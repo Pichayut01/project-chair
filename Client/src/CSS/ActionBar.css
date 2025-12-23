@@ -1,0 +1,110 @@
+/* src/CSS/ActionBar.css */
+
+.action-bar-container {
+    position: absolute;
+    /* ✨ Changed from fixed to absolute */
+    bottom: -70px;
+    /* ✨ Adjusted to sit just below the container with a gap */
+    width: 100%;
+    /* ✨ Full width container */
+    left: 0;
+    /* ✨ Start from left edge */
+    transform: none;
+    /* ✨ Remove transform centering */
+    display: flex;
+    /* ✨ Use flex to center the navbody */
+    justify-content: center;
+    /* ✨ Center the navbody */
+    z-index: 1000;
+}
+
+#navbody {
+    width: 100%;
+    /* ✨ Expanded width to match container */
+    max-width: none;
+    /* Remove cap to align edges */
+    min-width: 300px;
+    margin-bottom: 5px;
+    height: 60px;
+    background-color: rgb(255, 255, 255);
+    border-radius: 20px;
+    /* ✨ Reduced radius for wider look */
+    box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.041);
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    padding: 0 20px;
+    /* Add padding for breathing room */
+}
+
+.ul {
+    list-style: none;
+    width: 100%;
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    /* ✨ Group icons in center */
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    gap: 20px;
+    /* ✨ Comfortable spacing */
+}
+
+
+.ul .li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.radio {
+    display: none;
+}
+
+.svg-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    /* Explicit size for touch targets */
+    height: 50px;
+    opacity: 80%;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #555;
+    /* Default color */
+    border-radius: 50%;
+}
+
+.svg-container svg {
+    width: 24px;
+    height: 24px;
+}
+
+.svg-container:hover {
+    transition: 0.1s;
+    color: rgb(235, 40, 176);
+    background-color: rgba(235, 40, 176, 0.05);
+    /* Subtle hover fill */
+    opacity: 100%;
+    transform: translateY(-2px);
+    /* Slight lift */
+}
+
+.radio:checked+label .svg-container {
+    color: rgb(235, 40, 176);
+    opacity: 100%;
+    transform: translateY(-2px);
+}
+
+/* ✨ Media Query for Mobile Devices */
+@media (max-width: 768px) {
+    .action-bar-container {
+        position: fixed;
+        /* Fix to viewport */
+        bottom: 10px;
+        /* ✨ Closer to bottom edge */
+        /* Left/Transform already centered by main rule, but good to ensure */
+    }
+}

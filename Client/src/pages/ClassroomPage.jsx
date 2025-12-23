@@ -18,7 +18,8 @@ import StudentRatingModal from '../component/StudentRatingModal';
 import { useSocket } from '../hooks/useSocket';
 
 
-import { FaEdit, FaTh, FaRandom, FaBars, FaThLarge, FaChevronUp, FaChevronDown, FaExchangeAlt, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo } from 'react-icons/fa';
+import { FaEdit, FaTh, FaRandom, FaBars, FaThLarge, FaChevronUp, FaChevronDown, FaExchangeAlt, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaTimes, FaLayerGroup, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import ActionBar from '../component/ActionBar';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupOverlay from '../component/GroupOverlay';
 
@@ -33,11 +34,13 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const [error, setError] = useState(null);
     const [seatingPositions, setSeatingPositions] = useState({});
     const [isEditing, setIsEditing] = useState(false);
+    const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false); // ✨ State for hierarchical edit menu
+    const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(false); // ✨ Chat Sidebar State
     const [currentChairPositions, setCurrentChairPositions] = useState({});
     const [assignedUsers, setAssignedUsers] = useState({});
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedChairId, setSelectedChairId] = useState(null);
-    const [isBannerCollapsed, setIsBannerCollapsed] = useState(false);
+    const [isBannerCollapsed, setIsBannerCollapsed] = useState(true);
     const containerRef = useRef(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
@@ -58,6 +61,11 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const [isGroupingMode, setIsGroupingMode] = useState(false); // ✨ State for grouping mode
     const [groupSizeInput, setGroupSizeInput] = useState(2); // ✨ State for group size input
     const [selectedChairsForGroup, setSelectedChairsForGroup] = useState([]); // ✨ Selected chairs for creating a group
+
+    // ✨ Chat State
+    const [chatMessages, setChatMessages] = useState([]);
+    const [newMessage, setNewMessage] = useState('');
+    const chatContainerRef = useRef(null);
 
     // Zoom functionality state
     const [zoomLevel, setZoomLevel] = useState(1);
@@ -107,6 +115,19 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             });
         }
     }, [user.id]);
+
+    // Placeholder handlers for new interaction actions
+    const handleRaiseHand = () => {
+        Swal.fire('Raised Hand', 'You raised your hand!', 'info');
+    };
+
+    const handleEmoji = () => {
+        Swal.fire('Emoji', 'Emoji picker would open here.', 'question');
+    };
+
+    const handleChat = () => {
+        setIsChatSidebarOpen(prev => !prev);
+    };
 
     // Handle real-time chair seating updates
     const handleChairUpdate = useCallback((data) => {
@@ -191,15 +212,26 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
     }, [user.id]);
 
+    // ✨ Handle incoming chat messages
+    const handleChatMessage = useCallback((data) => {
+        setChatMessages(prev => [...prev, data]);
+        // Auto-scroll to bottom using container scrollTop to avoid page jumping
+        setTimeout(() => {
+            if (chatContainerRef.current) {
+                chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+            }
+        }, 100);
+    }, []);
+
     // Initialize socket connection
-    // Initialize socket connection
-    const { emitScoreUpdate, emitChairSeatingUpdate, emitChairMovement, emitChairGroupUpdate } = useSocket(
+    const { emitScoreUpdate, emitChairSeatingUpdate, emitChairMovement, emitChairGroupUpdate, emitChatMessage } = useSocket(
         classId,
         user,
         handleScoreUpdate,
         handleChairUpdate,
         handleChairMovement,
-        handleChairGroupUpdate // ✨ Pass the new handler
+        handleChairGroupUpdate,
+        handleChatMessage // ✨ Pass chat handler
     );
 
 
@@ -238,7 +270,6 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             }
 
             // Prevent text selection while dragging
-            e.preventDefault();
         }
     }, []);
 
@@ -292,13 +323,24 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             setIsTeacherView(prev => !prev);
             setTimeout(() => {
                 setIsViewChanging(false);
-                // ✨ Smooth scroll to "Front of Classroom" board
-                setTimeout(() => {
-                    const boardElement = document.getElementById('front-classroom-board');
-                    if (boardElement) {
-                        boardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 100);
+                // ✨ Manually calculate scroll to focus board WITHIN the wrapper
+                const boardElement = document.getElementById('front-classroom-board');
+                if (boardElement && seatingWrapperRef.current) {
+                    const wrapper = seatingWrapperRef.current;
+                    const boardRect = boardElement.getBoundingClientRect();
+                    const wrapperRect = wrapper.getBoundingClientRect();
+
+                    // Calculate position relative to the wrapper's current scroll
+                    // Target: Board center in Wrapper center
+                    const relativeTop = boardRect.top - wrapperRect.top;
+                    const currentScroll = wrapper.scrollTop;
+                    const targetScroll = currentScroll + relativeTop - (wrapper.clientHeight / 2) + (boardRect.height / 2);
+
+                    wrapper.scrollTo({
+                        top: targetScroll,
+                        behavior: 'smooth'
+                    });
+                }
             }, 500); // Keep loader briefly after switch for smooth transition
         }, 1500); // Show loader for 1.5 seconds
     }, []);
@@ -614,20 +656,49 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
     }, [classId, user, navigate]);
 
-    useEffect(() => {
-        if (user && classId) {
-            fetchClassroomDetails();
-            if (isCreator) {
-                fetchRatePresets();
-            }
+    // ✨ Fetch chat history on mount
+    const fetchChatHistory = useCallback(async () => {
+        try {
+            console.log('🔄 Fetching chat history for classroom:', classId);
+            const response = await axios.get(`${API_BASE_URL}/api/classrooms/${classId}/chat`, {
+                headers: { 'x-auth-token': user.token }
+            });
+
+            console.log('📦 Chat API Response:', response.data);
+
+            const { chatMessages } = response.data;
+
+            // Ensure chatMessages is always an array
+            const messages = Array.isArray(chatMessages) ? chatMessages : [];
+            setChatMessages(messages);
+            console.log('✅ Loaded chat history:', messages.length, 'messages');
+
+            // Auto-scroll to bottom after loading chat history
+            setTimeout(() => {
+                if (chatContainerRef.current) {
+                    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+                    console.log('📜 Auto-scrolled chat to bottom');
+                }
+            }, 200);
+        } catch (err) {
+            console.error('❌ Error fetching chat history:', err);
+            console.error('❌ Error details:', err.response?.data || err.message);
+            // Don't show error to user, just start with empty chat
+            setChatMessages([]);
         }
-    }, [user, classId, fetchClassroomDetails, fetchRatePresets, isCreator]);
+    }, [classId, user]);
 
     useEffect(() => {
         if (!user || !user.token || !classId) return;
+
         setLoading(true);
         fetchClassroomDetails();
-    }, [classId, user, fetchClassroomDetails]);
+        fetchChatHistory(); // ✨ Load chat history whenever classId changes
+
+        if (isCreator) {
+            fetchRatePresets();
+        }
+    }, [classId, user, fetchClassroomDetails, fetchChatHistory, fetchRatePresets, isCreator]);
 
     const handleAssign = async (name) => {
         if (!selectedChairId || !user) return;
@@ -706,6 +777,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     };
 
     const handleToggleEditMode = () => {
+        if (!isCreator) return;
         setIsEditing(prev => !prev);
         setIsGroupingMode(false); // Exit grouping mode when toggling edit mode
         setSelectedChairsForGroup([]); // Clear selected chairs
@@ -876,7 +948,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
     const calculateContainerSize = () => {
         const positions = isEditing ? currentChairPositions : seatingPositions;
-        const chairList = Object.values(positions);
+        // ✨ Filter for valid chairs only to prevent outliers (like 0,0 defaults) from breaking bounds
+        const chairList = Object.values(positions).filter(pos => pos && typeof pos.x === 'number');
         const chairCount = chairList.length;
 
         // Base minimum size calculations
@@ -913,17 +986,24 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         // Container width should be (maxX + chairWidth) + minX.
         // This ensures space on right equals space on left (minX).
 
-        const finalWidth = bounds.maxX + chairWidth + bounds.minX;
-        const finalHeight = bounds.maxY + chairHeight + bounds.minY;
+        // ✨ Calculate exact content dimensions
+        const contentWidth = bounds.maxX + chairWidth - bounds.minX;
+        const contentHeight = bounds.maxY + chairHeight - bounds.minY;
 
-        // Ensure minimum size to prevent glitches if minX is 0 or very small
-        // We add some extra buffer if it's too tight
-        const minContainerWidth = Math.max(finalWidth, 400);
-        const minContainerHeight = Math.max(finalHeight, 300);
+        // ✨ Define uniform padding (visual breathing room inside the white box)
+        const padding = 100;
+
+        // ✨ Final Container Size = Content + Padding * 2
+        // This ensures the box is exactly centered around the cluster of chairs
+        const finalWidth = contentWidth + (padding * 2);
+        const finalHeight = contentHeight + (padding * 2);
 
         return {
-            width: Math.round(minContainerWidth) + 'px',
-            height: Math.round(minContainerHeight) + 'px'
+            width: Math.round(finalWidth),
+            height: Math.round(finalHeight),
+            minX: bounds.minX,
+            minY: bounds.minY,
+            padding: padding
         };
     };
 
@@ -932,7 +1012,9 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             return <div className="no-seating-chart">No seating chart available.</div>;
         }
 
-        const chairList = Object.entries(isEditing ? currentChairPositions : seatingPositions);
+        const positions = isEditing ? currentChairPositions : seatingPositions;
+        // ✨ Filter valid chairs for rendering logic to match bounds
+        const chairList = Object.entries(positions).filter(([_, pos]) => pos && typeof pos.x === 'number');
         const containerSize = calculateContainerSize();
 
         return (
@@ -970,89 +1052,129 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                         border: '2px solid #e5e7eb',
                         borderRadius: '12px',
                         backgroundColor: '#f8fafc',
+                        backgroundColor: '#f8fafc',
                         padding: '0px',
                         cursor: isPanning ? 'grabbing' : 'grab',
-                        // position: 'relative' // handled by wrapper now
+                        display: 'flex', // Enable Flexbox for margin: auto centering
+                        // Remove alignItems/justifyContent to let margin: auto handle safe centering
                     }}>
 
-                    <div className="seating-grid" ref={containerRef} style={{
+                    <div className="seating-grid-wrapper" style={{
                         position: 'relative',
-                        width: containerSize.width,
-                        height: containerSize.height,
-                        border: '1px solid #ccc',
-                        borderRadius: '8px',
-                        backgroundColor: '#f9f9f9',
-                        margin: '50px auto 0 auto', // ✨ Added top margin for board visibility
-                        cursor: isPanning ? 'grabbing' : 'grab',
-                        transform: `scale(${zoomLevel}) rotate(${isTeacherView ? 180 : 0}deg)`, // ✨ Rotate grid
-                        transformOrigin: 'center center',
-                        transition: 'transform 0.5s ease'
+                        width: `${containerSize.width * zoomLevel}px`,
+                        height: `${containerSize.height * zoomLevel}px`,
+                        // ✨ Increase padding to 120px to provide generous buffer for board and edges
+                        padding: `${120 * zoomLevel}px`,
+                        margin: 'auto',
+                        boxSizing: 'content-box', // ✨ FORCE content-box so padding doesn't eat width
                     }}>
-                        {/* Front of classroom blackboard */}
-                        <div
-                            id="front-classroom-board"
-                            className="front-classroom-board"
-                            style={{
-                                transform: `translateX(-50%) rotate(${isTeacherView ? 180 : 0}deg)`, // ✨ Rotate text
+                        <div className="seating-grid" ref={containerRef} style={{
+                            position: 'relative',
+                            width: `${containerSize.width}px`,
+                            height: `${containerSize.height}px`,
+                            border: '1px solid #ccc',
+                            borderRadius: '8px',
+                            backgroundColor: '#f9f9f9',
+                            // ✨ Grid background only in Edit Mode
+                            backgroundImage: isEditing ? 'radial-gradient(circle, #e0e0e0 1px, transparent 1px)' : 'none',
+                            backgroundSize: '20px 20px',
+                            cursor: isPanning ? 'grabbing' : 'grab',
+                            transform: `scale(${zoomLevel})`,
+                            transformOrigin: 'top left',
+                            transition: 'transform 0.5s ease',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}>
+                            <div className="rotation-wrapper" style={{
+                                width: '100%',
+                                height: '100%',
+                                // Remove padding here, use transform instead for precise positioning
+                                position: 'relative',
+                                transform: `rotate(${isTeacherView ? 180 : 0}deg)`,
+                                transformOrigin: 'center center',
                                 transition: 'transform 0.5s ease'
                             }}>
-                            <span className="board-label">FRONT OF CLASSROOM</span>
+                                {/* Front of classroom blackboard */}
+                                <div
+                                    id="front-classroom-board"
+                                    className="front-classroom-board"
+                                    style={{
+                                        transform: `translateX(-50%) rotate(${isTeacherView ? 180 : 0}deg)`, // ✨ Rotate text
+                                        transition: 'transform 0.5s ease'
+                                    }}>
+                                    <span className="board-label">FRONT OF CLASSROOM</span>
+                                </div>
+
+                                {/* ✨ Centering Group for Chairs */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    // ✨ Shift chairs: -minX + Padding
+                                    // This moves the cluster to start exactly at 'Padding' px from top/left
+                                    transform: `translate(${-containerSize.minX + containerSize.padding}px, ${-containerSize.minY + containerSize.padding}px)`,
+                                    pointerEvents: 'none' // Let clicks pass through to chairs
+                                }}>
+
+                                    {/* ✨ Render Group Overlay */}
+                                    <GroupOverlay
+                                        groups={[
+                                            ...chairGroups,
+                                            // Render current selection as a temporary group
+                                            ...(selectedChairsForGroup.length > 0 ? [{
+                                                id: 'temp-group',
+                                                chairIds: selectedChairsForGroup,
+                                                label: `${selectedChairsForGroup.length}/${groupSizeInput}`,
+                                                color: '#90cdf4'
+                                            }] : [])
+                                        ]}
+                                        chairPositions={isEditing ? currentChairPositions : seatingPositions}
+                                        rotation={isTeacherView ? -180 : 0} // ✨ Counter-rotate labels
+                                    />
+
+                                    {chairList.map(([id, pos]) => {
+                                        const assignedUser = assignedUsers[id];
+                                        const photoURL = getProfileImageSrc(assignedUser?.photoURL, isGoogleUser(assignedUser));
+                                        const userName = assignedUser?.userName || null;
+
+                                        const userScoreRecord = assignedUser ? studentScores[assignedUser.userId] || {} : {};
+                                        const userScore = Object.values(userScoreRecord).reduce((sum, score) => sum + score, 0);
+
+                                        // Calculate min and max scores for relative scaling
+                                        const allScores = Object.values(studentScores).map(record => Object.values(record).reduce((sum, score) => sum + score, 0));
+                                        const hasAnyScores = allScores.some(score => score > 0);
+                                        const minScore = hasAnyScores ? Math.min(...allScores.filter(score => score >= 0)) : 0;
+                                        const maxScore = hasAnyScores ? Math.max(...allScores) : 0;
+
+                                        console.log(`Rendering Chair ${id}: userScore=${userScore}, maxScore=${maxScore}`);
+
+                                        return (
+                                            <Chair
+                                                key={`${id}-${userScore}`} // ✨ Removed Date.now() to prevent remounting on drag
+                                                id={id}
+                                                initialPosition={pos}
+                                                onChairMove={handleChairMove}
+                                                containerRef={containerRef}
+                                                isDraggable={isEditing && !isGroupingMode} // ✨ Disable drag when grouping
+                                                userPhotoURL={photoURL}
+                                                userName={userName}
+                                                onChairClick={handleChairClick}
+                                                userScore={userScore}
+                                                minScore={minScore}
+                                                maxScore={maxScore}
+                                                hasAnyScores={hasAnyScores}
+                                                isCreator={isCreator}
+                                                rotation={isTeacherView ? -180 : 0} // ✨ Counter-rotate chairs
+                                                isSelectedForGroup={selectedChairsForGroup.includes(id)} // Highlight selected chairs
+                                                selectionIndex={selectedChairsForGroup.indexOf(id) !== -1 ? selectedChairsForGroup.indexOf(id) + 1 : 0} // ✨ Pass selection index
+                                                zoomScale={zoomLevel} // ✨ Pass zoom level for drag correction
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
-
-                        {/* ✨ Render Group Overlay */}
-                        <GroupOverlay
-                            groups={[
-                                ...chairGroups,
-                                // Render current selection as a temporary group
-                                ...(selectedChairsForGroup.length > 0 ? [{
-                                    id: 'temp-group',
-                                    chairIds: selectedChairsForGroup,
-                                    label: `${selectedChairsForGroup.length}/${groupSizeInput}`,
-                                    color: '#90cdf4'
-                                }] : [])
-                            ]}
-                            chairPositions={isEditing ? currentChairPositions : seatingPositions}
-                            rotation={isTeacherView ? -180 : 0} // ✨ Counter-rotate labels
-                        />
-
-                        {chairList.map(([id, pos]) => {
-                            const assignedUser = assignedUsers[id];
-                            const photoURL = getProfileImageSrc(assignedUser?.photoURL, isGoogleUser(assignedUser));
-                            const userName = assignedUser?.userName || null;
-
-                            const userScoreRecord = assignedUser ? studentScores[assignedUser.userId] || {} : {};
-                            const userScore = Object.values(userScoreRecord).reduce((sum, score) => sum + score, 0);
-
-                            // Calculate min and max scores for relative scaling
-                            const allScores = Object.values(studentScores).map(record => Object.values(record).reduce((sum, score) => sum + score, 0));
-                            const hasAnyScores = allScores.some(score => score > 0);
-                            const minScore = hasAnyScores ? Math.min(...allScores.filter(score => score >= 0)) : 0;
-                            const maxScore = hasAnyScores ? Math.max(...allScores) : 0;
-
-                            console.log(`Rendering Chair ${id}: userScore=${userScore}, maxScore=${maxScore}`);
-
-                            return (
-                                <Chair
-                                    key={`${id}-${userScore}-${Date.now()}`}
-                                    id={id}
-                                    initialPosition={pos}
-                                    onChairMove={handleChairMove}
-                                    containerRef={containerRef}
-                                    isDraggable={isEditing && !isGroupingMode} // ✨ Disable drag when grouping
-                                    userPhotoURL={photoURL}
-                                    userName={userName}
-                                    onChairClick={handleChairClick}
-                                    userScore={userScore}
-                                    minScore={minScore}
-                                    maxScore={maxScore}
-                                    hasAnyScores={hasAnyScores}
-                                    isCreator={isCreator}
-                                    rotation={isTeacherView ? -180 : 0} // ✨ Counter-rotate chairs
-                                    isSelectedForGroup={selectedChairsForGroup.includes(id)} // Highlight selected chairs
-                                    selectionIndex={selectedChairsForGroup.indexOf(id) !== -1 ? selectedChairsForGroup.indexOf(id) + 1 : 0} // ✨ Pass selection index
-                                />
-                            );
-                        })}
                     </div>
                 </div>
             </div>
@@ -1076,6 +1198,133 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const userSeatId = Object.keys(assignedUsers).find(
         key => assignedUsers[key]?.userId === user.id
     );
+
+    const actionBarActions = [
+        {
+            id: 'raise-hand',
+            icon: <FaHandPaper />,
+            label: 'Raise Hand',
+            onClick: handleRaiseHand,
+            isActive: false
+        },
+        {
+            id: 'emoji',
+            icon: <FaSmile />,
+            label: 'Emoji',
+            onClick: handleEmoji,
+            isActive: false
+        },
+        {
+            id: 'chat',
+            icon: <FaComment />,
+            label: 'Chat',
+            onClick: handleChat,
+            isActive: isChatSidebarOpen
+        },
+        {
+            id: 'view',
+            icon: <FaChalkboardTeacher />,
+            label: 'Toggle View',
+            onClick: handleToggleView,
+            isActive: isTeacherView
+        }
+    ];
+
+    const handleConnectClick = async () => {
+        if (isGroupingMode) {
+            setIsGroupingMode(false);
+            setSelectedChairsForGroup([]);
+        } else {
+            const { value: size } = await Swal.fire({
+                title: 'Group Size',
+                text: 'Enter number of chairs to connect (max 5)',
+                input: 'number',
+                inputValue: groupSizeInput,
+                showCancelButton: true,
+                inputValidator: (value) => {
+                    if (!value || value < 2 || value > 5) {
+                        return 'Please enter a number between 2 and 5';
+                    }
+                }
+            });
+
+            if (size) {
+                setGroupSizeInput(parseInt(size));
+                setIsGroupingMode(true);
+            }
+        }
+    };
+
+    if (isCreator) {
+        if (isEditing) {
+            // Edit Mode Tools
+            actionBarActions.push(
+                {
+                    id: 'layout-rows',
+                    icon: <FaTh />,
+                    label: 'Rows Layout',
+                    onClick: () => handleApplyPreset('rows'),
+                    isActive: false
+                },
+                {
+                    id: 'layout-grid',
+                    icon: <FaThLarge />,
+                    label: 'Grid Layout',
+                    onClick: () => handleApplyPreset('grid'),
+                    isActive: false
+                },
+                {
+                    id: 'layout-groups',
+                    icon: <FaObjectGroup />,
+                    label: 'Groups Layout',
+                    onClick: () => handleApplyPreset('groups'),
+                    isActive: false
+                },
+                {
+                    id: 'connect',
+                    icon: <FaLink />,
+                    label: isGroupingMode ? 'Finish Connecting' : 'Connect Chairs',
+                    onClick: handleConnectClick,
+                    isActive: isGroupingMode
+                }
+            );
+
+            if (chairGroups.length > 0 || isGroupingMode) {
+                actionBarActions.push({
+                    id: 'undo',
+                    icon: <FaUndo />,
+                    label: 'Undo Connection',
+                    onClick: handleUndoGroup,
+                    isActive: false
+                });
+                actionBarActions.push({
+                    id: 'reset',
+                    icon: <FaTrash />,
+                    label: 'Reset Connections',
+                    onClick: handleClearGroups,
+                    isActive: false
+                });
+            }
+
+            // Save/Finish Button
+            actionBarActions.push({
+                id: 'save',
+                icon: <FaCheck />,
+                label: 'Save & Exit',
+                onClick: handleSavePositions,
+                isActive: true
+            });
+        } else {
+            // Enter Edit Mode Button
+            actionBarActions.push({
+                id: 'edit',
+                icon: <FaEdit />,
+                label: 'Edit Layout',
+                onClick: handleToggleEditMode,
+                isActive: false
+            });
+        }
+    }
 
     return (
         <>
@@ -1102,51 +1351,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 classroom={classroom}
                 onClassroomBackClick={() => navigate('/')}
             >
-                {/* ✨ Grouping Tool inside Navbar */}
-                {isEditing && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: '10px', paddingLeft: '10px', borderLeft: '1px solid #ddd' }}>
-                        <button
-                            className={`navbar-action-button ${isGroupingMode ? 'active' : ''}`}
-                            onClick={() => {
-                                setIsGroupingMode(!isGroupingMode);
-                                setSelectedChairsForGroup([]);
-                            }}
-                            style={{ backgroundColor: isGroupingMode ? '#4CAF50' : '#7ec282' }}
-                            title="Connect Chairs"
-                        >
-                            <FaLink /> {isGroupingMode ? 'Done' : 'Connect'}
-                        </button>
-                        {isGroupingMode && (
-                            <>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="5"
-                                    value={groupSizeInput}
-                                    onChange={(e) => setGroupSizeInput(parseInt(e.target.value) || 2)}
-                                    style={{ width: '50px', padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-                                    placeholder="#"
-                                />
-                                <button
-                                    className="navbar-action-button"
-                                    onClick={handleUndoGroup}
-                                    style={{ backgroundColor: '#f59e0b', color: 'white', marginLeft: '5px' }}
-                                    title="Undo Last Connection"
-                                >
-                                    <FaUndo /> Delete Connect
-                                </button>
-                                <button
-                                    className="navbar-action-button"
-                                    onClick={handleClearGroups}
-                                    style={{ backgroundColor: '#ef4444', color: 'white' }}
-                                    title="Reset All Connections"
-                                >
-                                    <FaTrash /> Reset
-                                </button>
-                            </>
-                        )}
-                    </div>
-                )}
+                {/* ✨ Navbar Children removed - Tools moved to ActionBar */}
             </Navbar>
 
 
@@ -1182,7 +1387,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                     </button>
                 </div>
                 <div className="classroom-layout-container">
-                    <div className="seating-chart-section">
+                    <div className="seating-chart-section" >
                         <div className="seating-header">
                             <h2 className="section-title">Seating Arrangement</h2>
                             <div className="seating-controls">
@@ -1213,6 +1418,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                         Reset
                                     </button>
 
+                                    {/* Layout Presets (Edit Mode Only) - Removed from here, moved to bottom right */}
                                     {/* View Toggle Button */}
                                     {isCreator && (
                                         <button
@@ -1226,44 +1432,135 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                     )}
                                 </div>
 
-                                {/* Compact Chair Arrangement Controls */}
-                                {isCreator && isEditing && (
-                                    <div className="chair-arrangement-controls">
-                                        <button
-                                            className="preset-btn row-preset"
-                                            onClick={() => handleApplyPreset('rows')}
-                                            title="Arrange chairs in rows"
-                                        >
-                                            <FaBars />
-                                            <span>Rows</span>
-                                        </button>
-
-                                        <button
-                                            className="preset-btn grid-preset"
-                                            onClick={() => handleApplyPreset('grid')}
-                                            title="Arrange chairs in grid pattern"
-                                        >
-                                            <FaTh />
-                                            <span>Grid</span>
-                                        </button>
-
-                                        <button
-                                            className="preset-btn group-preset"
-                                            onClick={() => handleApplyPreset('groups')}
-                                            title="Arrange chairs in groups"
-                                        >
-                                            <FaThLarge />
-                                            <span>Groups</span>
-                                        </button>
-
-                                        <div className="chair-count-display">
-                                            <span>{Object.keys(currentChairPositions).length} chairs</span>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         </div>
+
+                        {/* Render Seating Chart */}
                         {renderSeatingChart()}
+
+                        {/* ✨ Action Bar inside Seating Section implies it fits the width */}
+                        <ActionBar actions={actionBarActions} />
+                    </div>
+
+                    {/* ✨ Chat Split Card (Side-by-Side) */}
+                    <div className={`chat-split-card ${isChatSidebarOpen ? 'open' : ''}`}>
+                        <div className="edit-sidebar-header" style={{
+                            padding: '15px 20px',
+                            background: '#f8f9fa',
+                            borderBottom: '1px solid #eee',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}>
+                            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Class Chat</h3>
+                            <button
+                                className="close-edit-sidebar"
+                                onClick={() => setIsChatSidebarOpen(false)}
+                                title="Close Chat"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                            >
+                                <FaTimes size={18} color="#666" />
+                            </button>
+                        </div>
+
+                        <div className="edit-sidebar-content" style={{ padding: '0', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            <div
+                                ref={chatContainerRef}
+                                style={{ flex: 1, overflowY: 'auto', padding: '15px' }}
+                            >
+                                <div style={{ textAlign: 'center', color: '#888', fontSize: '0.85rem', marginBottom: '15px' }}>
+                                    {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                </div>
+
+                                {chatMessages.length === 0 ? (
+                                    <div style={{ textAlign: 'center', color: '#aaa', marginTop: '20px', fontStyle: 'italic' }}>
+                                        No messages yet. Start the conversation!
+                                    </div>
+                                ) : (
+                                    chatMessages.map((msg, index) => {
+                                        const isMe = msg.senderId === user.id;
+                                        return (
+                                            <div key={index} style={{
+                                                marginBottom: '10px',
+                                                display: 'flex',
+                                                gap: '10px',
+                                                flexDirection: isMe ? 'row-reverse' : 'row'
+                                            }}>
+                                                <img
+                                                    src={getProfileImageSrc(msg.senderPhoto, false)}
+                                                    alt={msg.senderName}
+                                                    onError={handleImageError}
+                                                    style={{ width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0, objectFit: 'cover' }}
+                                                />
+                                                <div style={{ alignItems: isMe ? 'flex-end' : 'flex-start', display: 'flex', flexDirection: 'column', maxWidth: '70%' }}>
+                                                    <div style={{
+                                                        background: isMe ? '#e3f2fd' : '#f1f1f1',
+                                                        padding: '8px 12px',
+                                                        borderRadius: isMe ? '12px 12px 0 12px' : '12px 12px 12px 0',
+                                                        wordBreak: 'break-word'
+                                                    }}>
+                                                        {msg.message}
+                                                    </div>
+                                                    <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                                                        {isMe ? 'Me' : msg.senderName} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+
+                            </div>
+
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    if (newMessage.trim()) {
+                                        emitChatMessage(newMessage.trim());
+                                        setNewMessage('');
+                                    }
+                                }}
+                                style={{
+                                    padding: '15px',
+                                    borderTop: '1px solid #eee',
+                                    display: 'flex',
+                                    gap: '10px',
+                                    background: '#fff'
+                                }}>
+                                <input
+                                    type="text"
+                                    placeholder="Type a message..."
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '10px 15px',
+                                        borderRadius: '20px',
+                                        border: '1px solid #ddd',
+                                        fontSize: '14px',
+                                        outline: 'none',
+                                        transition: 'border-color 0.2s'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = '#4CAF50'}
+                                    onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                                />
+                                <button type="submit" style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '50%',
+                                    background: '#4CAF50',
+                                    color: 'white',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                                }}>
+                                    <FaChevronRight size={18} />
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </main>

@@ -6,9 +6,10 @@ import 'react-circular-progressbar/dist/styles.css';
 import chroma from 'chroma-js';
 import '../CSS/Chair.css';
 import NoUserInChair from '../image/ืNoUserInChair.png';
+import { FaUser } from 'react-icons/fa';
 import nullUserPhoto from '../image/nulluser.png';
 
-const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, userPhotoURL, userName, onChairClick, userScore, minScore, maxScore, hasAnyScores, isCreator, rotation = 0, isSelectedForGroup = false, selectionIndex }) => {
+const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, userPhotoURL, userName, onChairClick, userScore, minScore, maxScore, hasAnyScores, isCreator, rotation = 0, isSelectedForGroup = false, selectionIndex, zoomScale = 1 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [position, setPosition] = useState(initialPosition);
     const offset = useRef({ x: 0, y: 0 });
@@ -35,6 +36,7 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
         if (!isDraggable || !chairRef.current) return;
         setIsDragging(true);
         const chairRect = chairRef.current.getBoundingClientRect();
+        // Calculate offset based on SCREEN coordinates, no zoom needed here as clientX/Y are screen relative
         offset.current = {
             x: e.clientX - chairRect.left,
             y: e.clientY - chairRect.top
@@ -42,19 +44,40 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
     }, [isDraggable]);
 
     const handleMouseMove = useCallback((e) => {
-        if (!isDragging || !containerRef.current || !chairRef.current) return;
+        if (!isDragging || !chairRef.current) return;
 
-        const containerRect = containerRef.current.getBoundingClientRect();
+        // Use offsetParent to get the correct coordinate space (handling translations of parent groups)
+        const parentEl = chairRef.current.offsetParent || containerRef.current;
+        if (!parentEl) return;
+
+        const parentRect = parentEl.getBoundingClientRect();
         const chairRect = chairRef.current.getBoundingClientRect();
 
-        let newX = e.clientX - containerRect.left - offset.current.x;
-        let newY = e.clientY - containerRect.top - offset.current.y;
+        // Calculate raw position relative to parent's visual top-left
+        let rawX = e.clientX - parentRect.left - offset.current.x;
+        let rawY = e.clientY - parentRect.top - offset.current.y;
 
-        newX = Math.max(0, Math.min(newX, containerRect.width - chairRect.width));
-        newY = Math.max(0, Math.min(newY, containerRect.height - chairRect.height));
+        let newX = rawX / zoomScale;
+        let newY = rawY / zoomScale;
+
+        // Correct for 180-degree rotation (inverted view)
+        // If rotated, the origin is visual bottom-right, and axis is inverted relative to screen
+        if (Math.abs(rotation) === 180) {
+            newX = (parentRect.width / zoomScale) - newX - (chairRect.width / zoomScale);
+            newY = (parentRect.height / zoomScale) - newY - (chairRect.height / zoomScale);
+        }
+
+        // Boundary checks (in logical pixels)
+        const logicalContainerWidth = parentRect.width / zoomScale;
+        const logicalContainerHeight = parentRect.height / zoomScale;
+        const logicalChairWidth = chairRect.width / zoomScale;
+        const logicalChairHeight = chairRect.height / zoomScale;
+
+        newX = Math.max(0, Math.min(newX, logicalContainerWidth - logicalChairWidth));
+        newY = Math.max(0, Math.min(newY, logicalContainerHeight - logicalChairHeight));
 
         setPosition({ x: newX, y: newY });
-    }, [isDragging, containerRef]);
+    }, [isDragging, rotation, zoomScale, containerRef]);
 
     const handleMouseUp = useCallback(() => {
         if (isDragging) {
@@ -78,10 +101,11 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
     }, [isDragging, handleMouseMove, handleMouseUp]);
 
     const handleClick = useCallback((e) => {
-        if (onChairClick && !isDraggable) {
+        // ✨ Allow click propagation even if draggable, to support Selection Mode
+        if (onChairClick) {
             onChairClick(id, e);
         }
-    }, [id, isDraggable, onChairClick]);
+    }, [id, onChairClick]);
 
     // Create heatmap color scale using chroma-js
     const getHeatmapColor = () => {
@@ -134,7 +158,7 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
             style={{
                 left: position.x + 'px',
                 top: position.y + 'px',
-                zIndex: isDragging ? 1000 : 1,
+                zIndex: isDragging ? 1000 : 10,
                 transform: `rotate(${rotation}deg)`, // Apply counter-rotation
                 boxShadow: isSelectedForGroup ? '0 0 0 3px #4CAF50, 0 4px 6px rgba(0,0,0,0.1)' : undefined, // ✨ Highlight selection
                 border: isSelectedForGroup ? '2px solid #fff' : undefined // Optional extra contrast
@@ -198,8 +222,17 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
                 </div>
             )}
 
-            <div className="chair-icon" style={{ backgroundImage: `url(${userName ? (userPhotoURL || nullUserPhoto) : NoUserInChair})` }}>
-                {/* Shows nulluser.png if user deleted their profile, NoUserInChair.png if chair is empty */}
+            <div className="chair-icon" style={{
+                backgroundImage: userName && userPhotoURL ? `url(${userPhotoURL})` : (!userName ? `url(${NoUserInChair})` : 'none'),
+                backgroundColor: userName && !userPhotoURL ? '#f0f0f0' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundSize: 'cover', // Ensure image covers the chair
+                backgroundPosition: 'center'
+            }}>
+                {userName && !userPhotoURL && <FaUser size={30} color="#555" />}
+                {/* Shows user photo if available, generic icon if user present but no photo, NoUserInChair if empty */}
             </div>
             <div className="user-name-under">
                 {userName || ''}

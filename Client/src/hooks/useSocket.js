@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate) => { // ✨ Added onChairGroupUpdate
+export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage) => { // ✨ Added onChatMessage
     const socketRef = useRef(null);
 
     useEffect(() => {
@@ -68,6 +68,14 @@ export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMo
             }
         });
 
+        // ✨ Listen for chat messages
+        socketRef.current.on('chat-message-received', (data) => {
+            console.log('Socket received chat message:', data);
+            if (onChatMessage) {
+                onChatMessage(data);
+            }
+        });
+
         // Handle connection events
         socketRef.current.on('connect', () => {
             console.log('Socket connected successfully');
@@ -86,7 +94,7 @@ export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMo
                 socketRef.current.disconnect();
             }
         };
-    }, [classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate]); // ✨ Added dependency
+    }, [classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage]); // ✨ Added dependency
 
     const emitScoreUpdate = (studentId, newScore, presetName, studentName) => {
         if (socketRef.current && socketRef.current.connected) {
@@ -159,5 +167,23 @@ export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMo
         }
     };
 
-    return { emitScoreUpdate, emitChairSeatingUpdate, emitChairMovement, emitChairGroupUpdate }; // ✨ Exported
+    // ✨ Added emitChatMessage
+    const emitChatMessage = (message) => {
+        if (socketRef.current && socketRef.current.connected) {
+            const messageData = {
+                classId,
+                message,
+                senderId: user.id,
+                senderName: user.displayName,
+                senderPhoto: user.photoURL,
+                timestamp: Date.now()
+            };
+            console.log('Emitting chat message:', messageData);
+            socketRef.current.emit('chat-message', messageData);
+        } else {
+            console.error('Socket not connected, cannot emit chat message');
+        }
+    };
+
+    return { emitScoreUpdate, emitChairSeatingUpdate, emitChairMovement, emitChairGroupUpdate, emitChatMessage }; // ✨ Exported
 };

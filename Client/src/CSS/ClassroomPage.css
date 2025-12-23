@@ -1,19 +1,39 @@
 /* src/CSS/ClassroomPage.css */
 
+.seating-grid {
+    position: relative;
+    background-color: #ffffff;
+    background-size: 20px 20px;
+    background-image: radial-gradient(circle, #e0e0e0 1px, transparent 1px);
+    cursor: grab;
+    user-select: none;
+}
+
+.seating-grid:active {
+    cursor: grabbing;
+}
+
+.chair-item {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    position: absolute;
+    /* Ensure it respects left/top */
+}
+
 .classroom-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     /* เปลี่ยนเป็น center เพื่อให้ข้อความอยู่กึ่งกลาง */
-    top: 5px;
+    top: 0px;
     /* Height of the Navbar */
     z-index: 900;
     /* Below Navbar (999) but above other content */
-    padding: 20px 30px;
+    padding: 15px 25px;
     /* ลดความสูงของ padding จาก 30px เป็น 20px */
     border-radius: 8px;
-    margin-bottom: 15px;
-    /* ลด margin-bottom จาก 20px เป็น 15px */
+    margin-bottom: 5px;
+    /* ลด margin-bottom จาก 20px เป็น 15px -> 5px */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     border-left: 10px solid;
     /* This will be set dynamically with JavaScript */
@@ -190,10 +210,64 @@
     background: rgba(255, 255, 255, 1);
     color: #333;
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+
 }
 
-/* Edit Sidebar Styles */
+/* Main Layout Container - turns into Flexbox for Split View */
+.classroom-layout-container {
+    display: flex;
+    /* transition: all 0.3s ease; */
+    height: calc(100vh - 140px);
+    /* Ensure full height usage */
+    /* overflow: hidden; */
+    position: relative;
+}
+
+.seating-chart-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    /* Prevent flex overflow */
+    transition: all 0.3s ease;
+}
+
+/* Chat Split Card - Side Panel */
+.chat-split-card {
+    width: 0;
+    /* Default closed */
+    background: #fff;
+    border-radius: 16px;
+    /* ✨ Slightly more rounded */
+    border: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin 0.3s ease;
+    opacity: 0;
+
+    /* ✨ Floating Positioning */
+    margin-left: 0;
+    margin-bottom: 20px;
+    /* Float up from bottom */
+    margin-right: 0px;
+    /* Spacing from right edge */
+    height: calc(100% - 20px);
+    /* Adjust height to not overflow container */
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    /* Soft shadow for depth */
+}
+
+.chat-split-card.open {
+    width: 340px;
+    /* Expanded width */
+    opacity: 1;
+    margin-left: 10px;
+    border: 1px solid #e0e0e0;
+}
+
 .edit-sidebar-overlay {
     position: fixed;
     top: 0;
@@ -262,6 +336,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    margin: 6px;
 }
 
 .edit-section-tabs {
@@ -718,30 +793,34 @@
 /* Container for the classroom layout section */
 .classroom-layout-container {
     border-radius: 8px;
-    margin-top: 20px;
+    margin-top: 10px;
     width: 100%;
     /* Responsive container with proper scrolling */
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: visible;
+    /* ✨ Ensure Action Bar is not clipped */
     /* Smooth scrolling */
     scroll-behavior: smooth;
 }
 
 .classroom-layout-container h2 {
-    font-size: 1.8rem;
+    font-size: 1.2rem;
     color: #333;
     margin-top: 0;
-    margin-bottom: 25px;
+    margin-bottom: 5px;
 }
 
 .seating-chart-section {
     background-color: #ffffff;
-    padding: 20px;
+    padding: 15px;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     width: 100%;
-    overflow: hidden;
-    /* Prevent section from scrolling */
+    position: relative;
+    /* ✨ Needed for absolute positioning of ActionBar */
+    overflow: visible;
+    /* ✨ Allow ActionBar to protrude */
+    margin-bottom: 90px;
+    /* ✨ Make space for the hanging ActionBar */
 }
 
 /* Grid that holds all the chairs */
@@ -888,7 +967,7 @@
 /* --- Responsive Design for Tablet Devices --- */
 @media (min-width: 769px) and (max-width: 1024px) {
     .seating-chart-section {
-        padding: 25px;
+        padding: 15px;
     }
 
     .classroom-header {
@@ -899,7 +978,7 @@
 /* --- Responsive Design for Large Screens --- */
 @media (min-width: 1025px) {
     .seating-chart-section {
-        padding: 30px;
+        padding: 20px;
     }
 
     .classroom-header {
@@ -1315,7 +1394,7 @@
 
     /* Make seating chart section take more space */
     .seating-chart-section {
-        padding: 10px;
+        padding: 5px;
     }
 
     /* Adjust seating header for mobile */

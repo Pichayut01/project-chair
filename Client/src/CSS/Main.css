@@ -1,38 +1,55 @@
 /* กำหนด box-sizing: border-box; ให้กับทุกองค์ประกอบ เพื่อให้การคำนวณขนาดรวม padding และ border */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
 }
 
 
 .main__content {
-  position: fixed; /* เปลี่ยนเป็น fixed position */
-  top: 60px; /* วางใต้ navbar */
+  position: fixed;
+  /* เปลี่ยนเป็น fixed position */
+  top: 60px;
+  /* วางใต้ navbar */
   left: 0;
   right: 0;
-  bottom: 0; /* ขยายไปจนถึงด้านล่างของหน้าจอ */
+  bottom: 0;
+  /* ขยายไปจนถึงด้านล่างของหน้าจอ */
   background-color: #E8F2E9;
   border-top-left-radius: 15px;
   padding: 20px;
   padding-bottom: 20px;
   transition: left 0.3s ease;
-  overflow-y: auto; /* เพิ่ม scroll เมื่อ content เกิน */
-  box-sizing: border-box; /* รวม padding ในการคำนวณขนาด */
+  overflow: hidden;
+  /* Changed from overflow-y: auto - NO SCROLLBAR */
+  box-sizing: border-box;
+  /* รวม padding ในการคำนวณขนาด */
+  display: flex;
+  /* Add flexbox */
+  flex-direction: column;
+  /* Stack children vertically */
 }
 
 .main__content.shift {
-  left: 250px; /* ใช้ left แทน margin-left เพื่อให้ทำงานกับ fixed position */
-  right: 0; /* รักษา right ไว้ */
+  left: 250px;
+  /* ใช้ left แทน margin-left เพื่อให้ทำงานกับ fixed position */
+  right: 0;
+  /* รักษา right ไว้ */
 }
 
 .main-content-scrollable-area {
-  height: 100%; /* ใช้ความสูงเต็มของ parent */
-  overflow-y: auto; /* ทำให้เนื้อหาภายในสามารถเลื่อนได้ */
-  padding-bottom: 20px; /* ลด padding-bottom */
+  height: 100%;
+  /* ใช้ความสูงเต็มของ parent */
+  overflow-y: auto;
+  /* ทำให้เนื้อหาภายในสามารถเลื่อนได้ */
+  padding-bottom: 20px;
+  /* ลด padding-bottom */
   -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
@@ -66,22 +83,24 @@ html, body {
 .classroom-card {
   background: #f5f5f5;
   border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease;
   cursor: pointer;
   position: relative;
-  z-index: 1; /* กำหนด z-index พื้นฐานให้กับ card */
+  z-index: 1;
+  /* กำหนด z-index พื้นฐานให้กับ card */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 1.5rem;
   padding-bottom: 25px;
-  border-left: 20px solid; /* กำหนดให้มี border-left แต่ไม่มีสี เพื่อให้ JSX กำหนดสีเอง */
+  border-left: 20px solid;
+  /* กำหนดให้มี border-left แต่ไม่มีสี เพื่อให้ JSX กำหนดสีเอง */
 }
 
 /* เพิ่ม class เมื่อ card มี dropdown เปิดอยู่ */
 .classroom-card.active-dropdown {
-    z-index: 10;
+  z-index: 10;
 }
 
 .classroom-text-content {
@@ -89,7 +108,7 @@ html, body {
   flex-grow: 1;
 }
 
-.classroom-card > .classroom-text-content > h2 {
+.classroom-card>.classroom-text-content>h2 {
   font-weight: normal;
   white-space: nowrap;
   overflow: hidden;
@@ -142,9 +161,12 @@ html, body {
 .empty-section {
   margin: 0 1rem 0.5rem;
   padding: 0.75rem 1rem;
-  color: #6b7280; /* slate-500 */
-  background: #f8fafc; /* slate-50 */
-  border: 1px solid #e2e8f0; /* slate-200 */
+  color: #6b7280;
+  /* slate-500 */
+  background: #f8fafc;
+  /* slate-50 */
+  border: 1px solid #e2e8f0;
+  /* slate-200 */
   border-radius: 8px;
 }
 
@@ -233,20 +255,20 @@ html, body {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .welcome-btn {
     width: 100%;
     max-width: 200px;
   }
-  
+
   .no-classrooms-container {
     padding: 2rem 1rem 1rem;
   }
-  
+
   .no-classrooms-message {
     padding: 1.5rem;
   }
-  
+
   .no-classrooms-message h2 {
     font-size: 1.5rem;
   }
@@ -261,7 +283,8 @@ html, body {
 
   .main__content.shift {
     margin-left: 0;
-    width: 100%; /* Ensure it takes full width on mobile */
+    width: 100%;
+    /* Ensure it takes full width on mobile */
   }
 }
 
@@ -273,7 +296,7 @@ html, body {
     max-width: 100%;
     box-sizing: border-box;
   }
-  
+
   .classroom-card {
     padding: 1rem;
     padding-bottom: 25px;
@@ -282,7 +305,7 @@ html, body {
     box-sizing: border-box;
     overflow: hidden;
   }
-  
+
   .classroom-text-content {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
@@ -291,9 +314,9 @@ html, body {
     box-sizing: border-box;
     overflow: hidden;
   }
-  
+
   /* Fix classroom title overflow on mobile */
-  .classroom-card > .classroom-text-content > h2 {
+  .classroom-card>.classroom-text-content>h2 {
     white-space: normal;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -302,7 +325,7 @@ html, body {
     max-width: 100%;
     box-sizing: border-box;
   }
-  
+
   /* Fix classroom subname overflow on mobile */
   .classroom-subname {
     white-space: normal;
@@ -313,7 +336,7 @@ html, body {
     max-width: calc(100% - 1rem);
     box-sizing: border-box;
   }
-  
+
   /* Ensure main content doesn't expand */
   .main__content {
     width: 100vw;
@@ -348,13 +371,14 @@ html, body {
 
 .dropdown-menu {
   position: absolute;
-  top: 40px; 
+  top: 40px;
   right: 10px;
   background-color: white;
   border: 1px solid #dadce0;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  z-index: 20; /* เพิ่มค่า z-index ของ Dropdown ให้สูงกว่า card อื่น ๆ */
+  z-index: 20;
+  /* เพิ่มค่า z-index ของ Dropdown ให้สูงกว่า card อื่น ๆ */
   min-width: 180px;
   padding: 8px 0;
 }
@@ -375,29 +399,29 @@ html, body {
 
 /* SweetAlert2 specific styles */
 .swal2-confirm {
-    background-color: #4CAF50 !important;
-    color: white !important;
-    border: none !important;
-    box-shadow: none !important;
+  background-color: #4CAF50 !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .swal2-confirm:focus {
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.4) !important;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.4) !important;
 }
 
 .swal2-html-container {
-    margin: 0 !important; 
+  margin: 0 !important;
 }
 
 /* For green code box inside SweetAlert */
-.swal2-html-container > div {
-    background-color: #eaf6ea;
-    border: 1px solid #d4ecd4;
-    border-radius: 4px;
-    padding: 12px 15px;
-    font-size: 24px;
-    font-weight: bold;
-    color: #388e3c;
-    word-break: break-all;
-    margin: 15px 0;
+.swal2-html-container>div {
+  background-color: #eaf6ea;
+  border: 1px solid #d4ecd4;
+  border-radius: 4px;
+  padding: 12px 15px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #388e3c;
+  word-break: break-all;
+  margin: 15px 0;
 }

@@ -228,27 +228,9 @@ const Navbar = ({
 
                 {/* ✨ ย้ายปุ่มมาไว้ตรงกลาง Navbar เพื่อให้แสดงผลถูกต้อง */}
                 <div className="navbar-center">
-                    {isClassroomPage && isCreator && (
-                        isEditing ? (
-                            <>
-                                <button className="navbar-action-button save" onClick={onSavePositions} title="Save Seating">
-                                    <FiSave size={20} />
-                                    <span>Save</span>
-                                </button>
-                                <button className="navbar-action-button cancel" onClick={onCancelEdit} title="Cancel">
-                                    <FiX size={20} />
-                                    <span>Cancel</span>
-                                </button>
-                                {children} {/* ✨ Custom actions (e.g. Grouping) from parent */}
-                            </>
-                        ) : (
-                            <button className="navbar-action-button" onClick={onToggleEditMode} title="Edit Seating">
-                                <FiEdit2 size={20} />
-                                <span>Edit</span>
-                            </button>
-                        )
-                    )}
+                    {children}
                 </div>
+
 
                 <div className="navbar__right">
                     {user && (

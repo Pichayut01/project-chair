@@ -1,0 +1,19 @@
+/* Add to ClassroomPage.css - Main content wrapper for fixed-height layout */
+
+/* Override main content to use flexbox and fill viewport */
+.main__content {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px);
+    /* Full viewport height minus navbar */
+    overflow: hidden;
+    /* No scrollbar on main content */
+    padding: 20px;
+}
+
+/* Ensure body and html don't scroll */
+body.classroom-page,
+html.classroom-page {
+    overflow: hidden;
+    height: 100vh;
+}

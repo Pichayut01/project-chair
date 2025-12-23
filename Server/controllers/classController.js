@@ -318,3 +318,44 @@ exports.updateTheme = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+
+exports.getChatHistory = async (req, res) => {
+    const { classId } = req.params;
+    const limit = parseInt(req.query.limit) || 100; // Default to last 100 messages
+
+    try {
+        console.log('📥 Fetching chat history for classroom:', classId);
+
+        const classroom = await Class.findById(classId);
+        if (!classroom) {
+            console.log('❌ Classroom not found:', classId);
+            return res.status(404).json({ msg: 'Classroom not found' });
+        }
+
+        // Verify user is a member of the classroom
+        const userId = req.user._id.toString();
+        const isCreator = classroom.creator.some(id => id.toString() === userId);
+        const isParticipant = classroom.participants.some(id => id.toString() === userId);
+
+        if (!isCreator && !isParticipant) {
+            console.log('🚫 Access denied for user:', userId);
+            return res.status(403).json({ msg: 'Access denied. You are not a member of this classroom.' });
+        }
+
+        // ✨ CRITICAL FIX: Initialize chatMessages if undefined (for existing classrooms)
+        if (!classroom.chatMessages) {
+            console.log('⚠️ chatMessages undefined, initializing empty array');
+            classroom.chatMessages = [];
+            await classroom.save();
+        }
+
+        // Get the last N messages
+        const chatMessages = classroom.chatMessages.slice(-limit);
+
+        console.log('✅ Returning', chatMessages.length, 'chat messages for classroom:', classId);
+        res.json({ chatMessages });
+    } catch (err) {
+        console.error('❌ Error fetching chat history:', err);
+        res.status(500).send('Server error');
+    }
+};

@@ -1,3 +1,5 @@
+const Class = require('../models/Class');
+
 module.exports = (io) => {
     io.on('connection', (socket) => {
         console.log('User connected:', socket.id);
@@ -75,6 +77,52 @@ module.exports = (io) => {
                 updatedBy,
                 timestamp
             });
+        });
+
+        // ✨ Handle chat messages
+        socket.on('chat-message', async (data) => {
+            console.log('Chat message received:', data);
+            const { classId, message, senderId, senderName, senderPhoto, timestamp } = data;
+
+            try {
+                // Save message to database
+                console.log('💾 Saving chat message to database for classroom:', classId);
+                await Class.findByIdAndUpdate(
+                    classId,
+                    {
+                        $push: {
+                            chatMessages: {
+                                senderId,
+                                senderName,
+                                senderPhoto,
+                                message,
+                                timestamp
+                            }
+                        }
+                    },
+                    { new: true }
+                );
+                console.log('✅ Chat message saved successfully');
+
+                // Broadcast to all users in the classroom INCLUDING sender (to confirm receipt/ordering)
+                io.to(classId).emit('chat-message-received', {
+                    message,
+                    senderId,
+                    senderName,
+                    senderPhoto,
+                    timestamp
+                });
+            } catch (error) {
+                console.error('❌ Error saving chat message:', error);
+                // Still broadcast even if save fails to maintain real-time functionality
+                io.to(classId).emit('chat-message-received', {
+                    message,
+                    senderId,
+                    senderName,
+                    senderPhoto,
+                    timestamp
+                });
+            }
         });
 
         socket.on('disconnect', () => {

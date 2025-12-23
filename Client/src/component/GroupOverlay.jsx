@@ -49,7 +49,7 @@ const GroupOverlay = ({ groups, chairPositions, rotation = 0 }) => { // ✨ Acce
                 width: '100%',
                 height: '100%',
                 pointerEvents: 'none',
-                zIndex: 0
+                zIndex: 5
             }}
         >
             {groupShapes.map(shape => (

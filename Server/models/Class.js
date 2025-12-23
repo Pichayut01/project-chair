@@ -26,6 +26,16 @@ const classSchema = new mongoose.Schema({
     rows: { type: Number, default: 0 },
     cols: { type: Number, default: 0 },
     chairGroups: { type: mongoose.Schema.Types.Mixed, default: [] },
+    chatMessages: {
+        type: [{
+            senderId: { type: String, required: true },
+            senderName: { type: String, required: true },
+            senderPhoto: { type: String },
+            message: { type: String, required: true },
+            timestamp: { type: Number, required: true }
+        }],
+        default: [] // ✨ CRITICAL: Default empty array so existing classrooms work
+    }
 });
 
 module.exports = mongoose.model('Class', classSchema);
