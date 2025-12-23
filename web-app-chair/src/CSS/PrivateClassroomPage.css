@@ -1,0 +1,264 @@
+/* src/CSS/PrivateClassroomPage.css */
+
+.private-classroom-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(80vh - 60px);
+  padding: 1rem;
+   overflow: hidden;
+  box-sizing: border-box;
+}
+
+.private-classroom-content {
+  text-align: center;
+  max-width: 450px;
+  width: 100%;
+  background: #ffffff;
+  padding: 1.5rem 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  animation: slideUp 0.6s ease-out;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.private-icon {
+  margin-bottom: 1rem;
+  color: #f59e0b;
+  display: flex;
+  justify-content: center;
+}
+
+.private-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.private-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+  margin-top: 0;
+}
+
+.private-description {
+  font-size: 1rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.classroom-info {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.classroom-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+.classroom-id {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0 0 0.5rem 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.classroom-description {
+  font-size: 0.95rem;
+  color: #4b5563;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  color: #dc2626;
+  text-align: center;
+}
+
+.error-message p {
+  margin: 0;
+}
+
+.private-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.private-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.private-btn.primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.private-btn.primary:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.private-btn.secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.private-btn.secondary:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+.private-help {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.private-help p {
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .private-classroom-container {
+    padding: 1rem;
+  }
+  
+  .private-classroom-content {
+    padding: 1.5rem 1rem;
+    margin: 0;
+    max-width: 90vw;
+  }
+  
+  .private-title {
+    font-size: 1.75rem;
+  }
+  
+  .private-description {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .private-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .private-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .classroom-info {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .private-classroom-container {
+    padding: 1rem;
+  }
+  
+  .private-classroom-content {
+    padding: 1.5rem 1rem;
+    border-radius: 8px;
+    max-width: 95vw;
+  }
+  
+  .private-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .private-description {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  
+  .private-icon svg {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .private-btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9rem;
+    min-width: 120px;
+  }
+  
+  .private-help {
+    font-size: 0.85rem;
+  }
+  
+  .classroom-name {
+    font-size: 1.1rem;
+  }
+  
+  .classroom-id {
+    font-size: 0.8rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 320px) {
+  .private-classroom-content {
+    padding: 1rem 0.75rem;
+  }
+  
+  .private-title {
+    font-size: 1.25rem;
+  }
+  
+  .private-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    min-width: 100px;
+  }
+}

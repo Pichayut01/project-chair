@@ -1,0 +1,1414 @@
+/* src/CSS/ClassroomPage.css */
+
+.classroom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* เปลี่ยนเป็น center เพื่อให้ข้อความอยู่กึ่งกลาง */
+    top: 5px;
+    /* Height of the Navbar */
+    z-index: 900;
+    /* Below Navbar (999) but above other content */
+    padding: 20px 30px;
+    /* ลดความสูงของ padding จาก 30px เป็น 20px */
+    border-radius: 8px;
+    margin-bottom: 15px;
+    /* ลด margin-bottom จาก 20px เป็น 15px */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-left: 10px solid;
+    /* This will be set dynamically with JavaScript */
+    transition: top 0.3s ease, background-color 0.3s;
+    background-size: cover;
+    background-position: center;
+    position: sticky;
+    /* Combined position properties */
+    min-width: 300px;
+    /* ขนาดขั้นต่ำของ header */
+}
+
+.classroom-header-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255);
+    /* Default white overlay */
+    z-index: 0;
+    /* Behind content but in front of header's background image */
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+/* When there is a banner image, make the overlay darker for text contrast */
+.classroom-header[style*="background-image"]:not([style*="background-image: none"]) .classroom-header-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* When there is a banner image, make the text white */
+.classroom-header[style*="background-image"]:not([style*="background-image: none"]) .classroom-header-content h1,
+.classroom-header[style*="background-image"]:not([style*="background-image: none"]) .classroom-header-content p {
+    color: #fff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.classroom-header-content {
+    flex: 1;
+    position: relative;
+    /* Ensure content is above overlay */
+    z-index: 1;
+    /* Higher z-index to be on top of the overlay */
+    min-width: 0;
+    /* ให้สามารถย่อได้ */
+    margin-right: 10px;
+    /* ลดระยะห่างจากปุ่ม */
+}
+
+.classroom-header h1 {
+    font-size: 2rem;
+    /* ลดขนาดฟอนต์จาก 2.5rem เป็น 2rem */
+    color: #333;
+    margin: 0;
+    line-height: 1.2;
+    /* เพิ่ม line-height เพื่อให้ดูกระชับขึ้น */
+    overflow: hidden;
+    /* ซ่อนข้อความที่เกินขอบ */
+    text-overflow: ellipsis;
+    /* แสดง ... เมื่อข้อความเกินขอบ */
+    display: block;
+    /* เปลี่ยนเป็น block */
+    width: 100%;
+    /* ใช้พื้นที่เต็มที่ */
+}
+
+.classroom-header p {
+    font-size: 1rem;
+    /* ลดขนาดฟอนต์จาก 1.2rem เป็น 1rem */
+    color: #666;
+    margin-top: 3px;
+    /* ลด margin-top จาก 5px เป็น 3px */
+    line-height: 1.3;
+    overflow: hidden;
+    /* ซ่อนข้อความที่เกินขอบ */
+    text-overflow: ellipsis;
+    /* แสดง ... เมื่อข้อความเกินขอบ */
+    display: block;
+    /* เปลี่ยนเป็น block */
+    width: 100%;
+    /* ใช้พื้นที่เต็มที่ */
+}
+
+/* Media query สำหรับหน้าจอเล็ก - บังคับให้เป็นบรรทัดเดียว */
+@media (max-width: 768px) {
+    .classroom-header h1 {
+        white-space: nowrap;
+        /* บังคับให้อยู่ในบรรทัดเดียวเมื่อหน้าจอเล็ก */
+    }
+
+    .classroom-header p {
+        white-space: nowrap;
+        /* บังคับให้อยู่ในบรรทัดเดียวเมื่อหน้าจอเล็ก */
+    }
+}
+
+.classroom-theme-edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    position: relative;
+    z-index: 2;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+/* เมื่อ header เป็น sticky (พับแล้ว) ให้ปรับตำแหน่งปุ่ม */
+.classroom-header[style*="position: sticky"] .classroom-theme-edit-btn,
+.classroom-header.sticky .classroom-theme-edit-btn {
+    position: absolute;
+    top: 8px;
+    /* ลดระยะห่างจากด้านบน */
+    right: 8px;
+    /* ลดระยะห่างจากด้านขวา */
+    transform: none;
+    /* ลบ transform เพื่อให้ปุ่มอยู่ในตำแหน่งที่แน่นอน */
+    width: 20px;
+    /* ลดขนาดปุ่มให้เล็กลง */
+    height: 20px;
+    padding: 2px;
+    /* ลด padding */
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.classroom-header[style*="background-image"]:not([style*="background-image: none"]) .classroom-theme-edit-btn {
+    color: #fff;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.classroom-header-actions {
+    display: flex;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+    align-items: flex-start;
+    margin-top: 10px;
+}
+
+.classroom-edit-btn {
+    cursor: pointer;
+    padding: 0;
+    /* ลด padding เหลือ 0 เพื่อให้ชิดไอคอน */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    transition: all 0.2s ease;
+    width: 44px;
+    height: 44px;
+}
+
+.classroom-edit-btn:hover {
+    color: var(--green-primary, #7ec282);
+    transform: scale(1.05);
+}
+
+.classroom-header[style*="background-image"]:not([style*="background-image: none"]) .classroom-edit-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: #555;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.classroom-header[style*="background-image"]:not([style*="background-image: none"]) .classroom-edit-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    color: #333;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Edit Sidebar Styles */
+.edit-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.edit-sidebar {
+    width: 400px;
+    height: 100%;
+    background: #fff;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+.edit-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+}
+
+.edit-sidebar-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+.close-edit-sidebar {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.close-edit-sidebar:hover {
+    background-color: #e9ecef;
+}
+
+.edit-sidebar-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.edit-section-tabs {
+    display: flex;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+}
+
+.edit-tab {
+    flex: 1;
+    padding: 15px 10px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    color: #666;
+    transition: all 0.2s;
+    font-size: 12px;
+}
+
+.edit-tab:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+.edit-tab.active {
+    background: #7ec282;
+    color: white;
+}
+
+.edit-tab svg {
+    font-size: 18px;
+}
+
+.edit-section-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.theme-section,
+.role-section,
+.other-section {
+    max-width: 100%;
+}
+
+.theme-section h4,
+.role-section h4,
+.other-section h4 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 1.1rem;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
+    font-size: 14px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="url"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="url"]:focus {
+    outline: none;
+    border-color: #7ec282;
+}
+
+.form-group input[type="text"]:disabled,
+.form-group input[type="url"]:disabled {
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.form-group input[type="color"] {
+    width: 50px;
+    height: 35px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.form-group input[type="color"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.role-subsection {
+    margin-bottom: 25px;
+}
+
+.role-subsection h5 {
+    margin: 0 0 15px 0;
+    color: #555;
+    font-size: 1rem;
+}
+
+.members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.member-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s;
+}
+
+.member-card:hover {
+    background: #e9ecef;
+}
+
+.member-card.creator {
+    background: #e8f5e8;
+    border-color: #4CAF50;
+}
+
+.member-card.participant {
+    background: #f0f8ff;
+    border-color: #7ec282;
+}
+
+.member-card img {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+}
+
+.member-card span {
+    flex: 1;
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+.action-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.promote-btn {
+    background: #28a745;
+    color: white;
+}
+
+.promote-btn:hover {
+    background: #1e7e34;
+}
+
+.demote-btn {
+    background: #ffc107;
+    color: #212529;
+}
+
+.demote-btn:hover {
+    background: #e0a800;
+}
+
+.kick-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.kick-btn:hover {
+    background: #c82333;
+}
+
+.class-code-display {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.readonly-input {
+    flex: 1;
+    background: #f8f9fa !important;
+    color: #6c757d !important;
+    cursor: not-allowed !important;
+}
+
+.copy-btn {
+    padding: 10px 15px;
+    background: #7ec282;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.copy-btn:hover {
+    background: #6bb36f;
+}
+
+.edit-sidebar-actions {
+    padding: 20px;
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+    display: flex;
+    gap: 10px;
+}
+
+.edit-mode-btn,
+.save-btn,
+.cancel-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.edit-mode-btn {
+    background: #7ec282;
+    color: white;
+}
+
+.edit-mode-btn:hover {
+    background: #6bb36f;
+}
+
+.save-btn {
+    background: #28a745;
+    color: white;
+}
+
+.save-btn:hover {
+    background: #1e7e34;
+}
+
+.cancel-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background: #c82333;
+}
+
+/* Responsive Design for Edit Sidebar */
+@media (max-width: 768px) {
+    .edit-sidebar {
+        width: 100%;
+    }
+
+    .edit-section-tabs {
+        flex-direction: column;
+    }
+
+    .edit-tab {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+
+    .edit-tab svg {
+        font-size: 16px;
+        margin-right: 8px;
+    }
+
+    .member-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+
+    .member-card span {
+        flex: none;
+    }
+
+    .action-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .class-code-display {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .copy-btn {
+        width: 100%;
+    }
+}
+
+
+.classroom-details-container {
+    padding: 20px;
+}
+
+.members-section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.members-section h2 {
+    font-size: 1.8rem;
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.members-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.member-card {
+    display: flex;
+    align-items: center;
+    background-color: #f9f9f9;
+    padding: 10px 15px;
+    border-radius: 50px;
+    border: 1px solid #ddd;
+}
+
+.member-card.creator {
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+.member-card img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 15px;
+    object-fit: cover;
+}
+
+.member-card h4 {
+    font-size: 1rem;
+    color: #333;
+    margin: 0;
+}
+
+/* src/CSS/ClassroomPage.css */
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    padding: 5px;
+    transition: color 0.3s ease;
+}
+
+.edit-button {
+    color: #337ab7;
+}
+
+.edit-button:hover {
+    color: #286090;
+}
+
+.save-button {
+    color: #5cb85c;
+}
+
+.save-button:hover {
+    color: #449d44;
+}
+
+.cancel-button {
+    color: #d9534f;
+}
+
+.cancel-button:hover {
+    color: #c9302c;
+}
+
+/* ปุ่ม action ใน navbar หรือ header */
+.navbar-action-button,
+.edit-action-btn {
+    background-color: #7ec282;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 18px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s, box-shadow 0.18s;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 10px;
+}
+
+.navbar-action-button:hover,
+.edit-action-btn:hover,
+.navbar-action-button:focus,
+.edit-action-btn:focus {
+    background-color: #7cd385;
+    box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15);
+    outline: none;
+}
+
+/* Container for the classroom layout section */
+.classroom-layout-container {
+    border-radius: 8px;
+    margin-top: 20px;
+    width: 100%;
+    /* Responsive container with proper scrolling */
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+}
+
+.classroom-layout-container h2 {
+    font-size: 1.8rem;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 25px;
+}
+
+.seating-chart-section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    overflow: hidden;
+    /* Prevent section from scrolling */
+}
+
+/* Grid that holds all the chairs */
+.chairs-grid {
+    position: relative;
+    min-height: 600px;
+    /* Set a minimum height */
+    border: 1px dashed #d1d1d1;
+    border-radius: 6px;
+}
+
+/* Front of classroom blackboard */
+.front-classroom-board {
+    position: absolute;
+    top: -40px;
+    /* ✨ Moved up from 5px to give more space */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 24px;
+    background: linear-gradient(135deg, #7EC282, #6BB36F);
+    border: 1px solid #5A9F5E;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.board-label {
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.3px;
+}
+
+/* No seating chart message */
+.no-seating-chart {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    font-size: 1.2rem;
+    color: #666;
+    background-color: #f9f9f9;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    text-align: center;
+    padding: 40px;
+}
+
+/* --- Responsive Design for Mobile Devices --- */
+@media (max-width: 768px) {
+    .classroom-details-container {
+        padding: 10px;
+        /* Reduce overall padding */
+    }
+
+    .classroom-header {
+        padding: 20px;
+        background-color: #ffffff;
+        /* Ensure consistent background on mobile */
+        border-left-width: 8px;
+    }
+
+    .classroom-header h1 {
+        font-size: 1.8rem;
+        /* Smaller main title */
+    }
+
+    /* Make seating container take more vertical space on mobile */
+    .seating-container-wrapper {
+        max-height: 75vh !important;
+        height: calc(100vh - 250px) !important;
+    }
+
+    /* Increase seating grid size for better visibility */
+    .seating-grid {
+        min-height: 500px !important;
+    }
+
+    .classroom-header p {
+        font-size: 1rem;
+    }
+
+    .members-section h2,
+    .classroom-layout-container h2 {
+        font-size: 1.5rem;
+        /* Smaller section titles */
+    }
+
+    .members-list {
+        gap: 10px;
+    }
+
+    .member-card {
+        padding: 8px 12px;
+    }
+
+    .chairs-grid {
+        gap: 15px;
+        /* Reduce gap between chairs */
+    }
+
+    .seating-chart-section {
+        padding: 15px;
+        /* Reduce padding on mobile */
+        min-width: 100%;
+        /* Allow full width on mobile */
+    }
+
+    .edit-action-btn,
+    .navbar-action-button {
+        padding: 8px;
+        /* Adjust padding for icon-only */
+        width: 40px;
+        /* Set a fixed width */
+        height: 40px;
+        /* Set a fixed height */
+        border-radius: 50%;
+        /* Make it circular */
+        justify-content: center;
+        /* Center the icon */
+        font-size: 0;
+        /* Hide text node by setting font size to 0 */
+        gap: 0;
+        /* Remove gap between icon and hidden text */
+    }
+
+    /* Ensure the icon (if it's an SVG or font icon) remains visible */
+    .edit-action-btn svg,
+    .edit-action-btn i,
+    .navbar-action-button svg {
+        font-size: 20px;
+        /* Restore icon size. Adjust as needed. */
+        margin: 0;
+        /* Remove any margin that might have been there */
+    }
+}
+
+/* --- Responsive Design for Tablet Devices --- */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .seating-chart-section {
+        padding: 25px;
+    }
+
+    .classroom-header {
+        padding: 25px;
+    }
+}
+
+/* --- Responsive Design for Large Screens --- */
+@media (min-width: 1025px) {
+    .seating-chart-section {
+        padding: 30px;
+    }
+
+    .classroom-header {
+        padding: 30px;
+    }
+}
+
+/* Styles for the theme edit form inside SweetAlert2 */
+.swal-edit-form {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    gap: 8px;
+    /* Adjust gap between label and input */
+    padding: 10px 5px;
+    /* Add some padding */
+}
+
+.swal-edit-form label {
+    margin-top: 12px;
+    /* Add space above each label */
+    font-size: 0.9em;
+    color: #666;
+    font-weight: 500;
+}
+
+.swal-edit-form .swal2-input {
+    margin: 0 !important;
+    /* Remove default margin from swal2-input */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.swal-color-input {
+    padding: 4px !important;
+    /* Adjust padding for color input */
+    height: 45px;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background-color: #f9f9f9;
+    box-sizing: border-box;
+}
+
+.swal2-input {
+    border-radius: 8px !important;
+    border: 1px solid #e0e0e0 !important;
+    background-color: #f9f9f9 !important;
+}
+
+.preset-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #555;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.preset-btn:hover {
+    background: #f8f9fa;
+    border-color: #7ec282;
+    color: #7ec282;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.preset-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.rows-btn:hover {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.grid-btn:hover {
+    border-color: #6f42c1;
+    color: #6f42c1;
+}
+
+.groups-btn:hover {
+    border-color: #17a2b8;
+    color: #17a2b8;
+}
+
+.scattered-btn:hover {
+    border-color: #ffc107;
+    color: #e0a800;
+}
+
+.preset-btn svg {
+    font-size: 14px;
+}
+
+/* Seating container wrapper styles */
+.seating-container-wrapper {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: white;
+    padding: 20px;
+    width: 100%;
+    height: calc(100vh - 400px);
+    /* เพิ่มพื้นที่สำหรับ banner */
+    max-height: 60vh;
+    /* ลดความสูงสูงสุดเพื่อให้มีพื้นที่สำหรับ banner */
+    overflow: auto;
+    transition: height 0.3s ease, max-height 0.3s ease;
+}
+
+/* When banner is collapsed, expand seating container to full height */
+.classroom-header.collapsed~.classroom-layout-container .seating-container-wrapper {
+    height: calc(100vh - 300px);
+    /* เพิ่มพื้นที่เว้นเพื่อป้องกัน scroll */
+    max-height: 70vh;
+    /* ลดความสูงสูงสุดเพื่อป้องกัน scroll */
+}
+
+/* Custom scrollbar for seating container */
+.seating-container-wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.seating-container-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.seating-container-wrapper::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.seating-container-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Banner collapse button */
+.banner-collapse-btn {
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    border: 2px solid #ddd;
+    padding: 8px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.banner-collapse-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: #bbb;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.banner-collapse-btn:active {
+    transform: translateX(-50%) translateY(0px);
+}
+
+.classroom-header.collapsed .banner-collapse-btn:active {
+    transform: translateX(-50%) translateY(2px);
+}
+
+/* Collapsed banner state */
+.classroom-header.collapsed {
+    height: 60px !important;
+    min-height: 60px !important;
+    overflow: visible;
+}
+
+.classroom-header.collapsed .classroom-header-content {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding-right: 120px;
+    /* เว้นที่สำหรับปุ่ม edit */
+}
+
+.classroom-header.collapsed .classroom-header-content h1 {
+    font-size: 1.2em;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.classroom-header.collapsed .classroom-header-content p {
+    display: none;
+}
+
+.classroom-header.collapsed .banner-collapse-btn {
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.classroom-header.collapsed .classroom-header-actions {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Banner upload styles */
+.banner-upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-upload-btn {
+    display: inline-block;
+    padding: 12px 20px;
+    background: #7ec282;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 500;
+    transition: background 0.2s;
+    border: none;
+}
+
+.file-upload-btn:hover {
+    background: #6bb36f;
+}
+
+.file-info {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+}
+
+.banner-actions {
+    margin-top: 10px;
+}
+
+.remove-banner-btn {
+    padding: 8px 16px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.remove-banner-btn:hover {
+    background: #c82333;
+}
+
+.banner-display {
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.current-banner-text {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.no-banner-text {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.banner-preview {
+    margin-top: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 100%;
+}
+
+.banner-preview img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Compact Chair Arrangement Controls for ClassroomPage */
+.seating-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.seating-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Zoom Controls */
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 4px 8px;
+}
+
+.zoom-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+    transition: all 0.2s ease;
+}
+
+.zoom-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #334155;
+}
+
+.zoom-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.zoom-btn.zoom-reset {
+    width: auto;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.zoom-level {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    min-width: 35px;
+    text-align: center;
+}
+
+.chair-arrangement-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.preset-btn {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: transparent;
+    border: none;
+    padding: 2px 4px;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    font-size: 0.55rem;
+    font-weight: 500;
+    color: #64748b;
+    border-radius: 2px;
+}
+
+.preset-btn:hover {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.preset-btn svg {
+    font-size: 10px;
+}
+
+.chair-count-display {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-left: 6px;
+}
+
+/* Mobile Responsive adjustments for ClassroomPage */
+@media (max-width: 768px) {
+
+    /* Hide section title on mobile to save space */
+    .seating-header .section-title {
+        display: none;
+    }
+
+    /* Make seating chart section take more space */
+    .seating-chart-section {
+        padding: 10px;
+    }
+
+    /* Adjust seating header for mobile */
+    .seating-header {
+        margin-bottom: 10px;
+        padding: 0 5px;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Adjust seating controls layout for mobile */
+    .seating-controls {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        align-items: center;
+    }
+
+    /* Make zoom controls smaller on mobile */
+    .zoom-controls {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        padding: 3px 6px;
+        border-radius: 6px;
+        gap: 4px;
+    }
+
+    .zoom-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .zoom-btn.zoom-reset {
+        padding: 0 6px;
+        font-size: 10px;
+    }
+
+    .zoom-level {
+        font-size: 11px;
+        min-width: 30px;
+    }
+
+    /* Make chair arrangement controls smaller on mobile */
+    .chair-arrangement-controls {
+        gap: 2px;
+        padding: 0;
+    }
+
+    .preset-btn {
+        padding: 1px 3px;
+        font-size: 0.45rem;
+        gap: 1px;
+    }
+
+    .preset-btn svg {
+        font-size: 8px;
+    }
+
+    .chair-count-display {
+        font-size: 0.6rem;
+        margin-left: 4px;
+    }
+
+    .preset-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .preset-buttons {
+        justify-content: center;
+    }
+
+    .chair-count-display {
+        align-self: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .preset-btn {
+        min-width: 50px;
+        padding: 6px 8px;
+        font-size: 0.7rem;
+    }
+
+    .preset-btn svg {
+        font-size: 14px;
+    }
+
+    .chair-arrangement-controls {
+        padding: 8px 12px;
+    }
+}

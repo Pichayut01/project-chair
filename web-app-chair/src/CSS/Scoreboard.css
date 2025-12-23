@@ -1,0 +1,231 @@
+/* src/CSS/Scoreboard.css */
+
+.scoreboard-container {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin: 20px;
+}
+
+.scoreboard-container h1 {
+    text-align: left; /* Align title to the left */
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.table-responsive {
+    overflow-x: auto; /* Enable horizontal scrolling for the table */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+.scoreboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    /* Removed min-width: 600px; */
+}
+
+.scoreboard-table th, .scoreboard-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    /* Removed white-space: nowrap; */
+}
+
+.scoreboard-table th {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+}
+
+.scoreboard-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.scoreboard-table tr:hover {
+    background-color: #ddd;
+}
+
+.scoreboard-table td:first-child {
+    width: 10%;
+    text-align: center;
+    font-weight: bold;
+}
+
+.student-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between image and name */
+    white-space: nowrap; /* Keep name and image on one line */
+}
+
+.student-profile-pic {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #eee;
+}
+
+.score-cell {
+    cursor: pointer;
+}
+
+.score-input {
+    width: 100%; /* Make input fill the cell */
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.scoreboard-summary {
+    background-color: #e8f5e9; /* Light green background */
+    border: 1px solid #c8e6c9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    color: #2e7d32; /* Dark green text */
+}
+
+.scoreboard-summary h2 {
+    color: #1b5e20;
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.scoreboard-summary p {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.summary-card {
+    background-color: #dcedc8;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.summary-card h3 {
+    margin-top: 0;
+    color: #1b5e20;
+    font-size: 1em;
+}
+
+.summary-card p {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #2e7d32;
+}
+
+.bar-chart-container {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f0fdf4;
+    border-radius: 8px;
+    border: 1px solid #c8e6c9;
+}
+
+.bar-chart-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.bar-label {
+    flex-shrink: 0;
+    width: 120px; /* Adjust as needed for labels */
+    font-size: 0.9em;
+    color: #1b5e20;
+    font-weight: bold;
+    text-align: right;
+    padding-right: 10px;
+}
+
+.bar-wrapper {
+    flex-grow: 1;
+    background-color: #e0e0e0;
+    height: 20px;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.bar-fill {
+    background-color: #4CAF50;
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease-in-out;
+}
+
+.bar-value {
+    font-size: 0.8em;
+    color: #333;
+    padding-left: 5px;
+    white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .scoreboard-container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .scoreboard-table th, .scoreboard-table td {
+        padding: 8px 10px;
+        font-size: 0.9em;
+    }
+
+    .student-profile-pic {
+        width: 25px;
+        height: 25px;
+    }
+
+    /* .score-input width can remain 100% */
+
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bar-label {
+        width: 90px;
+    }
+}
+
+@media (max-width: 480px) {
+    .scoreboard-container {
+        margin: 5px;
+        padding: 10px;
+    }
+
+    .scoreboard-table th, .scoreboard-table td {
+        padding: 6px 8px;
+        font-size: 0.8em;
+    }
+
+    .student-profile-pic {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* .score-input width can remain 100% */
+
+    .bar-label {
+        width: 70px;
+    }
+}

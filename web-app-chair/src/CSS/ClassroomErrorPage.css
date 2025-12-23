@@ -1,0 +1,214 @@
+/* src/CSS/ClassroomErrorPage.css */
+
+.classroom-error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(80vh - 60px);
+  padding: 1rem;
+  background: #f8fafc;
+}
+
+.classroom-error-content {
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  background: #ffffff;
+  padding: 2rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-icon {
+  margin-bottom: 1.5rem;
+  color: #dc2626;
+  display: flex;
+  justify-content: center;
+}
+
+.error-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  margin-top: 0;
+}
+
+.error-description {
+  font-size: 1.1rem;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.error-details {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.error-details p {
+  margin: 0 0 0.75rem 0;
+  font-weight: 600;
+  color: #991b1b;
+}
+
+.error-details ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #7f1d1d;
+}
+
+.error-details li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.error-details li:last-child {
+  margin-bottom: 0;
+}
+
+.error-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.error-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.error-btn-primary {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.error-btn-primary:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.error-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.error-btn-secondary:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.error-help {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 1rem;
+  color: #0c4a6e;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.error-help p {
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .classroom-error-container {
+    padding: 1rem;
+  }
+  
+  .classroom-error-content {
+    padding: 1.5rem 1rem;
+    margin: 0;
+    max-width: 90vw;
+  }
+  
+  .error-title {
+    font-size: 1.75rem;
+  }
+  
+  .error-description {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .error-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .error-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .error-details {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .classroom-error-container {
+    padding: 0.5rem;
+  }
+  
+  .classroom-error-content {
+    padding: 1.25rem 0.75rem;
+    border-radius: 8px;
+    max-width: 95vw;
+  }
+  
+  .error-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .error-description {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  
+  .error-details {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .error-help {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+}

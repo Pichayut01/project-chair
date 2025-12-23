@@ -1,0 +1,24 @@
+/* src/CSS/Layout.css */
+
+.layout-container {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.layout-main {
+  margin-left: 0;
+  margin-top: 60px; /* Height of navbar */
+  height: calc(100vh - 60px);
+  transition: margin-left 0.3s ease;
+  overflow: hidden;
+}
+
+.layout-main.shift {
+  margin-left: 250px; /* Width of sidebar when open */
+}
+
+@media (max-width: 768px) {
+  .layout-main.shift {
+    margin-left: 0;
+  }
+}

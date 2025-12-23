@@ -1,0 +1,152 @@
+/* src/CSS/ClassDetailPage.css */
+
+.class-detail-header {
+    background: linear-gradient(135deg, var(--green-primary, #7ec282) 0%, var(--green-secondary, #6ba86f) 100%);
+    color: white;
+    padding: 2rem 2rem 1.5rem 2rem;
+    margin-bottom: 2rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.class-detail-header-content h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.class-detail-header-content p {
+    margin: 0;
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.class-detail-container {
+    padding: 0 1rem;
+    width: 100%;
+    margin: 0;
+}
+
+.class-detail-content {
+    background: var(--bg-primary, #ffffff);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-primary, #e0e0e0);
+    transition: all 0.3s ease;
+}
+
+.class-detail-content h2 {
+    color: var(--text-primary, #333333);
+    margin: 0 0 1rem 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--green-primary, #7ec282);
+    padding-bottom: 0.5rem;
+}
+
+.class-detail-content p {
+    color: var(--text-secondary, #666666);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.content-placeholder {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.placeholder-card {
+    background: var(--bg-secondary, #f8f9fa);
+    border: 1px solid var(--border-secondary, #e9ecef);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.placeholder-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--green-primary, #7ec282);
+}
+
+.placeholder-card h3 {
+    color: var(--text-primary, #333333);
+    margin: 0 0 1rem 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.placeholder-card p {
+    color: var(--text-secondary, #666666);
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.loading, .error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    font-size: 1.2rem;
+    color: var(--text-secondary, #666666);
+}
+
+.error {
+    color: #e74c3c;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .class-detail-header {
+    background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-secondary) 100%);
+}
+
+[data-theme="dark"] .placeholder-card {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .placeholder-card:hover {
+    border-color: var(--green-primary);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .class-detail-header {
+        padding: 1.5rem 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .class-detail-header-content h1 {
+        font-size: 1.6rem;
+    }
+    
+    .class-detail-header-content p {
+        font-size: 1rem;
+    }
+    
+    .class-detail-container {
+        padding: 0 1rem;
+    }
+    
+    .class-detail-content {
+        padding: 1.5rem;
+    }
+    
+    .class-detail-content h2 {
+        font-size: 1.5rem;
+    }
+    
+    .content-placeholder {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .placeholder-card {
+        padding: 1rem;
+    }
+}

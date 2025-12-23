@@ -1,0 +1,194 @@
+/* src/CSS/AppSettings.css */
+
+.app-settings-page {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+.main-content {
+    margin-top: 60px;
+    transition: margin-left 0.3s ease;
+    min-height: calc(100vh - 60px);
+}
+
+.main-content.sidebar-open {
+    margin-left: 250px;
+}
+
+.app-settings-content {
+    padding: 32px;
+    background: white;
+    min-height: calc(100vh - 60px);
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+.settings-content h2 {
+    margin: 0 0 24px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #7ec282;
+    padding-bottom: 8px;
+}
+
+.settings-section {
+    margin-bottom: 32px;
+    padding: 24px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.settings-section h3 {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: #444;
+}
+
+.setting-item {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.setting-item label {
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.setting-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    color: #333;
+    min-width: 150px;
+    transition: border-color 0.2s ease;
+}
+
+.setting-select:focus {
+    outline: none;
+    border-color: #7ec282;
+    box-shadow: 0 0 0 2px rgba(126, 194, 130, 0.2);
+}
+
+.setting-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #7ec282;
+    cursor: pointer;
+}
+
+.setting-button {
+    padding: 10px 20px;
+    background: #7ec282;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+}
+
+.setting-button:hover {
+    background: #6bb36f;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.setting-button.secondary {
+    background: #6c757d;
+}
+
+.setting-button.secondary:hover {
+    background: #5a6268;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .app-settings-container {
+        flex-direction: column;
+        margin-left: 0;
+    }
+    
+    .app-settings-container.sidebar-open {
+        margin-left: 0;
+    }
+    
+    .app-settings-sidebar {
+        width: 100%;
+        position: relative;
+        height: auto;
+        top: 0;
+    }
+    
+    .app-settings-main {
+        margin-left: 0;
+        padding: 16px;
+    }
+    
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .setting-select {
+        width: 100%;
+    }
+}
+
+/* Loading State */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-size: 18px;
+    color: #666;
+}
+
+/* Animation for smooth transitions */
+.settings-content {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Custom scrollbar for sidebar */
+.app-settings-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.app-settings-sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.app-settings-sidebar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.app-settings-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

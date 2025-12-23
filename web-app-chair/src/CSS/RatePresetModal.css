@@ -1,0 +1,336 @@
+/* src/CSS/RatePresetModal.css */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+}
+
+.rate-preset-modal {
+    background: var(--bg-primary, #ffffff);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-primary, #e0e0e0);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-secondary, #e9ecef);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-primary, #333333);
+    font-weight: 600;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    color: var(--text-secondary, #666666);
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background: var(--bg-secondary, #f8f9fa);
+    color: var(--text-primary, #333333);
+}
+
+.modal-form {
+    padding: 2rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary, #333333);
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-secondary, #e9ecef);
+    border-radius: 6px;
+    font-size: 1rem;
+    background: var(--bg-primary, #ffffff);
+    color: var(--text-primary, #333333);
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--green-primary, #7ec282);
+    box-shadow: 0 0 0 2px rgba(126, 194, 130, 0.2);
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.emoji-option {
+    background: var(--bg-secondary, #f8f9fa);
+    border: 2px solid var(--border-secondary, #e9ecef);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emoji-option:hover {
+    border-color: var(--green-primary, #7ec282);
+    transform: scale(1.05);
+}
+
+.emoji-option.selected {
+    border-color: var(--green-primary, #7ec282);
+    background: rgba(126, 194, 130, 0.1);
+}
+
+.radio-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.radio-option input[type="radio"] {
+    margin-right: 0.5rem;
+    width: auto;
+}
+
+.radio-label {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.radio-label.positive {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.radio-label.negative {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    gap: 0.75rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin: 0;
+    width: auto;
+    margin-top: 0.25rem;
+}
+
+.checkbox-label span {
+    font-weight: 500;
+    color: var(--text-primary, #333333);
+}
+
+.checkbox-label small {
+    display: block;
+    color: var(--text-secondary, #666666);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+.score-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.score-type {
+    flex: 1;
+}
+
+.score-value {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.score-value input {
+    flex: 1;
+}
+
+.score-value span {
+    color: var(--text-secondary, #666666);
+    font-size: 0.9rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-secondary, #e9ecef);
+}
+
+.cancel-btn,
+.save-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-size: 1rem;
+}
+
+.cancel-btn {
+    background: var(--bg-secondary, #f8f9fa);
+    color: var(--text-secondary, #666666);
+    border: 1px solid var(--border-secondary, #e9ecef);
+}
+
+.cancel-btn:hover {
+    background: var(--border-secondary, #e9ecef);
+}
+
+.save-btn {
+    background: var(--green-primary, #7ec282);
+    color: white;
+}
+
+.save-btn:hover {
+    background: var(--green-secondary, #6ba86f);
+}
+
+/* Dark theme support */
+[data-theme="dark"] .rate-preset-modal {
+    background: var(--bg-primary);
+    border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .modal-header {
+    border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .close-btn:hover {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select {
+    background: var(--bg-primary);
+    border-color: var(--border-secondary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .emoji-option {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .cancel-btn {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .cancel-btn:hover {
+    background: var(--border-secondary);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: 0.5rem;
+    }
+    
+    .rate-preset-modal {
+        max-height: 95vh;
+    }
+    
+    .modal-header {
+        padding: 1rem 1.5rem;
+    }
+    
+    .modal-header h2 {
+        font-size: 1.3rem;
+    }
+    
+    .modal-form {
+        padding: 1.5rem;
+    }
+    
+    .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    
+    .radio-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .score-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .cancel-btn,
+    .save-btn {
+        width: 100%;
+    }
+}
