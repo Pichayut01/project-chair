@@ -3,29 +3,20 @@ echo Starting Chair App servers...
 
 REM Start the React frontend in a separate window
 echo Starting React frontend on port 3000...
-start "React Frontend" cmd /k "cd /d web-app-chair && npm start"
+start "React Frontend" cmd /k "cd /d Client && npm start"
 
 REM Wait a moment for the frontend to start
 timeout /t 2 /nobreak >nul
 
-echo Starting backend servers in this window...
-echo Main Backend: http://localhost:5000
-echo Presets Backend: http://localhost:5001
-echo React Frontend: http://localhost:3000
+echo Starting backend server in this window...
+echo Server: http://localhost:5000
+echo Client: http://localhost:3000
 echo.
 
 REM Start the main backend server in background
-echo Starting main backend server on port 5000...
-cd /d chairbackend
-start /b npm run dev
-
-REM Wait a moment for the first server to start
-timeout /t 3 /nobreak >nul
-
-REM Start the presets backend server in background
-echo Starting presets backend server on port 5001...
-cd /d ../presets-backend
-start /b npm run dev
+echo Starting backend server on port 5000...
+cd /d Server
+start /b npm start
 
 echo.
 echo All servers are starting...

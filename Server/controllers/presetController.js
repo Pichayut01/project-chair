@@ -1,22 +1,13 @@
-// presets-backend/routes/presets.js
-
-const express = require('express');
-const router = express.Router();
 const RatingPreset = require('../models/RatingPreset');
-const authMiddleware = require('../middleware/auth');
 
-// @route   GET /api/presets
-// @desc    Get all presets for a user in a specific classroom
-// @access  Private
-router.get('/', authMiddleware, async (req, res) => {
+exports.getAllPresets = async (req, res) => {
     try {
         const { classroomId, includePublic } = req.query;
         const userId = req.user._id;
 
         let query = {};
-        
+
         if (classroomId) {
-            // Get presets for specific classroom
             if (includePublic === 'true') {
                 query = {
                     classroomId,
@@ -29,7 +20,6 @@ router.get('/', authMiddleware, async (req, res) => {
                 query = { classroomId, creator: userId };
             }
         } else {
-            // Get all user's presets across all classrooms
             query = { creator: userId };
         }
 
@@ -51,12 +41,9 @@ router.get('/', authMiddleware, async (req, res) => {
             error: error.message
         });
     }
-});
+};
 
-// @route   GET /api/presets/:id
-// @desc    Get a specific preset by ID
-// @access  Private
-router.get('/:id', authMiddleware, async (req, res) => {
+exports.getPresetById = async (req, res) => {
     try {
         const preset = await RatingPreset.findById(req.params.id)
             .populate('creator', 'displayName email photoURL')
@@ -69,7 +56,6 @@ router.get('/:id', authMiddleware, async (req, res) => {
             });
         }
 
-        // Check if user has access to this preset
         const userId = req.user._id;
         if (!preset.isPublic && !preset.creator._id.equals(userId)) {
             return res.status(403).json({
@@ -90,12 +76,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
             error: error.message
         });
     }
-});
+};
 
-// @route   POST /api/presets
-// @desc    Create a new rating preset
-// @access  Private
-router.post('/', authMiddleware, async (req, res) => {
+exports.createPreset = async (req, res) => {
     try {
         const {
             name,
@@ -112,7 +95,6 @@ router.post('/', authMiddleware, async (req, res) => {
             notifyStudent
         } = req.body;
 
-        // Validation
         if (!name || !classroomId || !criteria || criteria.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -120,7 +102,6 @@ router.post('/', authMiddleware, async (req, res) => {
             });
         }
 
-        // Validate criteria
         for (let criterion of criteria) {
             if (!criterion.name || !criterion.maxScore) {
                 return res.status(400).json({
@@ -148,8 +129,7 @@ router.post('/', authMiddleware, async (req, res) => {
         });
 
         const savedPreset = await newPreset.save();
-        
-        // Populate the saved preset
+
         const populatedPreset = await RatingPreset.findById(savedPreset._id)
             .populate('creator', 'displayName email photoURL')
             .populate('classroomId', 'name');
@@ -167,12 +147,9 @@ router.post('/', authMiddleware, async (req, res) => {
             error: error.message
         });
     }
-});
+};
 
-// @route   PUT /api/presets/:id
-// @desc    Update a rating preset
-// @access  Private
-router.put('/:id', authMiddleware, async (req, res) => {
+exports.updatePreset = async (req, res) => {
     try {
         const preset = await RatingPreset.findById(req.params.id);
 
@@ -183,7 +160,6 @@ router.put('/:id', authMiddleware, async (req, res) => {
             });
         }
 
-        // Check if user is the creator
         if (!preset.creator.equals(req.user._id)) {
             return res.status(403).json({
                 success: false,
@@ -205,7 +181,6 @@ router.put('/:id', authMiddleware, async (req, res) => {
             notifyStudent
         } = req.body;
 
-        // Update fields
         if (name) preset.name = name;
         if (description !== undefined) preset.description = description;
         if (criteria) preset.criteria = criteria;
@@ -219,8 +194,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
         if (notifyStudent !== undefined) preset.notifyStudent = notifyStudent;
 
         const updatedPreset = await preset.save();
-        
-        // Populate the updated preset
+
         const populatedPreset = await RatingPreset.findById(updatedPreset._id)
             .populate('creator', 'displayName email photoURL')
             .populate('classroomId', 'name');
@@ -238,12 +212,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
             error: error.message
         });
     }
-});
+};
 
-// @route   DELETE /api/presets/:id
-// @desc    Delete a rating preset
-// @access  Private
-router.delete('/:id', authMiddleware, async (req, res) => {
+exports.deletePreset = async (req, res) => {
     try {
         const preset = await RatingPreset.findById(req.params.id);
 
@@ -254,7 +225,6 @@ router.delete('/:id', authMiddleware, async (req, res) => {
             });
         }
 
-        // Check if user is the creator
         if (!preset.creator.equals(req.user._id)) {
             return res.status(403).json({
                 success: false,
@@ -276,12 +246,9 @@ router.delete('/:id', authMiddleware, async (req, res) => {
             error: error.message
         });
     }
-});
+};
 
-// @route   POST /api/presets/:id/use
-// @desc    Mark a preset as used (increment usage count)
-// @access  Private
-router.post('/:id/use', authMiddleware, async (req, res) => {
+exports.usePreset = async (req, res) => {
     try {
         const preset = await RatingPreset.findById(req.params.id);
 
@@ -292,7 +259,6 @@ router.post('/:id/use', authMiddleware, async (req, res) => {
             });
         }
 
-        // Check if user has access to this preset
         const userId = req.user._id;
         if (!preset.isPublic && !preset.creator.equals(userId)) {
             return res.status(403).json({
@@ -301,7 +267,6 @@ router.post('/:id/use', authMiddleware, async (req, res) => {
             });
         }
 
-        // Update usage statistics
         preset.usageCount += 1;
         preset.lastUsed = new Date();
         await preset.save();
@@ -322,20 +287,17 @@ router.post('/:id/use', authMiddleware, async (req, res) => {
             error: error.message
         });
     }
-});
+};
 
-// @route   GET /api/presets/templates/public
-// @desc    Get public template presets
-// @access  Private
-router.get('/templates/public', authMiddleware, async (req, res) => {
+exports.getPublicTemplates = async (req, res) => {
     try {
         const templates = await RatingPreset.find({
             isTemplate: true,
             isPublic: true
         })
-        .populate('creator', 'displayName email photoURL')
-        .sort({ usageCount: -1, createdAt: -1 })
-        .limit(20);
+            .populate('creator', 'displayName email photoURL')
+            .sort({ usageCount: -1, createdAt: -1 })
+            .limit(20);
 
         res.json({
             success: true,
@@ -350,12 +312,9 @@ router.get('/templates/public', authMiddleware, async (req, res) => {
             error: error.message
         });
     }
-});
+};
 
-// @route   POST /api/presets/:id/duplicate
-// @desc    Duplicate a preset to user's collection
-// @access  Private
-router.post('/:id/duplicate', authMiddleware, async (req, res) => {
+exports.duplicatePreset = async (req, res) => {
     try {
         const originalPreset = await RatingPreset.findById(req.params.id);
 
@@ -366,7 +325,6 @@ router.post('/:id/duplicate', authMiddleware, async (req, res) => {
             });
         }
 
-        // Check if user has access to this preset
         const userId = req.user._id;
         if (!originalPreset.isPublic && !originalPreset.creator.equals(userId)) {
             return res.status(403).json({
@@ -384,7 +342,6 @@ router.post('/:id/duplicate', authMiddleware, async (req, res) => {
             });
         }
 
-        // Create duplicate preset
         const duplicatedPreset = new RatingPreset({
             name: name || `${originalPreset.name} (Copy)`,
             description: originalPreset.description,
@@ -392,14 +349,13 @@ router.post('/:id/duplicate', authMiddleware, async (req, res) => {
             creatorName: req.user.displayName || req.user.email,
             classroomId,
             criteria: originalPreset.criteria,
-            isPublic: false, // Duplicated presets are private by default
+            isPublic: false,
             isTemplate: false,
             tags: originalPreset.tags
         });
 
         const savedPreset = await duplicatedPreset.save();
-        
-        // Populate the saved preset
+
         const populatedPreset = await RatingPreset.findById(savedPreset._id)
             .populate('creator', 'displayName email photoURL')
             .populate('classroomId', 'name');
@@ -417,6 +373,4 @@ router.post('/:id/duplicate', authMiddleware, async (req, res) => {
             error: error.message
         });
     }
-});
-
-module.exports = router;
+};

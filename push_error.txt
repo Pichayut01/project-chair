@@ -1,0 +1,26 @@
+remote: error: GH013: Repository rule violations found for refs/heads/main.        
+remote: 
+remote: - GITHUB PUSH PROTECTION        
+remote:   G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현G현        
+remote:     Resolve the following violations before pushing again        
+remote: 
+remote:     - Push cannot contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn how to resolve a blocked push        
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push        
+remote:             
+remote:             
+remote:       G현G현 Google Cloud Service Account Credentials G현G현G현G현G현G현G현G현G현G현        
+remote:        locations:        
+remote:          - commit: 97cd1847218cc3207efd9733aac7ba87da407ae8        
+remote:            path: chairbackend/chair-f440c-firebase-adminsdk-fbsvc-92d591e38e.json:1        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/Pichayut01/project-chair/security/secret-scanning/unblock-secret/37Emf65XGnZUkLOVQTb4GAUQOEU        
+remote:             
+remote: 
+remote: 
+To https://github.com/Pichayut01/project-chair
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/Pichayut01/project-chair'
