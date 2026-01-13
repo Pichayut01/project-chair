@@ -13,7 +13,7 @@ import '../CSS/ClassroomPage.css';
 import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
 import Chair from '../component/Chair';
 import ChairPresets from '../component/ChairPresets';
-import { FaPalette, FaUsers, FaEllipsisH, FaSave, FaChair, FaTh, FaRandom, FaBars, FaThLarge } from 'react-icons/fa';
+import { FaPalette, FaUsers, FaEllipsisH, FaSave, FaChair, FaTh, FaRandom, FaBars, FaThLarge, FaArrowUp, FaArrowDown, FaUserSlash, FaCopy, FaCheck, FaCrown, FaUserGraduate } from 'react-icons/fa';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
@@ -24,7 +24,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
     const [loading, setLoading] = useState(true);
     const [activeSection, setActiveSection] = useState('theme');
     const [isEditing, setIsEditing] = useState(false);
-    
+
     // Theme settings
     const [themeData, setThemeData] = useState({
         name: '',
@@ -67,7 +67,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
             });
             const data = response.data;
             setClassroom(data);
-            
+
             // Set theme data
             setThemeData({
                 name: data.name || '',
@@ -75,7 +75,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 color: data.color || '#4CAF50',
                 bannerUrl: data.bannerUrl || ''
             });
-            
+
             // Set banner preview if exists
             if (data.bannerUrl) {
                 setBannerPreview(`${API_BASE_URL}${data.bannerUrl}`);
@@ -222,10 +222,10 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
 
     const handleApplyPreset = async (presetType) => {
         if (!containerRef.current) return;
-        
+
         const containerRect = containerRef.current.getBoundingClientRect();
         const chairCount = Object.keys(currentChairPositions).length;
-        
+
         if (chairCount === 0) {
             Swal.fire('No Chairs', 'Please add some chairs first before applying presets.', 'info');
             return;
@@ -244,16 +244,16 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
 
         if (result.isConfirmed) {
             const newPositions = ChairPresets.generatePreset(
-                presetType, 
-                chairCount, 
-                containerRect.width || 800, 
+                presetType,
+                chairCount,
+                containerRect.width || 800,
                 containerRect.height || 600
             );
-            
+
             // Map existing chair IDs to new positions
             const chairIds = Object.keys(currentChairPositions);
             const updatedPositions = {};
-            
+
             chairIds.forEach((chairId, index) => {
                 const presetKey = `chair-${index + 1}`;
                 if (newPositions[presetKey]) {
@@ -262,7 +262,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                     updatedPositions[chairId] = currentChairPositions[chairId];
                 }
             });
-            
+
             setCurrentChairPositions(updatedPositions);
             Swal.fire('Success', `${presetType.charAt(0).toUpperCase() + presetType.slice(1)} layout applied!`, 'success');
         }
@@ -276,15 +276,15 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 Swal.fire('Error', 'Please select an image file.', 'error');
                 return;
             }
-            
+
             // Check file size (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
                 Swal.fire('Error', 'Image size must be less than 5MB.', 'error');
                 return;
             }
-            
+
             setBannerFile(file);
-            
+
             // Create preview
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -297,41 +297,35 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
     const handleRemoveBanner = () => {
         setBannerFile(null);
         setBannerPreview('');
-        setThemeData({...themeData, bannerUrl: ''});
+        setThemeData({ ...themeData, bannerUrl: '' });
     };
 
     const handleSaveTheme = async () => {
         try {
-            let updatedThemeData = { ...themeData };
-            
-            // If there's a new banner file, upload it first
-            if (bannerFile) {
-                const formData = new FormData();
-                formData.append('banner', bannerFile);
-                
-                const uploadResponse = await axios.post(`${API_BASE_URL}/api/classrooms/${classId}/banner`, formData, {
-                    headers: { 
-                        'x-auth-token': user.token,
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-                
-                updatedThemeData.bannerUrl = uploadResponse.data.bannerUrl;
-            setBannerPreview(`${API_BASE_URL}${uploadResponse.data.bannerUrl}`);
-            }
-            
+            const updatedThemeData = {
+                name: themeData.name,
+                subname: themeData.subname,
+                color: themeData.color,
+                bannerUrl: themeData.bannerUrl || ''
+            };
+
             await axios.put(`${API_BASE_URL}/api/classrooms/${classId}/theme`, updatedThemeData, {
                 headers: { 'x-auth-token': user.token }
             });
-            
+
             setClassroom(prev => ({ ...prev, ...updatedThemeData }));
             setThemeData(updatedThemeData);
-            setBannerFile(null);
             setIsEditing(false);
-            Swal.fire('Saved!', 'Theme settings updated successfully.', 'success');
+            Swal.fire({
+                icon: 'success',
+                title: 'Saved!',
+                text: 'Theme settings updated successfully.',
+                timer: 1500,
+                showConfirmButton: false
+            });
         } catch (error) {
             console.error('Failed to save theme:', error);
-            Swal.fire('Error', 'Failed to save theme settings.', 'error');
+            Swal.fire('Error', error.response?.data?.msg || 'Failed to save theme settings.', 'error');
         }
     };
 
@@ -360,17 +354,17 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
         const positions = isSeatingEditing ? currentChairPositions : seatingPositions;
         const chairList = Object.values(positions);
         const chairCount = chairList.length;
-        
+
         // Base minimum size calculations
         const sidebarWidth = isSidebarOpen ? 250 : 0;
         const navbarHeight = 120;
         const baseMinWidth = (window.innerWidth - sidebarWidth - 40) * 0.8;
         const baseMinHeight = (window.innerHeight - navbarHeight) * 0.8;
-        
+
         if (chairCount === 0) {
-            return { 
-                width: Math.round(baseMinWidth) + 'px', 
-                height: Math.round(baseMinHeight) + 'px' 
+            return {
+                width: Math.round(baseMinWidth) + 'px',
+                height: Math.round(baseMinHeight) + 'px'
             };
         }
 
@@ -379,19 +373,19 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
         const chairRadius = chairSize / 2;
         const nameHeight = 20;
         const basePadding = 50; // Reduced from 80
-        
+
         // Dynamic padding and spacing based on chair count - more conservative
         const scaleFactor = Math.max(1, Math.sqrt(chairCount / 30)); // Changed from 15 to 30
         const dynamicPadding = basePadding * scaleFactor;
         const minSpacing = 80 * scaleFactor; // Reduced from 100
-        
+
         // Calculate bounds from chair positions
         const bounds = chairList.reduce((acc, pos) => {
             const left = pos.x - chairRadius;
             const right = pos.x + chairRadius;
             const top = pos.y - chairRadius;
             const bottom = pos.y + chairRadius + nameHeight;
-            
+
             return {
                 minX: Math.min(acc.minX, left),
                 maxX: Math.max(acc.maxX, right),
@@ -404,23 +398,23 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
             minY: Infinity,
             maxY: -Infinity
         });
-        
+
         // Calculate content size with enhanced scaling
         const contentFromBounds = {
             width: bounds.maxX - bounds.minX + (2 * dynamicPadding),
             height: bounds.maxY - bounds.minY + (2 * dynamicPadding)
         };
-        
+
         // Calculate optimal size based on chair count and arrangement - more compact
         const estimatedCols = Math.ceil(Math.sqrt(chairCount * 1.2)); // Reduced from 1.4
         const estimatedRows = Math.ceil(chairCount / estimatedCols);
         const optimalWidth = estimatedCols * minSpacing + (2 * dynamicPadding);
         const optimalHeight = estimatedRows * minSpacing + (2 * dynamicPadding);
-        
+
         // Use the larger of calculated sizes to ensure proper spacing
         const finalWidth = Math.max(baseMinWidth, contentFromBounds.width, optimalWidth);
         const finalHeight = Math.max(baseMinHeight, contentFromBounds.height, optimalHeight);
-        
+
         return {
             width: Math.round(finalWidth) + 'px',
             height: Math.round(finalHeight) + 'px'
@@ -442,81 +436,60 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 <FaPalette className="section-icon" />
                 Theme Settings
             </h2>
-            
-            <div className="form-group">
-                <label>Classroom Name</label>
-                <input
-                    type="text"
-                    value={themeData.name}
-                    onChange={(e) => setThemeData({...themeData, name: e.target.value})}
-                    disabled={!isEditing}
-                />
-            </div>
 
-            <div className="form-group">
-                <label>Description</label>
-                <input
-                    type="text"
-                    value={themeData.subname}
-                    onChange={(e) => setThemeData({...themeData, subname: e.target.value})}
-                    disabled={!isEditing}
-                />
-            </div>
-
-            <div className="form-group">
-                <label>Theme Color</label>
-                <input
-                    type="color"
-                    value={themeData.color}
-                    onChange={(e) => setThemeData({...themeData, color: e.target.value})}
-                    disabled={!isEditing}
-                />
-            </div>
-
-            <div className="form-group">
-                <label>Banner Image</label>
-                {isEditing ? (
-                    <div className="banner-upload-section">
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleBannerFileChange}
-                            className="file-input"
-                            id="banner-upload"
-                        />
-                        <label htmlFor="banner-upload" className="file-upload-btn">
-                            Choose Banner Image
-                        </label>
-                        <span className="file-info">Max size: 5MB. Supported: JPG, PNG, GIF</span>
-                        
-                        {bannerPreview && (
-                            <div className="banner-actions">
-                                <button 
-                                    type="button" 
-                                    className="remove-banner-btn"
-                                    onClick={handleRemoveBanner}
-                                >
-                                    Remove Banner
-                                </button>
-                            </div>
-                        )}
+            <div className="theme-settings-container">
+                {/* Classroom Name */}
+                <div className="setting-item">
+                    <div className="setting-header">
+                        <span className="setting-title">Classroom Name</span>
                     </div>
-                ) : (
-                    <div className="banner-display">
-                        {bannerPreview ? (
-                            <span className="current-banner-text">Banner image uploaded</span>
-                        ) : (
-                            <span className="no-banner-text">No banner image</span>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {bannerPreview && (
-                <div className="banner-preview">
-                    <img src={bannerPreview} alt="Banner Preview" />
+                    <p className="setting-description">The display name for your classroom.</p>
+                    <input
+                        type="text"
+                        value={themeData.name}
+                        onChange={(e) => setThemeData({ ...themeData, name: e.target.value })}
+                        disabled={!isEditing}
+                        placeholder="Enter classroom name"
+                        className="theme-input"
+                    />
                 </div>
-            )}
+
+                {/* Description */}
+                <div className="setting-item">
+                    <div className="setting-header">
+                        <span className="setting-title">Description</span>
+                    </div>
+                    <p className="setting-description">A brief description of your classroom (e.g., subject, section).</p>
+                    <input
+                        type="text"
+                        value={themeData.subname}
+                        onChange={(e) => setThemeData({ ...themeData, subname: e.target.value })}
+                        disabled={!isEditing}
+                        placeholder="Enter description"
+                        className="theme-input"
+                    />
+                </div>
+
+                {/* Theme Color */}
+                <div className="setting-item">
+                    <div className="setting-header">
+                        <span className="setting-title">Theme Color</span>
+                    </div>
+                    <p className="setting-description">Choose a color to personalize your classroom.</p>
+                    <div className="color-picker-container">
+                        <input
+                            type="color"
+                            value={themeData.color}
+                            onChange={(e) => setThemeData({ ...themeData, color: e.target.value })}
+                            disabled={!isEditing}
+                            className="color-input"
+                        />
+                        <div className="color-preview" style={{ backgroundColor: themeData.color }}>
+                            <span className="color-code">{themeData.color}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 
@@ -528,19 +501,31 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
             </h2>
 
             <div className="role-section">
-                <h3>Creators ({classroomMembers.creator.length})</h3>
+                <h3>
+                    <FaCrown style={{ color: '#4CAF50' }} />
+                    Creators
+                    <span className="role-count">{classroomMembers.creator.length}</span>
+                </h3>
                 <div className="members-list">
                     {classroomMembers.creator.map(creator => (
                         <div key={creator._id} className="member-card creator">
                             <img src={getProfileImageSrc(creator.photoURL, isGoogleUser(creator))} alt={creator.displayName} onError={handleImageError} />
-                            <span>{creator.displayName}</span>
+                            <div className="member-info">
+                                <span className="member-name">{creator.displayName}</span>
+                                {creator.email && <span className="member-email">{creator.email}</span>}
+                                <span className="role-badge creator-badge">
+                                    <FaCrown size={10} /> Creator
+                                </span>
+                            </div>
                             {isEditing && user.id !== creator._id && (
-                                <button 
-                                    className="action-btn demote-btn"
-                                    onClick={() => handleDemoteMember(creator._id, creator.displayName)}
-                                >
-                                    Demote
-                                </button>
+                                <div className="member-actions">
+                                    <button
+                                        className="action-btn demote-btn"
+                                        onClick={() => handleDemoteMember(creator._id, creator.displayName)}
+                                    >
+                                        <FaArrowDown /> Demote
+                                    </button>
+                                </div>
                             )}
                         </div>
                     ))}
@@ -548,30 +533,46 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
             </div>
 
             <div className="role-section">
-                <h3>Participants ({classroomMembers.participants.length})</h3>
+                <h3>
+                    <FaUserGraduate style={{ color: '#2196F3' }} />
+                    Participants
+                    <span className="role-count">{classroomMembers.participants.length}</span>
+                </h3>
                 <div className="members-list">
-                    {classroomMembers.participants.map(participant => (
-                        <div key={participant._id} className="member-card participant">
-                            <img src={getProfileImageSrc(participant.photoURL, isGoogleUser(participant))} alt={participant.displayName} onError={handleImageError} />
-                            <span>{participant.displayName}</span>
-                            {isEditing && (
-                                <>
-                                    <button 
-                                        className="action-btn promote-btn"
-                                        onClick={() => handlePromoteMember(participant._id, participant.displayName)}
-                                    >
-                                        Promote
-                                    </button>
-                                    <button 
-                                        className="action-btn kick-btn"
-                                        onClick={() => handleKickMember(participant._id, participant.displayName)}
-                                    >
-                                        Kick
-                                    </button>
-                                </>
-                            )}
+                    {classroomMembers.participants.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#888', fontStyle: 'italic' }}>
+                            No participants yet
                         </div>
-                    ))}
+                    ) : (
+                        classroomMembers.participants.map(participant => (
+                            <div key={participant._id} className="member-card participant">
+                                <img src={getProfileImageSrc(participant.photoURL, isGoogleUser(participant))} alt={participant.displayName} onError={handleImageError} />
+                                <div className="member-info">
+                                    <span className="member-name">{participant.displayName}</span>
+                                    {participant.email && <span className="member-email">{participant.email}</span>}
+                                    <span className="role-badge participant-badge">
+                                        <FaUserGraduate size={10} /> Student
+                                    </span>
+                                </div>
+                                {isEditing && (
+                                    <div className="member-actions">
+                                        <button
+                                            className="action-btn promote-btn"
+                                            onClick={() => handlePromoteMember(participant._id, participant.displayName)}
+                                        >
+                                            <FaArrowUp /> Promote
+                                        </button>
+                                        <button
+                                            className="action-btn kick-btn"
+                                            onClick={() => handleKickMember(participant._id, participant.displayName)}
+                                        >
+                                            <FaUserSlash /> Kick
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>
@@ -584,57 +585,85 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 Other Settings
             </h2>
 
-            <div className="form-group">
-                <label>Class Code</label>
-                <div className="class-code-display">
-                    <input
-                        type="text"
-                        value={otherSettings.classCode}
-                        readOnly
-                        className="readonly-input"
-                    />
-                    <button 
-                        className="copy-btn"
-                        onClick={() => {
-                            navigator.clipboard.writeText(otherSettings.classCode);
-                            Swal.fire('Copied!', 'Class code copied to clipboard.', 'success');
-                        }}
-                    >
-                        Copy
-                    </button>
+            <div className="other-settings-section">
+                {/* Class Code */}
+                <div className="setting-item">
+                    <div className="setting-header">
+                        <span className="setting-title">Class Code</span>
+                    </div>
+                    <p className="setting-description">Share this code with students so they can join your classroom.</p>
+                    <div className="class-code-display" style={{ marginTop: '12px' }}>
+                        <input
+                            type="text"
+                            value={otherSettings.classCode}
+                            readOnly
+                            className="readonly-input"
+                        />
+                        <button
+                            className="copy-btn"
+                            onClick={() => {
+                                navigator.clipboard.writeText(otherSettings.classCode);
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Copied!',
+                                    text: 'Class code copied to clipboard.',
+                                    timer: 1500,
+                                    showConfirmButton: false,
+                                    toast: true,
+                                    position: 'top-end'
+                                });
+                            }}
+                        >
+                            <FaCopy /> Copy
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div className="form-group">
-                <label className="checkbox-label">
-                    <input
-                        type="checkbox"
-                        checked={otherSettings.isPublic}
-                        onChange={(e) => setOtherSettings({...otherSettings, isPublic: e.target.checked})}
-                        disabled={!isEditing}
-                    />
-                    <span>Make classroom public</span>
-                </label>
-            </div>
+                {/* Public Setting */}
+                <div className="setting-item">
+                    <div className="setting-header">
+                        <div>
+                            <span className="setting-title">Public Classroom</span>
+                            <p className="setting-description">Allow anyone to view this classroom without joining.</p>
+                        </div>
+                        <label className="toggle-switch">
+                            <input
+                                type="checkbox"
+                                checked={otherSettings.isPublic}
+                                onChange={(e) => setOtherSettings({ ...otherSettings, isPublic: e.target.checked })}
+                                disabled={!isEditing}
+                            />
+                            <span className="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
 
-            <div className="form-group">
-                <label className="checkbox-label">
-                    <input
-                        type="checkbox"
-                        checked={otherSettings.allowSelfJoin}
-                        onChange={(e) => setOtherSettings({...otherSettings, allowSelfJoin: e.target.checked})}
-                        disabled={!isEditing}
-                    />
-                    <span>Allow students to join with class code</span>
-                </label>
-            </div>
+                {/* Self Join Setting */}
+                <div className="setting-item">
+                    <div className="setting-header">
+                        <div>
+                            <span className="setting-title">Allow Self Join</span>
+                            <p className="setting-description">Students can join using the class code without approval.</p>
+                        </div>
+                        <label className="toggle-switch">
+                            <input
+                                type="checkbox"
+                                checked={otherSettings.allowSelfJoin}
+                                onChange={(e) => setOtherSettings({ ...otherSettings, allowSelfJoin: e.target.checked })}
+                                disabled={!isEditing}
+                            />
+                            <span className="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
 
-            {isEditing && (
-                <button className="save-settings-btn" onClick={handleSaveSettings}>
-                    <FaSave />
-                    Save Settings
-                </button>
-            )}
+                {isEditing && (
+                    <button className="save-settings-btn" onClick={handleSaveSettings} style={{ marginTop: '20px' }}>
+                        <FaSave />
+                        Save Settings
+                    </button>
+                )}
+            </div>
         </div>
     );
 
@@ -661,8 +690,8 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                         backgroundColor: '#f8fafc',
                         padding: '10px'
                     }}>
-                        <div className="seating-grid" ref={containerRef} style={{ 
-                            position: 'relative', 
+                        <div className="seating-grid" ref={containerRef} style={{
+                            position: 'relative',
                             width: calculateContainerSize().width,
                             height: calculateContainerSize().height,
                             border: '1px solid #ccc',
@@ -731,7 +760,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 isSidebarOpen={isSidebarOpen}
                 toggleSidebar={toggleSidebar}
                 user={user}
-                onClassActionClick={() => {}}
+                onClassActionClick={() => { }}
                 classrooms={[]}
                 handleSignOut={handleSignOut}
                 isEditClassroomPage={true}
@@ -740,7 +769,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 editActiveSection={activeSection}
                 onEditSectionChange={handleSectionChange}
             />
-            
+
             <main className={`main__content ${isSidebarOpen ? 'shift' : ''}`}>
                 <div className="edit-classroom-container">
                     <div className="edit-header">

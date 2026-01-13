@@ -223,7 +223,7 @@ const Navbar = ({
                         &#9776;
                     </button>
                     <img src={icon} alt="Logo" className="navbar__logo-image" />
-                    <h1 style={{ color: "#414141ff", fontSize: "24px" }}>EChair</h1>
+                    <h1 style={{ color: "#414141ff", fontSize: "24px" }}>EChair <span style={{ color: "#0aa158" }}></span></h1>
                 </div>
 
                 {/* ✨ ย้ายปุ่มมาไว้ตรงกลาง Navbar เพื่อให้แสดงผลถูกต้อง */}

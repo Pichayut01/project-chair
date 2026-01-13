@@ -319,6 +319,34 @@ exports.updateTheme = async (req, res) => {
     }
 };
 
+exports.updateSettings = async (req, res) => {
+    const { classId } = req.params;
+    const { isPublic, allowSelfJoin } = req.body;
+    const userId = req.user.id;
+
+    try {
+        const classroom = await Class.findById(classId);
+        if (!classroom) return res.status(404).json({ msg: 'Classroom not found' });
+
+        if (!classroom.creator.map(id => id.toString()).includes(userId.toString())) {
+            return res.status(403).json({ msg: 'Authorization denied. Only creators can edit settings.' });
+        }
+
+        if (typeof isPublic === 'boolean') {
+            classroom.isPublic = isPublic;
+        }
+        if (typeof allowSelfJoin === 'boolean') {
+            classroom.allowSelfJoin = allowSelfJoin;
+        }
+
+        const updatedClassroom = await classroom.save();
+        res.json({ msg: 'Settings updated successfully', classroom: updatedClassroom });
+    } catch (err) {
+        console.error('Error updating settings:', err);
+        res.status(500).send('Server error');
+    }
+};
+
 exports.getChatHistory = async (req, res) => {
     const { classId } = req.params;
     const limit = parseInt(req.query.limit) || 100; // Default to last 100 messages

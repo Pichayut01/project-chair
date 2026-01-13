@@ -1,4 +1,9 @@
+// src/component/Chair.jsx
 
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import 'react-circular-progressbar/dist/styles.css';
+import chroma from 'chroma-js';
 import '../CSS/Chair.css';
 import NoUserInChair from '../image/ืNoUserInChair.png';
 import { FaUser, FaHandPaper } from 'react-icons/fa';
