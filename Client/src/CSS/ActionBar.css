@@ -132,7 +132,7 @@
     }
 
     #navbody {
-        padding: 0 10px;
+        padding: 5px 10px;
         /* ✨ Tighten padding */
         border-radius: 12px;
         /* ✨ Slightly more rounded */
@@ -142,15 +142,21 @@
         /* ✨ Reset margin */
         max-width: none;
         /* ✨ Remove max-width limit */
+        height: auto;
+        /* ✨ Allow height to grow */
+        min-height: 60px;
     }
 
     .ul {
         justify-content: center;
         /* ✨ Center items */
-        padding: 0 5px;
+        padding: 5px;
         /* ✨ Add internal padding */
-        overflow-x: auto;
-        /* ✨ Re-enable scroll for mobile */
+        overflow-x: visible;
+        /* ✨ Allow popovers */
+        flex-wrap: wrap;
+        /* ✨ Wrap items */
+        gap: 15px;
     }
 
     .ul .li {

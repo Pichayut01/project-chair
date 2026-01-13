@@ -1,6 +1,6 @@
 // src/pages/EditClassroomPage.jsx
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -13,9 +13,12 @@ import '../CSS/ClassroomPage.css';
 import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
 import Chair from '../component/Chair';
 import ChairPresets from '../component/ChairPresets';
-import { FaPalette, FaUsers, FaEllipsisH, FaSave, FaChair, FaTh, FaRandom, FaBars, FaThLarge, FaArrowUp, FaArrowDown, FaUserSlash, FaCopy, FaCheck, FaCrown, FaUserGraduate } from 'react-icons/fa';
+import { FaPalette, FaUsers, FaEllipsisH, FaChair, FaTh, FaRandom, FaBars, FaThLarge, FaArrowUp, FaArrowDown, FaUserSlash, FaCopy, FaCheck, FaCrown, FaUserGraduate, FaSpinner, FaSave } from 'react-icons/fa';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
+// Debounce delay in milliseconds
+const DEBOUNCE_DELAY = 800;
 
 const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     const { classId } = useParams();
@@ -23,7 +26,14 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
     const [classroom, setClassroom] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeSection, setActiveSection] = useState('theme');
-    const [isEditing, setIsEditing] = useState(false);
+
+    // Auto-save status
+    const [saving, setSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState(''); // '', 'saving', 'saved', 'error'
+
+    // Debounce refs
+    const themeDebounceRef = useRef(null);
+    const settingsDebounceRef = useRef(null);
 
     // Theme settings
     const [themeData, setThemeData] = useState({
@@ -82,9 +92,13 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
             }
 
             // Set classroom members
+            const creators = data.creator || [];
+            const creatorIds = new Set(creators.map(c => c._id));
+            const participants = (data.participants || []).filter(p => !creatorIds.has(p._id));
+
             setClassroomMembers({
-                creator: data.creator || [],
-                participants: data.participants || []
+                creator: creators,
+                participants: participants
             });
 
             // Set other settings
@@ -109,24 +123,95 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
         }
     };
 
+    // Auto-save theme settings
+    const autoSaveTheme = useCallback(async (data) => {
+        setSaving(true);
+        setSaveStatus('saving');
+        try {
+            const updatedThemeData = {
+                name: data.name,
+                subname: data.subname,
+                color: data.color,
+                bannerUrl: data.bannerUrl || ''
+            };
 
-    const handleSaveSettings = async () => {
+            await axios.put(`${API_BASE_URL}/api/classrooms/${classId}/theme`, updatedThemeData, {
+                headers: { 'x-auth-token': user.token }
+            });
+
+            setClassroom(prev => ({ ...prev, ...updatedThemeData }));
+            setSaveStatus('saved');
+            setTimeout(() => setSaveStatus(''), 2000);
+        } catch (error) {
+            console.error('Failed to save theme:', error);
+            setSaveStatus('error');
+            setTimeout(() => setSaveStatus(''), 3000);
+        } finally {
+            setSaving(false);
+        }
+    }, [classId, user]);
+
+    // Auto-save other settings
+    const autoSaveSettings = useCallback(async (data) => {
+        setSaving(true);
+        setSaveStatus('saving');
         try {
             await axios.put(
                 `${API_BASE_URL}/api/classrooms/${classId}/settings`,
                 {
-                    isPublic: otherSettings.isPublic,
-                    allowSelfJoin: otherSettings.allowSelfJoin
+                    isPublic: data.isPublic,
+                    allowSelfJoin: data.allowSelfJoin
                 },
                 { headers: { 'x-auth-token': user.token } }
             );
-            Swal.fire('Success', 'Classroom settings updated successfully!', 'success');
-            setIsEditing(false);
+            setSaveStatus('saved');
+            setTimeout(() => setSaveStatus(''), 2000);
         } catch (err) {
             console.error("Failed to update settings:", err);
-            Swal.fire('Error', 'Failed to update classroom settings.', 'error');
+            setSaveStatus('error');
+            setTimeout(() => setSaveStatus(''), 3000);
+        } finally {
+            setSaving(false);
         }
-    };
+    }, [classId, user]);
+
+    // Handle theme data change with debounce
+    const handleThemeChange = useCallback((newThemeData) => {
+        setThemeData(newThemeData);
+
+        // Clear existing timeout
+        if (themeDebounceRef.current) {
+            clearTimeout(themeDebounceRef.current);
+        }
+
+        // Set new timeout for auto-save
+        themeDebounceRef.current = setTimeout(() => {
+            autoSaveTheme(newThemeData);
+        }, DEBOUNCE_DELAY);
+    }, [autoSaveTheme]);
+
+    // Handle other settings change with debounce
+    const handleOtherSettingsChange = useCallback((newSettings) => {
+        setOtherSettings(newSettings);
+
+        // Clear existing timeout
+        if (settingsDebounceRef.current) {
+            clearTimeout(settingsDebounceRef.current);
+        }
+
+        // Set new timeout for auto-save
+        settingsDebounceRef.current = setTimeout(() => {
+            autoSaveSettings(newSettings);
+        }, DEBOUNCE_DELAY);
+    }, [autoSaveSettings]);
+
+    // Cleanup timeouts on unmount
+    useEffect(() => {
+        return () => {
+            if (themeDebounceRef.current) clearTimeout(themeDebounceRef.current);
+            if (settingsDebounceRef.current) clearTimeout(settingsDebounceRef.current);
+        };
+    }, []);
 
     const handlePromoteMember = async (memberId, memberName) => {
         try {
@@ -297,36 +382,8 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
     const handleRemoveBanner = () => {
         setBannerFile(null);
         setBannerPreview('');
-        setThemeData({ ...themeData, bannerUrl: '' });
-    };
-
-    const handleSaveTheme = async () => {
-        try {
-            const updatedThemeData = {
-                name: themeData.name,
-                subname: themeData.subname,
-                color: themeData.color,
-                bannerUrl: themeData.bannerUrl || ''
-            };
-
-            await axios.put(`${API_BASE_URL}/api/classrooms/${classId}/theme`, updatedThemeData, {
-                headers: { 'x-auth-token': user.token }
-            });
-
-            setClassroom(prev => ({ ...prev, ...updatedThemeData }));
-            setThemeData(updatedThemeData);
-            setIsEditing(false);
-            Swal.fire({
-                icon: 'success',
-                title: 'Saved!',
-                text: 'Theme settings updated successfully.',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        } catch (error) {
-            console.error('Failed to save theme:', error);
-            Swal.fire('Error', error.response?.data?.msg || 'Failed to save theme settings.', 'error');
-        }
+        const newThemeData = { ...themeData, bannerUrl: '' };
+        handleThemeChange(newThemeData);
     };
 
     const handleSaveSeating = async () => {
@@ -447,8 +504,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                     <input
                         type="text"
                         value={themeData.name}
-                        onChange={(e) => setThemeData({ ...themeData, name: e.target.value })}
-                        disabled={!isEditing}
+                        onChange={(e) => handleThemeChange({ ...themeData, name: e.target.value })}
                         placeholder="Enter classroom name"
                         className="theme-input"
                     />
@@ -463,8 +519,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                     <input
                         type="text"
                         value={themeData.subname}
-                        onChange={(e) => setThemeData({ ...themeData, subname: e.target.value })}
-                        disabled={!isEditing}
+                        onChange={(e) => handleThemeChange({ ...themeData, subname: e.target.value })}
                         placeholder="Enter description"
                         className="theme-input"
                     />
@@ -480,8 +535,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                         <input
                             type="color"
                             value={themeData.color}
-                            onChange={(e) => setThemeData({ ...themeData, color: e.target.value })}
-                            disabled={!isEditing}
+                            onChange={(e) => handleThemeChange({ ...themeData, color: e.target.value })}
                             className="color-input"
                         />
                         <div className="color-preview" style={{ backgroundColor: themeData.color }}>
@@ -517,13 +571,14 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                                     <FaCrown size={10} /> Creator
                                 </span>
                             </div>
-                            {isEditing && user.id !== creator._id && (
+                            {user.id !== creator._id && (
                                 <div className="member-actions">
                                     <button
                                         className="action-btn demote-btn"
                                         onClick={() => handleDemoteMember(creator._id, creator.displayName)}
+                                        title="Demote to participant"
                                     >
-                                        <FaArrowDown /> Demote
+                                        <FaArrowDown />
                                     </button>
                                 </div>
                             )}
@@ -540,7 +595,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 </h3>
                 <div className="members-list">
                     {classroomMembers.participants.length === 0 ? (
-                        <div style={{ padding: '20px', textAlign: 'center', color: '#888', fontStyle: 'italic' }}>
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#888', fontStyle: 'italic', width: '100%' }}>
                             No participants yet
                         </div>
                     ) : (
@@ -554,22 +609,22 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                                         <FaUserGraduate size={10} /> Student
                                     </span>
                                 </div>
-                                {isEditing && (
-                                    <div className="member-actions">
-                                        <button
-                                            className="action-btn promote-btn"
-                                            onClick={() => handlePromoteMember(participant._id, participant.displayName)}
-                                        >
-                                            <FaArrowUp /> Promote
-                                        </button>
-                                        <button
-                                            className="action-btn kick-btn"
-                                            onClick={() => handleKickMember(participant._id, participant.displayName)}
-                                        >
-                                            <FaUserSlash /> Kick
-                                        </button>
-                                    </div>
-                                )}
+                                <div className="member-actions">
+                                    <button
+                                        className="action-btn promote-btn"
+                                        onClick={() => handlePromoteMember(participant._id, participant.displayName)}
+                                        title="Promote to creator"
+                                    >
+                                        <FaArrowUp />
+                                    </button>
+                                    <button
+                                        className="action-btn kick-btn"
+                                        onClick={() => handleKickMember(participant._id, participant.displayName)}
+                                        title="Kick from classroom"
+                                    >
+                                        <FaUserSlash />
+                                    </button>
+                                </div>
                             </div>
                         ))
                     )}
@@ -630,8 +685,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                             <input
                                 type="checkbox"
                                 checked={otherSettings.isPublic}
-                                onChange={(e) => setOtherSettings({ ...otherSettings, isPublic: e.target.checked })}
-                                disabled={!isEditing}
+                                onChange={(e) => handleOtherSettingsChange({ ...otherSettings, isPublic: e.target.checked })}
                             />
                             <span className="toggle-slider"></span>
                         </label>
@@ -649,20 +703,12 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                             <input
                                 type="checkbox"
                                 checked={otherSettings.allowSelfJoin}
-                                onChange={(e) => setOtherSettings({ ...otherSettings, allowSelfJoin: e.target.checked })}
-                                disabled={!isEditing}
+                                onChange={(e) => handleOtherSettingsChange({ ...otherSettings, allowSelfJoin: e.target.checked })}
                             />
                             <span className="toggle-slider"></span>
                         </label>
                     </div>
                 </div>
-
-                {isEditing && (
-                    <button className="save-settings-btn" onClick={handleSaveSettings} style={{ marginTop: '20px' }}>
-                        <FaSave />
-                        Save Settings
-                    </button>
-                )}
             </div>
         </div>
     );
@@ -774,21 +820,21 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 <div className="edit-classroom-container">
                     <div className="edit-header">
                         <h1>Edit Classroom Settings</h1>
-                        <div className="edit-actions">
-                            {!isEditing ? (
-                                <button className="edit-btn" onClick={() => setIsEditing(true)}>
-                                    Edit Settings
-                                </button>
-                            ) : (
-                                <>
-                                    <button className="save-btn" onClick={activeSection === 'theme' ? handleSaveTheme : activeSection === 'other' ? handleSaveSettings : handleSaveTheme}>
-                                        <FaSave />
-                                        Save Changes
-                                    </button>
-                                    <button className="cancel-btn" onClick={() => setIsEditing(false)}>
-                                        Cancel
-                                    </button>
-                                </>
+                        <div className="save-status-indicator">
+                            {saveStatus === 'saving' && (
+                                <span className="status-saving">
+                                    <FaSpinner className="fa-spin" /> Saving...
+                                </span>
+                            )}
+                            {saveStatus === 'saved' && (
+                                <span className="status-saved">
+                                    <FaCheck /> Saved
+                                </span>
+                            )}
+                            {saveStatus === 'error' && (
+                                <span className="status-error">
+                                    Error Saving
+                                </span>
                             )}
                         </div>
                     </div>

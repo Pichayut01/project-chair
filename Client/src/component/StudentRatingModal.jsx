@@ -29,53 +29,51 @@ const StudentRatingModal = ({ isOpen, onClose, onRate, studentName, ratePresets 
     if (!isOpen) return null;
 
     // Separate positive and negative presets
-    const positivePresets = ratePresets.filter(preset => 
+    const positivePresets = ratePresets.filter(preset =>
         preset.type === 'positive' || preset.scoreType === 'add'
     );
-    const negativePresets = ratePresets.filter(preset => 
+    const negativePresets = ratePresets.filter(preset =>
         preset.type === 'negative' || preset.scoreType === 'subtract'
     );
 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="student-rating-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <div className="header-content">
-                        <h2>Rate {studentName}</h2>
-                        <p className="header-subtitle">Click any rating to apply instantly</p>
+                <div className="rating-modal-header">
+                    <div className="rating-header-text">
+                        <h2>Rate <span>{studentName}</span></h2>
+                        <p>Select a rating to apply instantly</p>
                     </div>
-                    <button className="close-btn" onClick={onClose}>
-                        <FiX size={20} />
+                    <button className="rating-close-btn" onClick={onClose}>
+                        <FiX size={24} />
                     </button>
                 </div>
 
-                <div className="modal-content">
+                <div className="rating-modal-content">
                     {ratePresets.length === 0 ? (
-                        <div className="no-presets">
-                            <p>No rating presets available</p>
+                        <div className="no-presets-state">
+                            <span className="no-presets-emoji">📝</span>
+                            <p>No rating presets found</p>
+                            <small>Create presets in the "Assign Rate" menu</small>
                         </div>
                     ) : (
-                        <div className="presets-container">
+                        <div className="rating-presets-grid-wrapper">
                             {positivePresets.length > 0 && (
-                                <div className="preset-group positive-group">
-                                    <div className="group-header positive">
-                                        <span className="group-icon">👍</span>
-                                        <span className="group-title">Positive</span>
+                                <div className="rating-section positive">
+                                    <div className="section-label">
+                                        <span className="dot positive"></span> Positive
                                     </div>
-                                    <div className="preset-buttons">
+                                    <div className="rating-grid">
                                         {positivePresets.map((preset) => (
                                             <button
                                                 key={preset._id}
-                                                className="preset-btn positive"
+                                                className="rating-btn positive"
                                                 onClick={() => handleDirectRate(preset)}
-                                                title={`${preset.name}: ${preset.scoreType === 'add' ? '+' : '-'}${preset.scoreValue} HP`}
                                             >
-                                                <span className="btn-emoji">{preset.emoji || '⭐'}</span>
-                                                <div className="btn-content">
-                                                    <span className="btn-name">{preset.name}</span>
-                                                    <span className="btn-score">
-                                                        {preset.scoreType === 'add' ? '+' : '-'}{preset.scoreValue}
-                                                    </span>
+                                                <span className="rating-emoji">{preset.emoji}</span>
+                                                <div className="rating-info">
+                                                    <span className="rating-name">{preset.name}</span>
+                                                    <span className="rating-score">+{preset.scoreValue}</span>
                                                 </div>
                                             </button>
                                         ))}
@@ -84,25 +82,21 @@ const StudentRatingModal = ({ isOpen, onClose, onRate, studentName, ratePresets 
                             )}
 
                             {negativePresets.length > 0 && (
-                                <div className="preset-group negative-group">
-                                    <div className="group-header negative">
-                                        <span className="group-icon">👎</span>
-                                        <span className="group-title">Negative</span>
+                                <div className="rating-section negative">
+                                    <div className="section-label">
+                                        <span className="dot negative"></span> Needs Improvement
                                     </div>
-                                    <div className="preset-buttons">
+                                    <div className="rating-grid">
                                         {negativePresets.map((preset) => (
                                             <button
                                                 key={preset._id}
-                                                className="preset-btn negative"
+                                                className="rating-btn negative"
                                                 onClick={() => handleDirectRate(preset)}
-                                                title={`${preset.name}: ${preset.scoreType === 'add' ? '+' : '-'}${preset.scoreValue} HP`}
                                             >
-                                                <span className="btn-emoji">{preset.emoji || '⚠️'}</span>
-                                                <div className="btn-content">
-                                                    <span className="btn-name">{preset.name}</span>
-                                                    <span className="btn-score">
-                                                        {preset.scoreType === 'add' ? '+' : '-'}{preset.scoreValue}
-                                                    </span>
+                                                <span className="rating-emoji">{preset.emoji}</span>
+                                                <div className="rating-info">
+                                                    <span className="rating-name">{preset.name}</span>
+                                                    <span className="rating-score subtract">-{preset.scoreValue}</span>
                                                 </div>
                                             </button>
                                         ))}

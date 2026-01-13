@@ -1,245 +1,261 @@
 /* src/CSS/AssignRate.css */
 
 .assign-rate-container {
-    background: var(--bg-primary, #ffffff);
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-primary, #e0e0e0);
-    transition: all 0.3s ease;
+    background: transparent;
+    /* Let parent handle background or keep it transparent */
+    border-radius: 0;
+    padding: 10px;
+    box-shadow: none;
+    border: none;
     width: 100%;
-    min-height: calc(100vh - 200px);
+    min-height: auto;
 }
 
 .assign-rate-header {
     margin-bottom: 2rem;
+    text-align: center;
 }
 
 .assign-rate-header h2 {
-    color: var(--text-primary, #333333);
+    color: #2c3e50;
     margin: 0 0 0.5rem 0;
-    font-size: 1.8rem;
-    font-weight: 600;
-    border-bottom: 2px solid var(--green-primary, #7ec282);
-    padding-bottom: 0.5rem;
+    font-size: 2rem;
+    font-weight: 700;
 }
 
 .assign-rate-header p {
-    color: var(--text-secondary, #666666);
+    color: #7f8c8d;
     font-size: 1.1rem;
     margin: 0;
 }
 
 .rate-presets-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
     width: 100%;
+    padding-bottom: 20px;
 }
 
 .rate-preset-card {
-    background: var(--bg-secondary, #f8f9fa);
-    border: 2px solid var(--border-secondary, #e9ecef);
-    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 16px;
     padding: 1.5rem;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
     position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
 }
 
 .rate-preset-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    border-color: var(--green-primary, #7ec282);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    /* Softer, premium shadow */
+    border-color: transparent;
 }
 
 .create-card {
-    border: 2px dashed var(--border-secondary, #e9ecef);
+    border: 2px dashed #cbd5e0;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 200px;
-    background: var(--bg-primary, #ffffff);
+    /* Match height of other cards roughly */
+    background: #f8f9fa;
+    box-shadow: none;
 }
 
 .create-card:hover {
-    border-color: var(--green-primary, #7ec282);
-    background: var(--bg-secondary, #f8f9fa);
+    border-color: #7ec282;
+    background: #f0fdf4;
+    transform: scale(1.02);
 }
 
 .create-card-content {
     text-align: center;
-    color: var(--text-secondary, #666666);
+    color: #718096;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .create-card-content svg {
-    color: var(--green-primary, #7ec282);
+    color: #7ec282;
     margin-bottom: 1rem;
+    filter: drop-shadow(0 2px 4px rgba(126, 194, 130, 0.2));
 }
 
 .create-card-content h3 {
     margin: 0 0 0.5rem 0;
-    font-size: 1.2rem;
-    color: var(--text-primary, #333333);
+    font-size: 1.25rem;
+    color: #2d3748;
+    font-weight: 600;
 }
 
 .create-card-content p {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
 }
 
 .preset-card-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .preset-emoji {
-    font-size: 2.5rem;
+    font-size: 3rem;
     line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .preset-actions {
     display: flex;
     gap: 0.5rem;
+    opacity: 0;
+    /* Hidden by default for cleaner look */
+    transition: opacity 0.2s ease;
+}
+
+.rate-preset-card:hover .preset-actions {
+    opacity: 1;
 }
 
 .action-btn {
-    background: transparent;
-    border: 1px solid var(--border-secondary, #e9ecef);
-    border-radius: 6px;
-    padding: 0.5rem;
+    background: #f7fafc;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #718096;
 }
 
 .edit-btn:hover {
-    background: var(--green-primary, #7ec282);
+    background: #7ec282;
     color: white;
-    border-color: var(--green-primary, #7ec282);
+    transform: rotate(15deg);
 }
 
 .delete-btn:hover {
-    background: #e74c3c;
+    background: #fc8181;
     color: white;
-    border-color: #e74c3c;
+    transform: rotate(-15deg);
 }
 
 .preset-card-content h3 {
-    margin: 0 0 1rem 0;
-    font-size: 1.3rem;
-    color: var(--text-primary, #333333);
-    font-weight: 600;
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+    color: #2d3748;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .preset-details {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    flex-grow: 1;
+    justify-content: flex-end;
 }
 
 .preset-type {
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
+    padding: 0.35rem 0.85rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 600;
     width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .preset-type.positive {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background: #e6fffa;
+    color: #2c7a7b;
 }
 
 .preset-type.negative {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background: #fff5f5;
+    color: #c53030;
 }
 
 .preset-score {
-    font-weight: 600;
-    color: var(--text-primary, #333333);
-    font-size: 1rem;
+    font-weight: 700;
+    color: #2d3748;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .preset-notification {
     font-size: 0.85rem;
-    color: var(--text-secondary, #666666);
+    color: #718096;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .empty-state {
     text-align: center;
-    padding: 3rem 2rem;
-    color: var(--text-secondary, #666666);
-}
-
-.empty-state h3 {
-    margin: 0 0 0.5rem 0;
-    color: var(--text-primary, #333333);
-}
-
-.empty-state p {
-    margin: 0;
+    padding: 4rem 2rem;
+    color: #a0aec0;
+    background: white;
+    border-radius: 16px;
+    border: 2px dashed #e2e8f0;
 }
 
 .loading {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 200px;
-    font-size: 1.1rem;
-    color: var(--text-secondary, #666666);
+    height: 300px;
 }
 
 /* Dark theme support */
 [data-theme="dark"] .rate-preset-card {
-    background: var(--bg-secondary);
-    border-color: var(--border-secondary);
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
 }
 
-[data-theme="dark"] .create-card {
-    background: var(--bg-primary);
-}
-
-[data-theme="dark"] .create-card:hover {
-    background: var(--bg-secondary);
-}
-
-[data-theme="dark"] .action-btn {
-    border-color: var(--border-secondary);
+[data-theme="dark"] .assign-rate-header h2 {
+    color: #f7fafc;
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
     .assign-rate-container {
-        padding: 1.5rem;
+        padding: 5px;
+        /* Minimal padding on mobile */
     }
-    
-    .assign-rate-header h2 {
-        font-size: 1.5rem;
-    }
-    
+
     .rate-presets-grid {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        /* Stack cards */
+        gap: 15px;
     }
-    
+
     .rate-preset-card {
-        padding: 1rem;
+        padding: 1.25rem;
     }
-    
+
     .preset-emoji {
-        font-size: 2rem;
+        font-size: 2.5rem;
     }
-    
-    .create-card {
-        min-height: 150px;
+
+    .preset-actions {
+        opacity: 1;
+        /* Always show actions on mobile */
     }
 }

@@ -9,7 +9,6 @@ import Swal from 'sweetalert2';
 import '../CSS/AssignRate.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
-const PRESETS_API_URL = process.env.REACT_APP_PRESETS_API_URL || 'http://localhost:5001';
 
 const AssignRate = ({ classId, user }) => {
     const [ratePresets, setRatePresets] = useState([]);
@@ -30,11 +29,14 @@ const AssignRate = ({ classId, user }) => {
 
     const fetchRatePresets = async () => {
         try {
-            const response = await axios.get(`${PRESETS_API_URL}/api/presets?classroomId=${classId}`, {
+            const response = await axios.get(`${API_BASE_URL}/api/presets?classroomId=${classId}`, {
                 headers: { 'x-auth-token': user.token }
             });
-            // Transform the new API response to match expected format
-            const transformedPresets = response.data.data?.map(preset => {
+            // Handle both response structures (wrapped in data or direct array)
+            const rawPresets = response.data.data || response.data;
+            const presetsArray = Array.isArray(rawPresets) ? rawPresets : [];
+
+            const transformedPresets = presetsArray.map(preset => {
                 return {
                     _id: preset._id,
                     name: preset.name,
@@ -46,16 +48,16 @@ const AssignRate = ({ classId, user }) => {
                     criteria: preset.criteria
                 };
             }) || [];
-            
+
             // Merge with default presets instead of replacing them
             const defaultPresets = getDefaultPresets();
             const allPresets = [...defaultPresets, ...transformedPresets];
-            
+
             // Remove duplicates based on name to avoid conflicts
-            const uniquePresets = allPresets.filter((preset, index, self) => 
+            const uniquePresets = allPresets.filter((preset, index, self) =>
                 index === self.findIndex(p => p.name === preset.name)
             );
-            
+
             setRatePresets(uniquePresets);
             setLoading(false);
         } catch (error) {
@@ -139,7 +141,7 @@ const AssignRate = ({ classId, user }) => {
                     Swal.fire('Deleted!', 'Rate preset has been deleted locally.', 'success');
                 } else {
                     // Handle API presets
-                    await axios.delete(`${PRESETS_API_URL}/api/presets/${presetId}`, {
+                    await axios.delete(`${API_BASE_URL}/api/presets/${presetId}`, {
                         headers: { 'x-auth-token': user.token }
                     });
                     await fetchRatePresets();
@@ -179,8 +181,8 @@ const AssignRate = ({ classId, user }) => {
                 // Check if it's a default preset (cannot be edited via API)
                 if (editingPreset._id.startsWith('default-')) {
                     // For default presets, just update locally
-                    const updatedPresets = ratePresets.map(preset => 
-                        preset._id === editingPreset._id 
+                    const updatedPresets = ratePresets.map(preset =>
+                        preset._id === editingPreset._id
                             ? { ...preset, ...presetData }
                             : preset
                     );
@@ -188,7 +190,7 @@ const AssignRate = ({ classId, user }) => {
                     Swal.fire('Updated!', 'Rate preset has been updated locally.', 'success');
                 } else {
                     // For API presets, update via API
-                    await axios.put(`${PRESETS_API_URL}/api/presets/${editingPreset._id}`, transformedData, {
+                    await axios.put(`${API_BASE_URL}/api/presets/${editingPreset._id}`, transformedData, {
                         headers: { 'x-auth-token': user.token }
                     });
                     await fetchRatePresets(); // Refresh to get updated data
@@ -196,7 +198,7 @@ const AssignRate = ({ classId, user }) => {
                 }
             } else {
                 // Creating new preset - always save to API
-                await axios.post(`${PRESETS_API_URL}/api/presets`, transformedData, {
+                await axios.post(`${API_BASE_URL}/api/presets`, transformedData, {
                     headers: { 'x-auth-token': user.token }
                 });
                 await fetchRatePresets(); // Refresh to include new preset
@@ -250,15 +252,15 @@ const AssignRate = ({ classId, user }) => {
                         <div className="preset-card-header">
                             <div className="preset-emoji">{preset.emoji}</div>
                             <div className="preset-actions">
-                                <button 
-                                    className="action-btn edit-btn" 
+                                <button
+                                    className="action-btn edit-btn"
                                     onClick={() => handleEditPreset(preset)}
                                     title="Edit preset"
                                 >
                                     <FiEdit2 size={16} />
                                 </button>
-                                <button 
-                                    className="action-btn delete-btn" 
+                                <button
+                                    className="action-btn delete-btn"
                                     onClick={() => handleDeletePreset(preset._id)}
                                     title="Delete preset"
                                 >

@@ -123,13 +123,15 @@
 /* Media query สำหรับหน้าจอเล็ก - บังคับให้เป็นบรรทัดเดียว */
 @media (max-width: 768px) {
     .classroom-header h1 {
-        white-space: nowrap;
-        /* บังคับให้อยู่ในบรรทัดเดียวเมื่อหน้าจอเล็ก */
+        white-space: normal;
+        /* Allow wrapping */
+        font-size: 1.5rem;
     }
 
     .classroom-header p {
-        white-space: nowrap;
-        /* บังคับให้อยู่ในบรรทัดเดียวเมื่อหน้าจอเล็ก */
+        white-space: normal;
+        /* Allow wrapping */
+        font-size: 0.9rem;
     }
 }
 

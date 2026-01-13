@@ -772,29 +772,34 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     // Fetch rate presets
     const fetchRatePresets = useCallback(async () => {
         try {
-            const response = await axios.get(`${PRESETS_API_URL}/api/presets?classroomId=${classId}`, {
+            const response = await axios.get(`${API_BASE_URL}/api/presets?classroomId=${classId}`, {
                 headers: { 'x-auth-token': user.token }
             });
 
+            // Handle both response structures (wrapped in data or direct array)
+            const rawPresets = response.data.data || response.data;
+            const presetsArray = Array.isArray(rawPresets) ? rawPresets : [];
+
             // Transform the new API response to match expected format
-            const transformedPresets = response.data.data?.map(preset => {
+            const transformedPresets = presetsArray.map(preset => {
                 // Determine type based on tags or preset name
                 const isNegative = preset.tags?.includes('negative') ||
                     preset.name.toLowerCase().includes('late') ||
                     preset.name.toLowerCase().includes('absent') ||
-                    preset.name.toLowerCase().includes('disrupt');
+                    preset.name.toLowerCase().includes('disrupt') ||
+                    preset.type === 'negative';
 
                 return {
                     _id: preset._id,
                     name: preset.name,
-                    emoji: isNegative ? '⚠️' : '⭐',
-                    type: isNegative ? 'negative' : 'positive',
-                    notifyStudent: true,
-                    scoreType: isNegative ? 'subtract' : 'add',
+                    emoji: preset.emoji || (isNegative ? '⚠️' : '⭐'),
+                    type: preset.type || (isNegative ? 'negative' : 'positive'),
+                    notifyStudent: preset.notifyStudent !== undefined ? preset.notifyStudent : true,
+                    scoreType: preset.scoreType || (isNegative ? 'subtract' : 'add'),
                     scoreValue: preset.scoreValue || 5,
                     criteria: preset.criteria
                 };
-            }) || [];
+            });
 
             // Merge with default presets instead of replacing them
             const defaultPresets = getDefaultRatePresets();

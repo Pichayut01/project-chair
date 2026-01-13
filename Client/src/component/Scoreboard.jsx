@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Loader from './Loader';
 import '../CSS/Scoreboard.css';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
+import { FaTrophy, FaMedal, FaCrown, FaUserGraduate, FaChartLine, FaStar, FaChartBar } from 'react-icons/fa';
 
 const Scoreboard = ({ classroom, user, onUpdateScores }) => {
     const [scores, setScores] = useState([]);
@@ -133,100 +134,207 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
     const maxAverage = stats && Object.values(stats.categoryAverages).length > 0
         ? Math.max(...Object.values(stats.categoryAverages)) : 1;
 
+    // Calculate Top 3 Students
+    const topStudents = [...scores].sort((a, b) => b.totalScore - a.totalScore).slice(0, 3);
+
     return (
         <div className="scoreboard-container">
-            <h1>Scoreboard</h1>
-            <div className="table-responsive">
-                <table className="scoreboard-table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Student Name</th>
-                            {scoreCategories.map(category => (
-                                <th key={category}>{category}</th>
-                            ))}
-                            <th>Total Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {scores.sort((a, b) => b.totalScore - a.totalScore).map((score, index) => (
-                            <tr key={score.student._id}>
-                                <td>{index + 1}</td>
-                                <td className="student-name-cell">
-                                    <img 
-                                        src={getProfileImageSrc(score.student.photoURL, isGoogleUser(score.student))}
-                                        alt={score.student.displayName}
-                                        className="student-profile-pic"
-                                    />
-                                    {score.student.displayName}
-                                </td>
-                                {scoreCategories.map(category => (
-                                    <td 
-                                        key={category} 
-                                        onClick={() => handleCellClick(score.student._id, category, score.categorizedScores[category] || 0)}
-                                        className="score-cell"
-                                    >
-                                        {editingCell.studentId === score.student._id && editingCell.category === category ? (
-                                            <input
-                                                type="number"
-                                                value={tempScore}
-                                                onChange={handleScoreChange}
-                                                onBlur={handleSaveScore}
-                                                onKeyDown={handleKeyDown}
-                                                autoFocus
-                                                className="score-input"
-                                            />
-                                        ) : (
-                                            score.categorizedScores[category] || 0
-                                        )}
-                                    </td>
-                                ))}
-                                <td>{score.totalScore}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className="scoreboard-header">
+                <h1><FaTrophy className="header-icon" /> Class Scoreboard</h1>
+                <p>Overview of student performance and engagement</p>
             </div>
 
             {stats && (scores.length > 0) && (
-                <div className="scoreboard-summary">
-                    <h2>Summary of Scores</h2>
-                    <div className="summary-grid">
-                        <div className="summary-card">
-                            <h3>Total Students Rated</h3>
-                            <p>{stats.totalStudents}</p>
-                        </div>
-                        <div className="summary-card">
-                            <h3>Overall Average Score</h3>
-                            <p>{stats.overallAverage}</p>
-                        </div>
-                        <div className="summary-card">
-                            <h3>Highest Total Score</h3>
-                            <p>{stats.highestScore}</p>
-                        </div>
-                        <div className="summary-card">
-                            <h3>Lowest Total Score</h3>
-                            <p>{stats.lowestScore}</p>
-                        </div>
-                    </div>
-                    
-                    <h3>Average Score per Category:</h3>
-                    <div className="bar-chart-container">
-                        {Object.entries(stats.categoryAverages).map(([category, average]) => (
-                            <div className="bar-chart-item" key={category}>
-                                <div className="bar-label">{category}</div>
-                                <div className="bar-wrapper">
-                                    <div 
-                                        className="bar-fill"
-                                        style={{ width: `${(average / maxAverage) * 100}%` }}
-                                    ></div>
-                                    <div className="bar-value">{average.toFixed(2)}</div>
+                <div className="scoreboard-dashboard">
+                    {/* Left Column: Podium */}
+                    <div className="dashboard-left">
+                        {topStudents.length > 0 ? (
+                            <div className="podium-section">
+                                <h2 className="section-title">Top Performers</h2>
+                                <div className="podium-container">
+                                    {/* 2nd Place */}
+                                    {topStudents[1] && (
+                                        <div className="podium-item second">
+                                            <div className="medal-icon silver"><FaMedal /></div>
+                                            <img
+                                                src={getProfileImageSrc(topStudents[1].student.photoURL, isGoogleUser(topStudents[1].student))}
+                                                alt={topStudents[1].student.displayName}
+                                                className="podium-avatar"
+                                            />
+                                            <div className="podium-rank">2nd</div>
+                                            <div className="podium-name">{topStudents[1].student.displayName}</div>
+                                            <div className="podium-score">{topStudents[1].totalScore} pts</div>
+                                        </div>
+                                    )}
+
+                                    {/* 1st Place */}
+                                    {topStudents[0] && (
+                                        <div className="podium-item first">
+                                            <div className="crown-icon"><FaCrown /></div>
+                                            <img
+                                                src={getProfileImageSrc(topStudents[0].student.photoURL, isGoogleUser(topStudents[0].student))}
+                                                alt={topStudents[0].student.displayName}
+                                                className="podium-avatar"
+                                            />
+                                            <div className="podium-rank">1st</div>
+                                            <div className="podium-name">{topStudents[0].student.displayName}</div>
+                                            <div className="podium-score">{topStudents[0].totalScore} pts</div>
+                                        </div>
+                                    )}
+
+                                    {/* 3rd Place */}
+                                    {topStudents[2] && (
+                                        <div className="podium-item third">
+                                            <div className="medal-icon bronze"><FaMedal /></div>
+                                            <img
+                                                src={getProfileImageSrc(topStudents[2].student.photoURL, isGoogleUser(topStudents[2].student))}
+                                                alt={topStudents[2].student.displayName}
+                                                className="podium-avatar"
+                                            />
+                                            <div className="podium-rank">3rd</div>
+                                            <div className="podium-name">{topStudents[2].student.displayName}</div>
+                                            <div className="podium-score">{topStudents[2].totalScore} pts</div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        ))}
+                        ) : (
+                            <div className="empty-state-podium">
+                                <FaTrophy size={48} color="#ccc" />
+                                <p>No scores yet. Start assigning points!</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Column: Stats & Charts */}
+                    <div className="dashboard-right">
+                        {/* Stats Cards */}
+                        <div className="stats-grid">
+                            <div className="stat-card students">
+                                <div className="stat-icon"><FaUserGraduate /></div>
+                                <div className="stat-info">
+                                    <h3>Active Students</h3>
+                                    <p>{stats.totalStudents}</p>
+                                </div>
+                            </div>
+                            <div className="stat-card average">
+                                <div className="stat-icon"><FaChartLine /></div>
+                                <div className="stat-info">
+                                    <h3>Class Average</h3>
+                                    <p>{stats.overallAverage}</p>
+                                </div>
+                            </div>
+                            <div className="stat-card highest">
+                                <div className="stat-icon"><FaStar /></div>
+                                <div className="stat-info">
+                                    <h3>Highest Score</h3>
+                                    <p>{stats.highestScore}</p>
+                                </div>
+                            </div>
+                            <div className="stat-card lowest">
+                                <div className="stat-icon"><FaChartBar /></div>
+                                <div className="stat-info">
+                                    <h3>Lowest Score</h3>
+                                    <p>{stats.lowestScore}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Category Chart */}
+                        <div className="chart-section">
+                            <h2 className="section-title">Category Breakdown</h2>
+                            <div className="bar-chart-container">
+                                {Object.entries(stats.categoryAverages).map(([category, average]) => {
+                                    // Calculate percentage based on max average (absolute)
+                                    const absAverage = Math.abs(average);
+                                    const maxAbsAverage = Math.max(...Object.values(stats.categoryAverages).map(Math.abs), 1);
+                                    const widthPercentage = (absAverage / maxAbsAverage) * 100;
+                                    const isNegative = average < 0;
+
+                                    return (
+                                        <div className="bar-chart-item" key={category}>
+                                            <div className="bar-info">
+                                                <span className="bar-label">{category}</span>
+                                                <span className={`bar-value ${isNegative ? 'negative' : 'positive'}`}>
+                                                    {average.toFixed(1)}
+                                                </span>
+                                            </div>
+                                            <div className="bar-track">
+                                                <div
+                                                    className={`bar-fill ${isNegative ? 'negative' : 'positive'}`}
+                                                    style={{ width: `${widthPercentage}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
+
+            <div className="table-section">
+                <h2 className="section-title">Detailed Scores</h2>
+                <div className="table-responsive">
+                    <table className="scoreboard-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Student</th>
+                                {scoreCategories.map(category => (
+                                    <th key={category}>{category}</th>
+                                ))}
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {scores.sort((a, b) => b.totalScore - a.totalScore).map((score, index) => (
+                                <tr key={score.student._id} className={index < 3 ? `top-rank rank-${index + 1}` : ''}>
+                                    <td>
+                                        <span className="rank-badge">{index + 1}</span>
+                                    </td>
+                                    <td className="student-name-cell">
+                                        <img
+                                            src={getProfileImageSrc(score.student.photoURL, isGoogleUser(score.student))}
+                                            alt={score.student.displayName}
+                                            className="student-profile-pic"
+                                        />
+                                        <div className="student-name-text">
+                                            {score.student.displayName}
+                                            {index === 0 && <FaCrown className="rank-icon gold" />}
+                                        </div>
+                                    </td>
+                                    {scoreCategories.map(category => (
+                                        <td
+                                            key={category}
+                                            onClick={() => handleCellClick(score.student._id, category, score.categorizedScores[category] || 0)}
+                                            className="score-cell"
+                                        >
+                                            {editingCell.studentId === score.student._id && editingCell.category === category ? (
+                                                <input
+                                                    type="number"
+                                                    value={tempScore}
+                                                    onChange={handleScoreChange}
+                                                    onBlur={handleSaveScore}
+                                                    onKeyDown={handleKeyDown}
+                                                    autoFocus
+                                                    className="score-input"
+                                                />
+                                            ) : (
+                                                <span className={`score-value ${(score.categorizedScores[category] || 0) > 0 ? 'positive' : 'neutral'}`}>
+                                                    {score.categorizedScores[category] || 0}
+                                                </span>
+                                            )}
+                                        </td>
+                                    ))}
+                                    <td className="total-score-cell">{score.totalScore}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 };

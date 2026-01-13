@@ -25,6 +25,10 @@
     padding: 0 1rem;
     width: 100%;
     margin: 0;
+    height: 100%;
+    overflow-y: auto;
+    padding-bottom: 50px;
+    /* Breathing room */
 }
 
 .class-detail-content {
@@ -87,7 +91,8 @@
     line-height: 1.5;
 }
 
-.loading, .error {
+.loading,
+.error {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -120,32 +125,32 @@
         padding: 1.5rem 1rem;
         margin-bottom: 1.5rem;
     }
-    
+
     .class-detail-header-content h1 {
         font-size: 1.6rem;
     }
-    
+
     .class-detail-header-content p {
         font-size: 1rem;
     }
-    
+
     .class-detail-container {
         padding: 0 1rem;
     }
-    
+
     .class-detail-content {
         padding: 1.5rem;
     }
-    
+
     .class-detail-content h2 {
         font-size: 1.5rem;
     }
-    
+
     .content-placeholder {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-    
+
     .placeholder-card {
         padding: 1rem;
     }
