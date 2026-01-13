@@ -18,7 +18,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [showCropper, setShowCropper] = useState(false);
-    
+
     // Editable profile states
     const [isEditing, setIsEditing] = useState({});
     const [profileData, setProfileData] = useState({
@@ -206,7 +206,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
         <div className="profile-field">
             <div className="field-header">
                 <label className="field-label">{label}</label>
-                <button 
+                <button
                     className="edit-button"
                     onClick={() => handleEditToggle(field)}
                     disabled={loading}
@@ -246,14 +246,14 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                             />
                         )}
                         <div className="field-actions">
-                            <button 
+                            <button
                                 className="save-button"
                                 onClick={() => handleSaveField(field)}
                                 disabled={loading}
                             >
                                 Save
                             </button>
-                            <button 
+                            <button
                                 className="cancel-button"
                                 onClick={() => handleCancelEdit(field)}
                                 disabled={loading}
@@ -317,7 +317,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
             <div className="info-section">
                 <h2 className="section-heading">Personal info</h2>
                 <p className="section-description">Info about you and your preferences across Google services</p>
-                
+
                 <div className="fields-container">
                     {renderEditableField('Name', 'displayName')}
                     {renderEditableField('Phone number', 'phoneNumber', 'tel')}
@@ -384,7 +384,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
             setMessage('New passwords do not match');
             return;
         }
-        
+
         setLoading(true);
         try {
             const response = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
@@ -508,7 +508,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                     <p>Change your password regularly to keep your account secure</p>
                 </div>
                 {!showChangePassword ? (
-                    <button 
+                    <button
                         className="security-action-btn"
                         onClick={() => setShowChangePassword(true)}
                     >
@@ -521,7 +521,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                                 type="password"
                                 placeholder="Current Password"
                                 value={securityData.currentPassword}
-                                onChange={(e) => setSecurityData({...securityData, currentPassword: e.target.value})}
+                                onChange={(e) => setSecurityData({ ...securityData, currentPassword: e.target.value })}
                                 required
                             />
                         </div>
@@ -530,7 +530,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                                 type="password"
                                 placeholder="New Password"
                                 value={securityData.newPassword}
-                                onChange={(e) => setSecurityData({...securityData, newPassword: e.target.value})}
+                                onChange={(e) => setSecurityData({ ...securityData, newPassword: e.target.value })}
                                 required
                             />
                         </div>
@@ -539,7 +539,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                                 type="password"
                                 placeholder="Confirm New Password"
                                 value={securityData.confirmPassword}
-                                onChange={(e) => setSecurityData({...securityData, confirmPassword: e.target.value})}
+                                onChange={(e) => setSecurityData({ ...securityData, confirmPassword: e.target.value })}
                                 required
                             />
                         </div>
@@ -547,12 +547,12 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                             <button type="submit" className="save-btn" disabled={loading}>
                                 {loading ? 'Changing...' : 'Change Password'}
                             </button>
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="cancel-btn"
                                 onClick={() => {
                                     setShowChangePassword(false);
-                                    setSecurityData({...securityData, currentPassword: '', newPassword: '', confirmPassword: ''});
+                                    setSecurityData({ ...securityData, currentPassword: '', newPassword: '', confirmPassword: '' });
                                 }}
                             >
                                 Cancel
@@ -572,7 +572,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                     <span className={`toggle-status ${twoFactorEnabled ? 'enabled' : 'disabled'}`}>
                         {twoFactorEnabled ? 'Enabled' : 'Disabled'}
                     </span>
-                    <button 
+                    <button
                         className={`toggle-btn ${twoFactorEnabled ? 'disable' : 'enable'}`}
                         onClick={() => handleToggle2FA(!twoFactorEnabled)}
                         disabled={loading}
@@ -580,7 +580,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                         {twoFactorEnabled ? 'Disable' : 'Enable'}
                     </button>
                 </div>
-                
+
                 {show2FAVerification && (
                     <form onSubmit={handleVerify2FA} className="verification-form">
                         <p>Enter the 6-digit code sent to your email:</p>
@@ -589,25 +589,25 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                                 type="text"
                                 placeholder="000000"
                                 value={securityData.twoFactorCode}
-                                onChange={(e) => setSecurityData({...securityData, twoFactorCode: e.target.value})}
+                                onChange={(e) => setSecurityData({ ...securityData, twoFactorCode: e.target.value })}
                                 maxLength="6"
                                 required
                             />
                         </div>
                         <div className="form-actions">
-                            <button 
-                                type="submit" 
-                                className="save-btn" 
+                            <button
+                                type="submit"
+                                className="save-btn"
                                 disabled={loading || securityData.twoFactorCode.length !== 6}
                             >
                                 {loading ? 'Verifying...' : 'Verify'}
                             </button>
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="cancel-btn"
                                 onClick={() => {
                                     setShow2FAVerification(false);
-                                    setSecurityData({...securityData, twoFactorCode: ''});
+                                    setSecurityData({ ...securityData, twoFactorCode: '' });
                                 }}
                             >
                                 Cancel
@@ -622,7 +622,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                 <div className="security-header">
                     <h3>Login History</h3>
                     <p>Recent activity on your account</p>
-                    <button 
+                    <button
                         className="refresh-btn"
                         onClick={fetchLoginHistory}
                     >
@@ -655,7 +655,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                 <div className="security-header">
                     <h3>Active Sessions</h3>
                     <p>Devices currently signed in to your account</p>
-                    <button 
+                    <button
                         className="refresh-btn"
                         onClick={fetchActiveSessions}
                     >
@@ -676,7 +676,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                                 </div>
                                 <div className="session-details">
                                     <span className="session-ip">{session.ipAddress}</span>
-                                    <button 
+                                    <button
                                         className="terminate-btn"
                                         onClick={() => handleTerminateSession(session._id)}
                                     >
@@ -743,45 +743,47 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                 onAccountSectionChange={handleSectionChange}
             />
             <main className={`main__content ${isSidebarOpen ? 'shift' : ''}`}>
-                <div className="google-account-container">
-                    {activeSection === 'account' && renderAccountSection()}
-                    {activeSection === 'security' && renderSecuritySection()}
-                    {activeSection === 'privacy' && renderPrivacySection()}
-                    {activeSection === 'notifications' && renderNotificationsSection()}
+                <div className="main-content-scrollable-area">
+                    <div className="google-account-container">
+                        {activeSection === 'account' && renderAccountSection()}
+                        {activeSection === 'security' && renderSecuritySection()}
+                        {activeSection === 'privacy' && renderPrivacySection()}
+                        {activeSection === 'notifications' && renderNotificationsSection()}
 
-                    {showCropper && (
-                        <div className="cropper-modal">
-                            <div className="cropper-container">
-                                <Cropper
-                                    image={imageSrcToCrop}
-                                    crop={crop}
-                                    zoom={zoom}
-                                    aspect={1}
-                                    onCropChange={setCrop}
-                                    onZoomChange={setZoom}
-                                    onCropComplete={onCropComplete}
-                                />
+                        {showCropper && (
+                            <div className="cropper-modal">
+                                <div className="cropper-container">
+                                    <Cropper
+                                        image={imageSrcToCrop}
+                                        crop={crop}
+                                        zoom={zoom}
+                                        aspect={1}
+                                        onCropChange={setCrop}
+                                        onZoomChange={setZoom}
+                                        onCropComplete={onCropComplete}
+                                    />
+                                </div>
+                                <div className="cropper-controls">
+                                    <input
+                                        type="range"
+                                        value={zoom}
+                                        min={1}
+                                        max={3}
+                                        step={0.1}
+                                        aria-labelledby="Zoom"
+                                        onChange={(e) => setZoom(e.target.value)}
+                                        className="zoom-slider"
+                                    />
+                                    <button onClick={() => setShowCropper(false)} className="cancel-crop-button">
+                                        Cancel
+                                    </button>
+                                    <button onClick={handleCropAndUpload} className="crop-upload-button">
+                                        Crop & Upload
+                                    </button>
+                                </div>
                             </div>
-                            <div className="cropper-controls">
-                                <input
-                                    type="range"
-                                    value={zoom}
-                                    min={1}
-                                    max={3}
-                                    step={0.1}
-                                    aria-labelledby="Zoom"
-                                    onChange={(e) => setZoom(e.target.value)}
-                                    className="zoom-slider"
-                                />
-                                <button onClick={() => setShowCropper(false)} className="cancel-crop-button">
-                                    Cancel
-                                </button>
-                                <button onClick={handleCropAndUpload} className="crop-upload-button">
-                                    Crop & Upload
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </main>
         </>

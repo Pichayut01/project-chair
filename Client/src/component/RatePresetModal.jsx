@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FiX } from 'react-icons/fi';
 import '../CSS/RatePresetModal.css';
 
@@ -72,7 +73,7 @@ const RatePresetModal = ({ isOpen, onClose, onSave, preset }) => {
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="modal-overlay" onClick={onClose}>
             <div className="rate-preset-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
@@ -230,7 +231,8 @@ const RatePresetModal = ({ isOpen, onClose, onSave, preset }) => {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
