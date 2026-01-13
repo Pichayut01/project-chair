@@ -58,7 +58,8 @@
     /* Behind content but in front of header's background image */
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
-    transition: background-color 0.3s;
+    transition: background-color 0.5s;
+    transition: transform 0.3s ease-in-out;
 }
 
 /* When there is a banner image, make the overlay darker for text contrast */
@@ -218,10 +219,11 @@
 .classroom-layout-container {
     display: flex;
     /* transition: all 0.3s ease; */
-    height: calc(100vh - 140px);
-    /* Ensure full height usage */
+    /* Height handled by flex in main wrapper */
     /* overflow: hidden; */
     position: relative;
+    align-items: stretch;
+    /* Stretch to fill height */
 }
 
 .seating-chart-section {
@@ -238,9 +240,15 @@
     width: 0;
     /* Default closed */
     background: #fff;
-    border-radius: 16px;
-    /* ✨ Slightly more rounded */
-    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    /* ✨ Match Seating Card */
+    border: none;
+    /* ✨ Visual consistency */
+    /* ✨ Use uniform shadow instead of border for cleaner alignment */
+    border-radius: 8px;
+    /* ✨ Match seating card radius */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    /* ✨ Match seating card shadow */
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -249,12 +257,12 @@
 
     /* ✨ Floating Positioning */
     margin-left: 0;
-    margin-bottom: 20px;
-    /* Float up from bottom */
+    margin-bottom: 0;
+    /* ✨ Align to bottom */
     margin-right: 0px;
     /* Spacing from right edge */
-    height: calc(100% - 20px);
-    /* Adjust height to not overflow container */
+    height: 100%;
+    /* ✨ Fill full height */
 
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     /* Soft shadow for depth */
@@ -265,7 +273,6 @@
     /* Expanded width */
     opacity: 1;
     margin-left: 10px;
-    border: 1px solid #e0e0e0;
 }
 
 .edit-sidebar-overlay {
@@ -664,6 +671,38 @@
     .copy-btn {
         width: 100%;
     }
+
+    /* ✨ Mobile Chat Overlay */
+    .chat-split-card {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        /* Cover full width */
+        z-index: 1000;
+        /* Be on top of everything */
+        transform: translateX(100%);
+        /* Start hidden to the right */
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin: 0;
+        /* Reset margins */
+        opacity: 1;
+        /* Ensure visible opacity-wise */
+    }
+
+    .chat-split-card.open {
+        transform: translateX(0);
+        /* Slide in */
+        width: 100%;
+        margin-left: 0;
+        /* Override desktop margin */
+    }
+
+    /* Adjust close button position if needed */
+    .edit-sidebar-header {
+        padding: 15px;
+    }
 }
 
 
@@ -758,9 +797,38 @@
     color: #d9534f;
 }
 
-.cancel-button:hover {
-    color: #c9302c;
+
+/* Emoji Picker Styles */
+.emoji-picker-popover {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    /* box-shadow handled by popover usually, but adding ensuring styles */
+    min-width: 150px;
 }
+
+.emoji-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emoji-btn:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.1);
+}
+
+
 
 /* ปุ่ม action ใน navbar หรือ header */
 .navbar-action-button,
@@ -796,7 +864,12 @@
     margin-top: 10px;
     width: 100%;
     /* Responsive container with proper scrolling */
-    overflow: visible;
+    /* ✨ Flex 1 to fill remaining space */
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    position: relative;
+    overflow: hidden;
     /* ✨ Ensure Action Bar is not clipped */
     /* Smooth scrolling */
     scroll-behavior: smooth;
@@ -810,17 +883,29 @@
 }
 
 .seating-chart-section {
+    /* ✨ Layout container only - visual styles moved to inner card */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    flex: 1;
+    gap: 15px;
+    /* Space between chart and action bar */
+}
+
+/* ✨ New Inner Card for the White Background part */
+.seating-area-card {
     background-color: #ffffff;
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    width: 100%;
+    flex: 1;
+    /* Grow to fill space above Action Bar */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     position: relative;
-    /* ✨ Needed for absolute positioning of ActionBar */
-    overflow: visible;
-    /* ✨ Allow ActionBar to protrude */
-    margin-bottom: 90px;
-    /* ✨ Make space for the hanging ActionBar */
 }
 
 /* Grid that holds all the chairs */
@@ -978,7 +1063,7 @@
 /* --- Responsive Design for Large Screens --- */
 @media (min-width: 1025px) {
     .seating-chart-section {
-        padding: 20px;
+        padding: 0px;
     }
 
     .classroom-header {
@@ -1091,7 +1176,7 @@
     width: 100%;
     height: calc(100vh - 400px);
     /* เพิ่มพื้นที่สำหรับ banner */
-    max-height: 60vh;
+    max-height: 50vh;
     /* ลดความสูงสูงสุดเพื่อให้มีพื้นที่สำหรับ banner */
     overflow: auto;
     transition: height 0.3s ease, max-height 0.3s ease;
@@ -1099,7 +1184,7 @@
 
 /* When banner is collapsed, expand seating container to full height */
 .classroom-header.collapsed~.classroom-layout-container .seating-container-wrapper {
-    height: calc(100vh - 300px);
+    height: calc(100vh - 315px);
     /* เพิ่มพื้นที่เว้นเพื่อป้องกัน scroll */
     max-height: 70vh;
     /* ลดความสูงสูงสุดเพื่อป้องกัน scroll */
@@ -1287,6 +1372,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 0px;
+    /* ✨ No extra margin needed as inner card has padding */
 }
 
 .seating-controls {

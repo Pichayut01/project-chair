@@ -22,6 +22,8 @@ import { FaEdit, FaTh, FaRandom, FaBars, FaThLarge, FaChevronUp, FaChevronDown, 
 import ActionBar from '../component/ActionBar';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupOverlay from '../component/GroupOverlay';
+import ClassroomEvent from '../component/ClassroomEvent';
+import ViewToggle from '../component/ViewToggle'; // ✨ Import ViewToggle
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 const PRESETS_API_URL = process.env.REACT_APP_PRESETS_API_URL || 'http://localhost:5001';
@@ -35,7 +37,16 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const [seatingPositions, setSeatingPositions] = useState({});
     const [isEditing, setIsEditing] = useState(false);
     const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false); // ✨ State for hierarchical edit menu
-    const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(false); // ✨ Chat Sidebar State
+    const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(() => {
+        // ✨ Read from localStorage, default to true (open) on desktop, false on mobile
+        const saved = localStorage.getItem(`chat-sidebar-open-${classId}`);
+        if (saved !== null) {
+            return JSON.parse(saved);
+        }
+        // Default: closed on mobile, open on desktop
+        const isMobile = window.innerWidth <= 768;
+        return !isMobile;
+    }); // ✨ Chat Sidebar State
     const [currentChairPositions, setCurrentChairPositions] = useState({});
     const [assignedUsers, setAssignedUsers] = useState({});
     const [modalOpen, setModalOpen] = useState(false);
@@ -48,6 +59,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const [ratingModalOpen, setRatingModalOpen] = useState(false);
     const [ratePresets, setRatePresets] = useState([]);
     const [studentScores, setStudentScores] = useState({});
+    const [viewMode, setViewMode] = useState('seating'); // ✨ 'seating' or 'event'
+    const [classroomEvents, setClassroomEvents] = useState([]); // ✨ State for classroom events
 
     // Pan functionality state
     const [isPanning, setIsPanning] = useState(false);
@@ -61,6 +74,14 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const [isGroupingMode, setIsGroupingMode] = useState(false); // ✨ State for grouping mode
     const [groupSizeInput, setGroupSizeInput] = useState(2); // ✨ State for group size input
     const [selectedChairsForGroup, setSelectedChairsForGroup] = useState([]); // ✨ Selected chairs for creating a group
+
+    // ✨ Raise Hand State
+    const [raisedHands, setRaisedHands] = useState(new Set());
+
+    // ✨ Emoji State
+    const [activeEmojis, setActiveEmojis] = useState({}); // { userId: { emoji, timestamp } }
+    const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+
 
     // ✨ Chat State
     const [chatMessages, setChatMessages] = useState([]);
@@ -88,6 +109,11 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    // ✨ Persist chat sidebar state to localStorage
+    useEffect(() => {
+        localStorage.setItem(`chat-sidebar-open-${classId}`, JSON.stringify(isChatSidebarOpen));
+    }, [isChatSidebarOpen, classId]);
 
     // Calculate isCreator early to avoid reference errors
     const isCreator = user && classroom?.creator && (
@@ -117,27 +143,83 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     }, [user.id]);
 
     // Placeholder handlers for new interaction actions
+    // Placeholder handlers for new interaction actions
     const handleRaiseHand = () => {
-        Swal.fire('Raised Hand', 'You raised your hand!', 'info');
+        const isRaised = raisedHands.has(user.id);
+        const newRaisedState = !isRaised;
+
+        // Optimistic update
+        setRaisedHands(prev => {
+            const next = new Set(prev);
+            if (newRaisedState) {
+                next.add(user.id);
+            } else {
+                next.delete(user.id);
+            }
+            return next;
+        });
+
+        emitRaiseHand(newRaisedState);
+
+        // Show feedback
+        if (newRaisedState) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Hand Raised ✋',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
     };
 
     const handleEmoji = () => {
-        Swal.fire('Emoji', 'Emoji picker would open here.', 'question');
+        setIsEmojiPickerOpen(prev => !prev);
+    };
+
+    const handleSendEmoji = (emoji) => {
+        // ✨ Check if hand is raised
+        if (raisedHands.has(user.id)) {
+            // Lower hand locally
+            setRaisedHands(prev => {
+                const next = new Set(prev);
+                next.delete(user.id);
+                return next;
+            });
+            // Emit raise hand false
+            emitRaiseHand(false);
+        }
+
+        emitEmoji(emoji);
+        setIsEmojiPickerOpen(false);
+        // Optimistic local update
+        setActiveEmojis(prev => ({
+            ...prev,
+            [user.id]: { emoji, timestamp: Date.now() }
+        }));
+        // Auto-remove local optimistic update
+        setTimeout(() => {
+            setActiveEmojis(prev => {
+                const newState = { ...prev };
+                if (newState[user.id] && newState[user.id].emoji === emoji) {
+                    delete newState[user.id];
+                }
+                return newState;
+            });
+        }, 3000);
     };
 
     const handleChat = () => {
         setIsChatSidebarOpen(prev => !prev);
     };
 
-    // Handle real-time chair seating updates
     const handleChairUpdate = useCallback((data) => {
         console.log('Received chair seating update:', data);
 
         if (data.updatedBy !== user.id) {
-            // Update assigned users state
             setAssignedUsers(data.assignedUsers);
 
-            // Show notification based on action
             let message = '';
             switch (data.action) {
                 case 'sit':
@@ -167,12 +249,10 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
     }, [user.id]);
 
-    // Handle real-time chair movement updates
     const handleChairMovement = useCallback((data) => {
         console.log('Received chair movement update:', data);
 
         if (data.updatedBy !== user.id) {
-            // Update chair positions
             setCurrentChairPositions(data.chairPositions);
             setSeatingPositions(data.chairPositions);
 
@@ -190,32 +270,16 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
     }, [user.id]);
 
-    // ✨ Handle real-time chair group updates
     const handleChairGroupUpdate = useCallback((data) => {
         console.log('Received chair group update:', data);
 
         if (data.updatedBy !== user.id) {
             setChairGroups(data.chairGroups);
-            /*
-            Swal.fire({
-                icon: 'info',
-                title: 'Groups Updated',
-                text: 'Chair groupings have been updated',
-                timer: 1500,
-                showConfirmButton: false,
-                position: 'top-end',
-                toast: true,
-                background: '#e0f2f1',
-                color: '#00695c'
-            });
-            */
         }
     }, [user.id]);
 
-    // ✨ Handle incoming chat messages
     const handleChatMessage = useCallback((data) => {
         setChatMessages(prev => [...prev, data]);
-        // Auto-scroll to bottom using container scrollTop to avoid page jumping
         setTimeout(() => {
             if (chatContainerRef.current) {
                 chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -223,17 +287,223 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }, 100);
     }, []);
 
-    // Initialize socket connection
-    const { emitScoreUpdate, emitChairSeatingUpdate, emitChairMovement, emitChairGroupUpdate, emitChatMessage } = useSocket(
+    // ✨ Handle incoming classroom events
+    const handleClassroomEventAdded = useCallback((data) => {
+        console.log('Classroom event added:', data);
+        setClassroomEvents(prev => {
+            // ✨ Prevent duplicates: Check if event ID already exists
+            if (prev.some(e => e.id === data.id)) {
+                return prev;
+            }
+            return [...prev, data];
+        });
+
+        Swal.fire({
+            icon: 'success',
+            title: 'New Event',
+            text: `Event "${data.title}" added!`,
+            timer: 2000,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true
+        });
+    }, []);
+
+    // ✨ Handle incoming event triggers (updates)
+    const handleClassroomEventTriggered = useCallback((data) => {
+        console.log('Classroom event triggered:', data);
+        const { eventId, updates } = data;
+
+        setClassroomEvents(prev => prev.map(event => {
+            if (event.id === eventId) {
+                // ✨ Update updatedAt locally so animation triggers
+                return { ...event, ...updates, updatedAt: Date.now() };
+            }
+            return event;
+        }));
+
+        // If results exist, show animation or notification
+        // ✨ Removed the Swal here because the card now has animation
+        // But maybe keep a toast?
+        // if (updates.results && updates.results.length > 0) { ... }
+    }, []);
+
+
+
+    // ✨ Handle event deletion
+    const handleClassroomEventDeleted = useCallback((data) => {
+        console.log('Classroom event deleted:', data);
+        setClassroomEvents(prev => prev.filter(e => e.id !== data.eventId));
+    }, []);
+
+    // ✨ Handle Raise Hand Update
+    const handleRaiseHandUpdate = useCallback((data) => {
+        const { userId, isRaised, userName } = data;
+        setRaisedHands(prev => {
+            const next = new Set(prev);
+            if (isRaised) {
+                next.add(userId);
+                // Optional: Play sound or show toast for host
+                if (isCreator && userId !== user.id) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: `${userName} raised hand`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                }
+            } else {
+                next.delete(userId);
+            }
+            return next;
+        });
+    }, [isCreator, user.id]);
+
+    // ✨ Handle Incoming Emoji
+    const handleEmojiSent = useCallback((data) => {
+        const { userId, emoji } = data;
+        setActiveEmojis(prev => ({
+            ...prev,
+            [userId]: { emoji, timestamp: Date.now() }
+        }));
+
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            setActiveEmojis(prev => {
+                const newState = { ...prev };
+                if (newState[userId] && newState[userId].emoji === emoji) {
+                    delete newState[userId];
+                }
+                return newState;
+            });
+        }, 3000);
+    }, []);
+
+    const handleDeleteEvent = (event) => {
+        Swal.fire({
+            title: 'Delete Event?',
+            text: "Are you sure you want to delete this event?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                emitDeleteClassroomEvent(event.id);
+            }
+        });
+    };
+
+    const {
+        emitScoreUpdate,
+        emitChairSeatingUpdate,
+        emitChairMovement,
+        emitChairGroupUpdate,
+        emitChatMessage,
+        emitSystemMessage, // ✨ Destructure system message emitter
+        emitAddClassroomEvent,
+        emitTriggerClassroomEvent, // ✨ Destructure new emitter
+        emitDeleteClassroomEvent, // ✨ Destructure delete emitter
+        emitSubmitEventAnswer, // ✨ Destructure submit answer emitter
+        emitRaiseHand, // ✨ Destructure raise hand emitter
+        emitEmoji // ✨ Destructure emoji emitter
+    } = useSocket(
         classId,
         user,
         handleScoreUpdate,
         handleChairUpdate,
         handleChairMovement,
         handleChairGroupUpdate,
-        handleChatMessage // ✨ Pass chat handler
+        handleChatMessage,
+        handleClassroomEventAdded,
+        handleClassroomEventTriggered, // ✨ Pass new listener
+        handleClassroomEventDeleted, // ✨ Pass delete listener
+        handleRaiseHandUpdate, // ✨ Pass raise hand listener
+        handleEmojiSent // ✨ Pass emoji listener
     );
 
+    // ✨ Handler for adding new events via ClassroomEvent component
+    const handleAddEvent = (eventConfig) => {
+        // support string (old way) or object (new way)
+        let newEvent = {
+            id: `event-${Date.now()}`,
+            description: 'New classroom event started',
+            type: 'default',
+            createdAt: Date.now(),
+            createdBy: user.id
+        };
+
+        if (typeof eventConfig === 'string') {
+            newEvent.title = eventConfig;
+        } else {
+            // Config object
+            if (eventConfig.type === 'random') {
+                newEvent.title = '🎲 Random Student';
+            } else if (eventConfig.type === 'question') {
+                newEvent.title = '❓ Question';
+            } else {
+                newEvent.title = 'Event';
+            }
+            newEvent.type = eventConfig.type;
+            newEvent.config = eventConfig; // Save config like count
+        }
+
+        // Emit via socket
+        emitAddClassroomEvent(newEvent);
+        // socket.to(classId).emit('classroom-event-added', event); -> EXCLUDES SENDER.
+        // So we MUST add it locally for the sender.
+        setClassroomEvents(prev => [...prev, { ...newEvent, createdBy: user.id, createdAt: Date.now() }]);
+    };
+
+    // ✨ Handler for triggering an event (Creator only)
+    const handleTriggerEvent = (event) => {
+        if (event.type === 'random') {
+            const count = event.config?.count || 1;
+
+            // Get all seated users (excluding creator if they are seated?)
+            // Usually creator is teacher, students are in assignedUsers.
+            // assignedUsers is object: { chairId: { userId, userName, ... } }
+            const students = Object.values(assignedUsers);
+
+            if (students.length === 0) {
+                Swal.fire('No Students', 'No students are currently seated to select from.', 'warning');
+                return;
+            }
+
+            // Shuffle and pick N
+            const shuffled = [...students].sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, count);
+
+            // Format results
+            const results = selected.map(s => ({
+                userId: s.userId,
+                userName: s.userName,
+                photoSrc: getProfileImageSrc(s.photoURL, isGoogleUser(s))
+            }));
+
+            // Emit trigger
+            emitTriggerClassroomEvent(event.id, { results });
+
+            // ✨ Send result to chat after animation (approx 3.5s)
+            setTimeout(() => {
+                const winnerNames = results.map(r => r.userName).join(', ');
+                emitSystemMessage(`🎲 Random Selection Result: ${winnerNames}`);
+            }, 3500);
+        }
+    };
+
+    // ✨ Handle Answer Submission
+    const handleSubmitAnswer = (event, answerText) => {
+        console.log('handleSubmitAnswer called in Page. EventID:', event?.id, 'Text:', answerText);
+        if (!event || !event.id) {
+            console.error('Invalid event object:', event);
+            return;
+        }
+        emitSubmitEventAnswer(event.id, answerText);
+    };
 
     const handleShareClick = () => {
         if (!classroom) return;
@@ -641,6 +911,11 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             setAssignedUsers(fetchedAssignedUsers);
             setStudentScores(fetchedScores);
             setChairGroups(fetchedGroups); // Set groups
+
+            // ✨ Initialize classroom events
+            const fetchedEvents = response.data.classroomEvents || [];
+            setClassroomEvents(fetchedEvents);
+
             setLoading(false);
         } catch (err) {
             if (err.response?.status === 403 && err.response?.data?.requiresInvitation) {
@@ -1169,6 +1444,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                                 isSelectedForGroup={selectedChairsForGroup.includes(id)} // Highlight selected chairs
                                                 selectionIndex={selectedChairsForGroup.indexOf(id) !== -1 ? selectedChairsForGroup.indexOf(id) + 1 : 0} // ✨ Pass selection index
                                                 zoomScale={zoomLevel} // ✨ Pass zoom level for drag correction
+                                                isHandRaised={assignedUser && raisedHands.has(assignedUser.userId)} // ✨ Pass raised hand state
+                                                currentEmoji={assignedUser && activeEmojis[assignedUser.userId]?.emoji} // ✨ Pass current emoji
                                             />
                                         );
                                     })}
@@ -1200,20 +1477,30 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     );
 
     const actionBarActions = [
-        {
+        ...(!isCreator ? [{
             id: 'raise-hand',
             icon: <FaHandPaper />,
             label: 'Raise Hand',
             onClick: handleRaiseHand,
-            isActive: false
-        },
-        {
+            isActive: raisedHands.has(user.id) // ✨ Show active state
+        }] : []),
+        ...(!isCreator ? [{
             id: 'emoji',
             icon: <FaSmile />,
             label: 'Emoji',
             onClick: handleEmoji,
-            isActive: false
-        },
+            isActive: isEmojiPickerOpen,
+            isPopover: true,
+            popoverContent: (
+                <div className="emoji-picker-popover">
+                    {['👍', '👎', '😂', '😮', '❤️', '🎉', '👋', '🤔'].map(emoji => (
+                        <button key={emoji} onClick={() => handleSendEmoji(emoji)} className="emoji-btn">
+                            {emoji}
+                        </button>
+                    ))}
+                </div>
+            )
+        }] : []),
         {
             id: 'chat',
             icon: <FaComment />,
@@ -1256,6 +1543,13 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     };
 
     if (isCreator) {
+        // ✨ Remove Start: Remove Raise Hand for Creator
+        const raiseHandIndex = actionBarActions.findIndex(a => a.id === 'raise-hand');
+        if (raiseHandIndex !== -1) {
+            actionBarActions.splice(raiseHandIndex, 1);
+        }
+        // ✨ Remove End
+
         if (isEditing) {
             // Edit Mode Tools
             actionBarActions.push(
@@ -1387,58 +1681,76 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                     </button>
                 </div>
                 <div className="classroom-layout-container">
-                    <div className="seating-chart-section" >
-                        <div className="seating-header">
-                            <h2 className="section-title">Seating Arrangement</h2>
-                            <div className="seating-controls">
-                                {/* Zoom Controls */}
-                                <div className="zoom-controls">
-                                    <button
-                                        className="zoom-btn zoom-out"
-                                        onClick={handleZoomOut}
-                                        disabled={zoomLevel <= minZoom}
-                                        title="Zoom Out"
-                                    >
-                                        -
-                                    </button>
-                                    <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
-                                    <button
-                                        className="zoom-btn zoom-in"
-                                        onClick={handleZoomIn}
-                                        disabled={zoomLevel >= maxZoom}
-                                        title="Zoom In"
-                                    >
-                                        +
-                                    </button>
-                                    <button
-                                        className="zoom-btn zoom-reset"
-                                        onClick={handleZoomReset}
-                                        title="Reset Zoom"
-                                    >
-                                        Reset
-                                    </button>
+                    <div className="seating-chart-section">
+                        {/* ✨ Inner Card for White Background */}
+                        <div className="seating-area-card">
+                            <div className="seating-header">
+                                {/* ✨ Styled View Toggle Switch */}
+                                <ViewToggle activeView={viewMode} onViewChange={setViewMode} />
 
-                                    {/* Layout Presets (Edit Mode Only) - Removed from here, moved to bottom right */}
-                                    {/* View Toggle Button */}
-                                    {isCreator && (
-                                        <button
-                                            className={`zoom-btn ${isTeacherView ? 'active' : ''}`}
-                                            onClick={handleToggleView}
-                                            title={isTeacherView ? "Switch to Back View" : "Switch to Teacher (Front) View"}
-                                            style={{ marginLeft: '10px' }}
-                                        >
-                                            <FaChalkboardTeacher size={16} />
-                                        </button>
-                                    )}
-                                </div>
+                                {viewMode === 'seating' && (
+                                    <div className="seating-controls">
+                                        {/* Zoom Controls */}
+                                        <div className="zoom-controls">
+                                            <button
+                                                className="zoom-btn zoom-out"
+                                                onClick={handleZoomOut}
+                                                disabled={zoomLevel <= minZoom}
+                                                title="Zoom Out"
+                                            >
+                                                -
+                                            </button>
+                                            <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
+                                            <button
+                                                className="zoom-btn zoom-in"
+                                                onClick={handleZoomIn}
+                                                disabled={zoomLevel >= maxZoom}
+                                                title="Zoom In"
+                                            >
+                                                +
+                                            </button>
+                                            <button
+                                                className="zoom-btn zoom-reset"
+                                                onClick={handleZoomReset}
+                                                title="Reset Zoom"
+                                            >
+                                                Reset
+                                            </button>
 
+                                            {/* View Toggle Button */}
+                                            {isCreator && (
+                                                <button
+                                                    className={`zoom-btn ${isTeacherView ? 'active' : ''}`}
+                                                    onClick={handleToggleView}
+                                                    title={isTeacherView ? "Switch to Back View" : "Switch to Teacher (Front) View"}
+                                                    style={{ marginLeft: '10px' }}
+                                                >
+                                                    <FaChalkboardTeacher size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Render Content Based on View Mode */}
+                            {viewMode === 'seating' ? renderSeatingChart() : (
+                                <ClassroomEvent
+                                    isCreator={isCreator}
+                                    events={classroomEvents}
+                                    onAddEvent={handleAddEvent}
+                                    onTriggerEvent={handleTriggerEvent}
+                                    onDeleteEvent={handleDeleteEvent} // ✨ Pass delete handler
+                                    onSubmitAnswer={handleSubmitAnswer} // ✨ Pass answer submit handler
+                                    candidates={Object.values(assignedUsers).map(u => ({
+                                        name: u.userName,
+                                        photoSrc: getProfileImageSrc(u.photoURL, isGoogleUser(u))
+                                    }))} // ✨ Pass candidates with images
+                                />
+                            )}
                         </div>
 
-                        {/* Render Seating Chart */}
-                        {renderSeatingChart()}
-
-                        {/* ✨ Action Bar inside Seating Section implies it fits the width */}
+                        {/* ✨ Action Bar outside the white card */}
                         <ActionBar actions={actionBarActions} />
                     </div>
 
@@ -1479,6 +1791,29 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                 ) : (
                                     chatMessages.map((msg, index) => {
                                         const isMe = msg.senderId === user.id;
+                                        const isSystem = msg.senderId === 'system' || msg.isSystem;
+
+                                        if (isSystem) {
+                                            return (
+                                                <div key={index} style={{
+                                                    textAlign: 'center',
+                                                    margin: '15px 0',
+                                                    color: '#666',
+                                                    fontSize: '0.85rem',
+                                                    background: '#f8f9fa',
+                                                    padding: '8px 15px',
+                                                    borderRadius: '20px',
+                                                    border: '1px solid #eee',
+                                                    alignSelf: 'center',
+                                                    width: 'fit-content',
+                                                    marginLeft: 'auto',
+                                                    marginRight: 'auto'
+                                                }}>
+                                                    {msg.message}
+                                                </div>
+                                            );
+                                        }
+
                                         return (
                                             <div key={index} style={{
                                                 marginBottom: '10px',

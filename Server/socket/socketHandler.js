@@ -79,14 +79,10 @@ module.exports = (io) => {
             });
         });
 
-        // ✨ Handle chat messages
-        socket.on('chat-message', async (data) => {
-            console.log('Chat message received:', data);
-            const { classId, message, senderId, senderName, senderPhoto, timestamp } = data;
-
+        // Helper to save and broadcast chat messages
+        const saveAndBroadcastChat = async (classId, message, senderId, senderName, senderPhoto, timestamp = Date.now()) => {
             try {
                 // Save message to database
-                console.log('💾 Saving chat message to database for classroom:', classId);
                 await Class.findByIdAndUpdate(
                     classId,
                     {
@@ -102,9 +98,8 @@ module.exports = (io) => {
                     },
                     { new: true }
                 );
-                console.log('✅ Chat message saved successfully');
 
-                // Broadcast to all users in the classroom INCLUDING sender (to confirm receipt/ordering)
+                // Broadcast to all users in the classroom
                 io.to(classId).emit('chat-message-received', {
                     message,
                     senderId,
@@ -114,7 +109,7 @@ module.exports = (io) => {
                 });
             } catch (error) {
                 console.error('❌ Error saving chat message:', error);
-                // Still broadcast even if save fails to maintain real-time functionality
+                // Still broadcast even if save fails
                 io.to(classId).emit('chat-message-received', {
                     message,
                     senderId,
@@ -123,6 +118,199 @@ module.exports = (io) => {
                     timestamp
                 });
             }
+        };
+
+        // ✨ Handle chat messages
+        socket.on('chat-message', async (data) => {
+            console.log('Chat message received:', data);
+            const { classId, message, senderId, senderName, senderPhoto, timestamp } = data;
+            await saveAndBroadcastChat(classId, message, senderId, senderName, senderPhoto, timestamp);
+        });
+
+        // ... (other events)
+
+        // ✨ Handle Raise Hand
+        socket.on('raise-hand', async (data) => {
+            console.log('Raise hand received:', data);
+            const { classId, userId, isRaised, userName, userPhoto } = data; // Added userPhoto
+
+            // Broadcast to all users in the classroom (including sender, to confirm)
+            io.to(classId).emit('raise-hand-updated', {
+                userId,
+                isRaised,
+                userName
+            });
+
+            // ✨ Auto-log to chat if raised
+            if (isRaised) {
+                await saveAndBroadcastChat(classId, '✋ Raised Hand', userId, userName, userPhoto);
+            }
+        });
+
+        // ✨ Handle Emoji
+        socket.on('send-emoji', async (data) => {
+            console.log('Emoji received:', data);
+            const { classId, userId, emoji, userName, userPhoto } = data; // Added userPhoto
+
+            // Broadcast to all users in the classroom (including sender for confirmation/sync)
+            io.to(classId).emit('emoji-sent', {
+                userId,
+                emoji,
+                userName,
+                timestamp: Date.now()
+            });
+
+            // ✨ Auto-log to chat
+            await saveAndBroadcastChat(classId, emoji, userId, userName, userPhoto);
+        });
+
+        // ✨ Handle adding classroom events
+        socket.on('add-classroom-event', async (data) => {
+            console.log('Add classroom event received:', data);
+            const { classId, event } = data;
+
+            try {
+                // Save event to database
+                await Class.findByIdAndUpdate(
+                    classId,
+                    {
+                        $push: {
+                            classroomEvents: event
+                        }
+                    },
+                    { new: true }
+                );
+
+                // Broadcast to all users in the classroom
+                io.to(classId).emit('classroom-event-added', event);
+            } catch (error) {
+                console.error('❌ Error saving classroom event:', error);
+                // Still broadcast for UI responsiveness
+                io.to(classId).emit('classroom-event-added', event);
+            }
+        });
+
+
+        // ✨ Handle triggering classroom events (e.g., Random Student)
+        socket.on('trigger-classroom-event', async (data) => {
+            console.log('Trigger classroom event received:', data);
+            const { classId, eventId, updates } = data;
+
+            try {
+                // Update specific event in database
+                // We need to find the class, then find the subdocument in classroomEvents array matches eventId
+                // and update its fields (e.g. results)
+
+                await Class.findOneAndUpdate(
+                    { _id: classId, "classroomEvents.id": eventId },
+                    {
+                        $set: {
+                            "classroomEvents.$.results": updates.results,
+                            "classroomEvents.$.status": "completed" // Optional status
+                        }
+                    },
+                    { new: true }
+                );
+
+                // Broadcast trigger update to all users in the classroom
+                io.to(classId).emit('classroom-event-triggered', { eventId, updates });
+
+            } catch (error) {
+                console.error('❌ Error triggering classroom event:', error);
+                // Still broadcast for UI responsiveness
+                io.to(classId).emit('classroom-event-triggered', { eventId, updates });
+            }
+        });
+
+        // ✨ Handle deleting classroom events
+        socket.on('delete-classroom-event', async (data) => {
+            console.log('Delete classroom event received:', data);
+            const { classId, eventId } = data;
+
+            try {
+                // Remove event from database
+                await Class.findByIdAndUpdate(
+                    classId,
+                    {
+                        $pull: {
+                            classroomEvents: { id: eventId }
+                        }
+                    },
+                    { new: true }
+                );
+
+                // Broadcast deletion to all users in the classroom
+                io.to(classId).emit('classroom-event-deleted', { eventId });
+                console.log(`✅ Event ${eventId} deleted from class ${classId}`);
+            } catch (error) {
+                console.error('❌ Error deleting classroom event:', error);
+            }
+        });
+
+        // ✨ Handle Answer Submission
+        socket.on('submit-event-answer', async (data) => {
+            console.log('Submit event answer received:', data);
+            const { classId, eventId, answer } = data;
+
+            try {
+                // Find class and push answer to specific event results
+                await Class.findOneAndUpdate(
+                    { _id: classId, "classroomEvents.id": eventId },
+                    {
+                        $push: {
+                            "classroomEvents.$.results": answer
+                        }
+                    },
+                    { new: true }
+                );
+
+                // Broadcast update to all clients
+                // We construct the update payload to match what the frontend expects
+                // Frontend expects { eventId, updates: { results: [...] } }
+                // But wait, broadcasting the WHOLE results array is safer to ensure sync.
+                // Or just the new answer? 
+
+                // Let's get the updated doc to be sure
+                const updatedClass = await Class.findById(classId);
+                const updatedEvent = updatedClass.classroomEvents.find(e => e.id === eventId);
+
+                io.to(classId).emit('classroom-event-updated', {
+                    eventId,
+                    updates: { results: updatedEvent.results }
+                });
+
+                console.log(`✅ Answer added to event ${eventId}`);
+
+            } catch (error) {
+                console.error('❌ Error submitting answer:', error);
+            }
+        });
+
+        // ✨ Handle Raise Hand
+        socket.on('raise-hand', (data) => {
+            console.log('Raise hand received:', data);
+            const { classId, userId, isRaised, userName } = data;
+
+            // Broadcast to all users in the classroom (including sender, to confirm)
+            io.to(classId).emit('raise-hand-updated', {
+                userId,
+                isRaised,
+                userName
+            });
+        });
+
+        // ✨ Handle Emoji
+        socket.on('send-emoji', (data) => {
+            console.log('Emoji received:', data);
+            const { classId, userId, emoji, userName } = data;
+
+            // Broadcast to all users in the classroom (including sender for confirmation/sync)
+            io.to(classId).emit('emoji-sent', {
+                userId,
+                emoji,
+                userName,
+                timestamp: Date.now()
+            });
         });
 
         socket.on('disconnect', () => {

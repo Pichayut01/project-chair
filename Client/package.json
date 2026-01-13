@@ -1,6 +1,6 @@
 {
   "name": "web-app-chair",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "dependencies": {
     "@react-aria/dnd": "^3.11.2",
@@ -34,7 +34,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "tauri": "tauri"
   },
   "eslintConfig": {
     "extends": [

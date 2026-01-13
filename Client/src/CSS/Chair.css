@@ -113,7 +113,7 @@
     align-items: center;
     background: #fff;
     border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
     padding: 12px 10px 8px 10px;
     margin: 8px;
     min-width: 80px;
@@ -140,49 +140,50 @@
     border-radius: 8px;
     padding: 0.5px 3px;
     min-width: 60px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
 }
 
 .user-name-under {
-  position: absolute;
-  top: 95px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  color: #333;
-  text-align: center;
-  background: #fff;
-  border-radius: 14px;
-  padding: 2px 8px;
-  min-width: 60px;
-  max-width: 80px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  border: 1.5px solid #e0e0e0;
-  display: inline-block;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-  line-height: 1.2;
+    position: absolute;
+    top: 95px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #333;
+    text-align: center;
+    background: #fff;
+    border-radius: 14px;
+    padding: 2px 8px;
+    min-width: 60px;
+    max-width: 80px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1.5px solid #e0e0e0;
+    display: inline-block;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    line-height: 1.2;
 }
 
 /* ถ้าไม่มีชื่อ ไม่ต้องแสดงกรอบชื่อ */
 .user-name-under:empty {
-  display: none;
+    display: none;
 }
 
 /* --- Responsive Design for Chair Component --- */
 @media (max-width: 768px) {
     .seating-area {
-        height: 500px; /* Reduce height on mobile */
+        height: 500px;
+        /* Reduce height on mobile */
         min-width: 100%;
     }
-    
+
     .seating-grid {
         min-height: 500px;
     }
-    
+
     .chair-icon {
         width: 48px;
         height: 48px;
@@ -192,19 +193,19 @@
         max-height: 48px;
         top: 30px;
     }
-    
+
     .hp-bar-container {
         width: 56px;
         height: 56px;
         top: 26px;
     }
-    
+
     .score-display {
         width: 20px;
         height: 20px;
         font-size: 10px;
     }
-    
+
     .user-name-under {
         font-size: 10px;
         padding: 1px 6px;
@@ -212,20 +213,20 @@
         max-width: 70px;
         top: 85px;
     }
-    
+
     .chair {
         min-width: 60px;
         min-height: 90px;
         padding: 8px 6px 6px 6px;
         margin: 6px;
     }
-    
+
     .chair-avatar {
         width: 36px;
         height: 36px;
         margin-bottom: 6px;
     }
-    
+
     .chair-name {
         font-size: 12px;
         padding: 0.3px 2px;
@@ -237,11 +238,11 @@
     .seating-area {
         height: 550px;
     }
-    
+
     .seating-grid {
         min-height: 550px;
     }
-    
+
     .chair-icon {
         width: 56px;
         height: 56px;
@@ -251,19 +252,19 @@
         max-height: 56px;
         top: 30px;
     }
-    
+
     .hp-bar-container {
         width: 64px;
         height: 64px;
         top: 26px;
     }
-    
+
     .score-display {
         width: 22px;
         height: 22px;
         font-size: 11px;
     }
-    
+
     .user-name-under {
         font-size: 11px;
         padding: 2px 7px;
@@ -277,8 +278,32 @@
     .seating-area {
         height: 600px;
     }
-    
+
     .seating-grid {
         min-height: 600px;
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes popIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.5);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
     }
 }

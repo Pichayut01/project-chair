@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const mongoose = require('mongoose');
 
 exports.googleLoginVerify = async (req, res) => {
     console.log('Google login verification request received');
@@ -66,7 +67,7 @@ exports.googleLoginVerify = async (req, res) => {
         jwt.sign(
             payload,
             process.env.JWT_SECRET,
-            { expiresIn: '1h' },
+            { expiresIn: '30d' },
             (err, token) => {
                 if (err) throw err;
                 res.json({
@@ -148,7 +149,7 @@ exports.register = async (req, res) => {
         jwt.sign(
             payload,
             process.env.JWT_SECRET,
-            { expiresIn: '1h' },
+            { expiresIn: '30d' },
             (err, token) => {
                 if (err) throw err;
                 res.status(201).json({
@@ -160,6 +161,14 @@ exports.register = async (req, res) => {
         );
     } catch (err) {
         console.error('Registration error:', err);
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const logPath = path.join(__dirname, '../server_error.log');
+            fs.appendFileSync(logPath, `${new Date().toISOString()} - Registration Error: ${err.stack || err}\n`);
+        } catch (logErr) {
+            console.error('Failed to write log:', logErr);
+        }
         if (err.code === 11000) {
             if (err.keyPattern && err.keyPattern.email) {
                 return res.status(400).json({ msg: 'User already exists with this email.' });
@@ -255,7 +264,7 @@ exports.login = async (req, res) => {
         jwt.sign(
             payload,
             process.env.JWT_SECRET,
-            { expiresIn: '1h' },
+            { expiresIn: '30d' },
             (err, token) => {
                 if (err) throw err;
                 res.json({ token, user: payload.user });

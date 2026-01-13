@@ -1,15 +1,10 @@
-// src/component/Chair.jsx
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
-import 'react-circular-progressbar/dist/styles.css';
-import chroma from 'chroma-js';
 import '../CSS/Chair.css';
 import NoUserInChair from '../image/ืNoUserInChair.png';
-import { FaUser } from 'react-icons/fa';
+import { FaUser, FaHandPaper } from 'react-icons/fa';
 import nullUserPhoto from '../image/nulluser.png';
 
-const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, userPhotoURL, userName, onChairClick, userScore, minScore, maxScore, hasAnyScores, isCreator, rotation = 0, isSelectedForGroup = false, selectionIndex, zoomScale = 1 }) => {
+const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, userPhotoURL, userName, onChairClick, userScore, minScore, maxScore, hasAnyScores, isCreator, rotation = 0, isSelectedForGroup = false, selectionIndex, zoomScale = 1, isHandRaised = false, currentEmoji = null }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [position, setPosition] = useState(initialPosition);
     const offset = useRef({ x: 0, y: 0 });
@@ -186,6 +181,39 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
                     boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                 }}>
                     {selectionIndex}
+                </div>
+            )}
+
+            {/* ✨ Raised Hand Indicator */}
+            {isHandRaised && (
+                <div style={{
+                    position: 'absolute',
+                    top: '5px',
+                    left: '60%',
+                    transform: 'translateX(-50%)',
+                    fontSize: '36px',
+                    zIndex: 25,
+                    animation: 'bounce 1s infinite',
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+                    color: '#fbbf24' // Warning color
+                }}>
+                    <FaHandPaper />
+                </div>
+            )}
+
+            {/* ✨ Emoji Indicator */}
+            {currentEmoji && (
+                <div style={{
+                    position: 'absolute',
+                    top: '5px',
+                    left: '60%',
+                    transform: 'translateX(-50%)',
+                    fontSize: '40px',
+                    zIndex: 30,
+                    animation: 'bounce 1s infinite', // Match raise hand animation
+                    filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.2))',
+                }}>
+                    {currentEmoji}
                 </div>
             )}
 

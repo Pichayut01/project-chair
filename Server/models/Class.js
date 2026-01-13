@@ -35,6 +35,20 @@ const classSchema = new mongoose.Schema({
             timestamp: { type: Number, required: true }
         }],
         default: [] // ✨ CRITICAL: Default empty array so existing classrooms work
+    },
+    classroomEvents: {
+        type: [{
+            id: { type: String }, // Client generated ID or UUID
+            title: { type: String },
+            description: { type: String },
+            type: { type: String, default: 'default' },
+            config: { type: mongoose.Schema.Types.Mixed }, // Store event config
+            results: { type: mongoose.Schema.Types.Mixed }, // Store results
+            status: { type: String, default: 'active' },
+            createdAt: { type: Number },
+            updatedAt: { type: Number }
+        }],
+        default: []
     }
 });
 
