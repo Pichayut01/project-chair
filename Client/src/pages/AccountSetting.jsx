@@ -1,6 +1,7 @@
 // src/component/AccountSetting.jsx
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../utils/cropImage';
 import '../CSS/GoogleAccount.css';
@@ -749,43 +750,44 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                         {activeSection === 'security' && renderSecuritySection()}
                         {activeSection === 'privacy' && renderPrivacySection()}
                         {activeSection === 'notifications' && renderNotificationsSection()}
-
-                        {showCropper && (
-                            <div className="cropper-modal">
-                                <div className="cropper-container">
-                                    <Cropper
-                                        image={imageSrcToCrop}
-                                        crop={crop}
-                                        zoom={zoom}
-                                        aspect={1}
-                                        onCropChange={setCrop}
-                                        onZoomChange={setZoom}
-                                        onCropComplete={onCropComplete}
-                                    />
-                                </div>
-                                <div className="cropper-controls">
-                                    <input
-                                        type="range"
-                                        value={zoom}
-                                        min={1}
-                                        max={3}
-                                        step={0.1}
-                                        aria-labelledby="Zoom"
-                                        onChange={(e) => setZoom(e.target.value)}
-                                        className="zoom-slider"
-                                    />
-                                    <button onClick={() => setShowCropper(false)} className="cancel-crop-button">
-                                        Cancel
-                                    </button>
-                                    <button onClick={handleCropAndUpload} className="crop-upload-button">
-                                        Crop & Upload
-                                    </button>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </main>
+
+            {showCropper && createPortal(
+                <div className="cropper-modal">
+                    <div className="cropper-container">
+                        <Cropper
+                            image={imageSrcToCrop}
+                            crop={crop}
+                            zoom={zoom}
+                            aspect={1}
+                            onCropChange={setCrop}
+                            onZoomChange={setZoom}
+                            onCropComplete={onCropComplete}
+                        />
+                    </div>
+                    <div className="cropper-controls">
+                        <input
+                            type="range"
+                            value={zoom}
+                            min={1}
+                            max={3}
+                            step={0.1}
+                            aria-labelledby="Zoom"
+                            onChange={(e) => setZoom(e.target.value)}
+                            className="zoom-slider"
+                        />
+                        <button onClick={() => setShowCropper(false)} className="cancel-crop-button">
+                            Cancel
+                        </button>
+                        <button onClick={handleCropAndUpload} className="crop-upload-button">
+                            Crop & Upload
+                        </button>
+                    </div>
+                </div>,
+                document.body
+            )}
         </>
     );
 };
