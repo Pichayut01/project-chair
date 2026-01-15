@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, select: false },
     displayName: { type: String },
     photoURL: { type: String },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
     uid: { type: String, unique: true, sparse: true, default: null },
     createdClasses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Class' }],
     enrolledClasses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Class' }],

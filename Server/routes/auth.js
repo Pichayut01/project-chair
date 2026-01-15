@@ -3,12 +3,13 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
+const { authLimiter, loginHistoryLimiter, activeSessionsLimiter } = require('../middleware/rateLimiter');
 
 // Auth Routes
-router.post('/google-login-verify', authController.googleLoginVerify);
-router.post('/register', authController.register);
-router.post('/login', authController.login);
-router.post('/forgot-password', authController.forgotPassword);
+router.post('/google-login-verify', authLimiter, authController.googleLoginVerify);
+router.post('/register', authLimiter, authController.register);
+router.post('/login', authLimiter, authController.login);
+router.post('/forgot-password', authLimiter, authController.forgotPassword);
 router.get('/reset-token-info/:token', authController.getResetTokenInfo);
 router.post('/reset-password/:token', authController.resetPassword);
 
@@ -17,8 +18,8 @@ router.get('/me', authMiddleware, authController.getMe);
 router.put('/change-password', authMiddleware, authController.changePassword);
 router.post('/2fa/toggle', authMiddleware, authController.toggle2FA);
 router.post('/2fa/verify', authMiddleware, authController.verify2FA);
-router.get('/login-history', authMiddleware, authController.getLoginHistory);
-router.get('/active-sessions', authMiddleware, authController.getActiveSessions);
+router.get('/login-history', authMiddleware, loginHistoryLimiter, authController.getLoginHistory);
+router.get('/active-sessions', authMiddleware, activeSessionsLimiter, authController.getActiveSessions);
 router.delete('/sessions/:sessionId', authMiddleware, authController.terminateSession);
 
 // Profile

@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const createLogger = require('../utils/logger');
+const { formatLoginInfo } = require('../utils/loginTracking');
 const logger = createLogger('AuthController');
 
 exports.googleLoginVerify = async (req, res) => {
@@ -56,13 +57,44 @@ exports.googleLoginVerify = async (req, res) => {
             }
         }
 
+        // Get detailed login info
+        const loginInfo = formatLoginInfo(req);
+
+        // Save login history with detailed information
+        await LoginHistory.create({
+            userId: user._id,
+            action: 'login',
+            ipAddress: loginInfo.ip,
+            location: loginInfo.location,
+            device: {
+                type: loginInfo.userAgent.device.type,
+                vendor: loginInfo.userAgent.device.vendor,
+                model: loginInfo.userAgent.device.model,
+                icon: loginInfo.deviceIcon,
+            },
+            browser: {
+                name: loginInfo.userAgent.browser.name,
+                version: loginInfo.userAgent.browser.version,
+                icon: loginInfo.browserIcon,
+            },
+            os: {
+                name: loginInfo.userAgent.os.name,
+                version: loginInfo.userAgent.os.version,
+            },
+            userAgent: req.get('User-Agent'),
+            success: true,
+        });
+
+        logger.info(`Google login successful for ${email} from ${loginInfo.location.city}, ${loginInfo.location.country} (${loginInfo.userAgent.device.type})`);
+
         const payload = {
             user: {
                 id: user.id,
                 email: user.email,
                 displayName: user.displayName,
                 photoURL: user.photoURL,
-                uid: user.uid
+                uid: user.uid,
+                role: user.role || 'user'
             },
         };
 
@@ -128,12 +160,21 @@ exports.register = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        // Check if this is the first user - make them admin
+        const userCount = await User.countDocuments();
+        const isFirstUser = userCount === 0;
+
+        if (isFirstUser) {
+            logger.info('First user registration - assigning admin role');
+        }
+
         user = new User({
             email: normalizedEmail,
             password: hashedPassword,
             displayName: displayName || normalizedEmail.split('@')[0],
             photoURL: null,
-            uid: new mongoose.Types.ObjectId().toString()
+            uid: new mongoose.Types.ObjectId().toString(),
+            role: isFirstUser ? 'admin' : 'user'
         });
 
         await user.save();
@@ -144,7 +185,8 @@ exports.register = async (req, res) => {
                 email: user.email,
                 displayName: user.displayName,
                 photoURL: user.photoURL,
-                uid: user.uid
+                uid: user.uid,
+                role: user.role
             },
         };
 
@@ -185,7 +227,7 @@ exports.login = async (req, res) => {
     const { email, password, otpCode } = req.body;
 
     try {
-        let user = await User.findOne({ email }).select('+password +twoFactorEnabled +loginOtpCode +loginOtpExpires');
+        let user = await User.findOne({ email }).select('+password +twoFactorEnabled +loginOtpCode +loginOtpExpires +role');
         if (!user) {
             return res.status(400).json({ msg: 'Invalid Credentials.' });
         }
@@ -245,12 +287,38 @@ exports.login = async (req, res) => {
             }
         }
 
-        await LoginHistory.create({
-            userId: user._id,
-            action: 'login',
-            ipAddress: req.ip || req.connection.remoteAddress,
-            userAgent: req.get('User-Agent')
-        });
+        // Get detailed login info
+        const loginInfo = formatLoginInfo(req);
+
+        // Save login history with detailed information (non-blocking)
+        try {
+            await LoginHistory.create({
+                userId: user._id,
+                action: 'login',
+                ipAddress: loginInfo.ip,
+                location: loginInfo.location,
+                device: {
+                    type: loginInfo.userAgent.device.type,
+                    vendor: loginInfo.userAgent.device.vendor,
+                    model: loginInfo.userAgent.device.model,
+                    icon: loginInfo.deviceIcon,
+                },
+                browser: {
+                    name: loginInfo.userAgent.browser.name,
+                    version: loginInfo.userAgent.browser.version,
+                    icon: loginInfo.browserIcon,
+                },
+                os: {
+                    name: loginInfo.userAgent.os.name,
+                    version: loginInfo.userAgent.os.version,
+                },
+                userAgent: req.get('User-Agent'),
+                success: true,
+            });
+        } catch (historyError) {
+            logger.error('Failed to save login history:', { message: historyError.message, stack: historyError.stack });
+            // Don't fail login if history logging fails
+        }
 
         const payload = {
             user: {
@@ -259,6 +327,7 @@ exports.login = async (req, res) => {
                 displayName: user.displayName,
                 photoURL: user.photoURL,
                 uid: user.uid,
+                role: user.role || 'user',
                 twoFactorEnabled: user.twoFactorEnabled
             },
         };
@@ -273,8 +342,8 @@ exports.login = async (req, res) => {
             }
         );
     } catch (err) {
-        logger.error('Login error:', err.message);
-        res.status(500).send('Server error');
+        logger.error('Login error:', err.message, { stack: err.stack });
+        res.status(500).json({ msg: 'Server error during login' });
     }
 };
 

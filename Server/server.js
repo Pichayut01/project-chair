@@ -11,6 +11,7 @@ const logger = createLogger('Server');
 const httpLogger = require('./middleware/httpLogger');
 const chalk = require('chalk'); // For status monitoring colors
 const figlet = require('figlet'); // ASCII art banner
+const { startHealthCheck } = require('./utils/healthCheck');
 
 // Display ASCII Art Banner
 console.log(chalk.green(figlet.textSync('Echair Server', {
@@ -35,12 +36,13 @@ const port = process.env.PORT || 5000;
 // Initialize Socket.IO
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:3001", "http://localhost:3000"],
-        methods: ["GET", "POST"],
-        credentials: true
+        origin: "*", // Allow all origins (for Admin Panel local file access)
+        methods: ["GET", "POST"]
     }
 });
 
+// Enable Real-time Logger Streaming
+createLogger.setSocketInstance(io);
 logger.info('Socket.IO server initialized with CORS settings');
 
 // Middleware
@@ -58,28 +60,18 @@ logger.debug('Static files serving enabled for /uploads');
 
 // Routes
 logger.info('Registering API routes...');
+app.use('/api', require('./routes/health')); // Health check endpoints
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/classrooms', require('./routes/classrooms'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/presets', require('./routes/presets'));
+app.use('/api/admin', require('./routes/admin'));
 logger.success('All API routes registered successfully');
 
 // Socket Handler
+logger.info('Setting up Socket.IO event handlers...');
 require('./socket/socketHandler')(io);
 logger.success('Socket.IO event handlers registered');
-
-// Health Check
-app.get('/api/health', (req, res) => {
-    const uptime = process.uptime();
-    const healthData = {
-        status: 'ok',
-        timestamp: new Date(),
-        uptime: `${Math.floor(uptime / 60)}m ${Math.floor(uptime % 60)}s`,
-        environment: process.env.NODE_ENV || 'development'
-    };
-    logger.debug('Health check requested', healthData);
-    res.json(healthData);
-});
 
 // Error handling for uncaught exceptions
 process.on('uncaughtException', (error) => {
@@ -137,4 +129,8 @@ server.listen(port, () => {
     // Start status monitoring
     logger.info(chalk.cyan('[STATUS]') + ' Starting server status monitoring (every 5 seconds)...');
     startStatusMonitoring();
+
+    // Start health check monitoring (every 10 seconds)
+    logger.info(chalk.cyan('[HEALTH]') + ' Starting health check monitoring (every 10 seconds)...');
+    startHealthCheck();
 });

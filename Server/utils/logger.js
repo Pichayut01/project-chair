@@ -111,7 +111,9 @@ const summarizeData = (data) => {
     return chalk.gray(dataStr.substring(0, 80) + '...');
 };
 
-// Simple console-based logger
+// Socket.IO instance
+let socketIo = null;
+
 const createLogger = (moduleName) => {
     // Get color for this module, default to cyan if not defined
     const moduleColor = moduleColors[moduleName] || chalk.cyan.bold;
@@ -127,12 +129,22 @@ const createLogger = (moduleName) => {
 
         // File output (plain text, no ANSI codes)
         const plainMsg = stripAnsi(msg);
-        winstonLogger.log({
+        const logEntry = {
             level: level,
             module: moduleName,
             message: plainMsg,
             data: data || {}
-        });
+        };
+
+        winstonLogger.log(logEntry);
+
+        // Real-time Socket.IO emission (if configured)
+        if (socketIo) {
+            socketIo.to('admins').emit('system_log', {
+                timestamp: new Date().toISOString(),
+                ...logEntry
+            });
+        }
     };
 
     return {
@@ -182,7 +194,7 @@ const createLogger = (moduleName) => {
 
             const statusSymbol = status >= 500 ? logSymbols.error :
                 status >= 400 ? logSymbols.warning :
-                    logSymbols.success;
+                    status >= 200 ? logSymbols.success : logSymbols.info;
 
             const timestamp = getTimestamp();
             const consoleOutput = `${timestamp} ${modulePrefix} ${statusSymbol} ${methodColor(method.padEnd(7))} ${url.padEnd(40)} ${statusColor(status)} ${chalk.gray(`[${duration}ms]`)}`;
@@ -190,12 +202,22 @@ const createLogger = (moduleName) => {
 
             // File output
             const level = status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info';
-            winstonLogger.log({
+            const logEntry = {
                 level: level,
                 module: moduleName,
                 message: `HTTP ${method} ${url}`,
                 data: { method, url, status, duration }
-            });
+            };
+
+            winstonLogger.log(logEntry);
+
+            // Real-time Socket.IO emission
+            if (socketIo) {
+                socketIo.to('admins').emit('system_log', {
+                    timestamp: new Date().toISOString(),
+                    ...logEntry
+                });
+            }
         },
 
         socket: (event, data) => {
@@ -204,11 +226,21 @@ const createLogger = (moduleName) => {
             console.log(`${timestamp} ${modulePrefix} ${chalk.magenta('⚡')} ${chalk.yellow(event)} ${summary}`);
 
             // File output
-            winstonLogger.info({
+            const logEntry = {
                 module: moduleName,
                 message: `Socket event: ${event}`,
                 data: data || {}
-            });
+            };
+            winstonLogger.info(logEntry);
+
+            // Real-time Socket.IO emission
+            if (socketIo) {
+                socketIo.to('admins').emit('system_log', {
+                    timestamp: new Date().toISOString(),
+                    level: 'info',
+                    ...logEntry
+                });
+            }
         },
 
         db: (operation, collection, details) => {
@@ -217,11 +249,21 @@ const createLogger = (moduleName) => {
             console.log(`${timestamp} ${modulePrefix} ${chalk.blue('💾')} ${operation}: ${chalk.cyan(collection)}${detailsStr}`);
 
             // File output
-            winstonLogger.info({
+            const logEntry = {
                 module: moduleName,
                 message: `DB ${operation}: ${collection}`,
                 data: details || {}
-            });
+            };
+            winstonLogger.info(logEntry);
+
+            // Real-time Socket.IO emission
+            if (socketIo) {
+                socketIo.to('admins').emit('system_log', {
+                    timestamp: new Date().toISOString(),
+                    level: 'info',
+                    ...logEntry
+                });
+            }
         },
 
         auth: (action, user, status) => {
@@ -231,14 +273,28 @@ const createLogger = (moduleName) => {
 
             // File output
             const level = status === 'success' ? 'info' : 'warn';
-            winstonLogger.log({
+            const logEntry = {
                 level: level,
                 module: moduleName,
                 message: `Auth ${action}: ${user}`,
                 data: { action, user, status }
-            });
+            };
+            winstonLogger.log(logEntry);
+
+            // Real-time Socket.IO emission
+            if (socketIo) {
+                socketIo.to('admins').emit('system_log', {
+                    timestamp: new Date().toISOString(),
+                    ...logEntry
+                });
+            }
         }
     };
+};
+
+// Export method to set socket instance
+createLogger.setSocketInstance = (io) => {
+    socketIo = io;
 };
 
 module.exports = createLogger;

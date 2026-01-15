@@ -349,8 +349,11 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
     const [showChangePassword, setShowChangePassword] = useState(false);
     const [show2FAVerification, setShow2FAVerification] = useState(false);
 
+    const [historyLoading, setHistoryLoading] = useState(false);
+
     // Fetch security data
-    const fetchLoginHistory = async () => {
+    const fetchLoginHistory = useCallback(async () => {
+        setHistoryLoading(true);
         try {
             const response = await fetch(`${API_BASE_URL}/api/auth/login-history`, {
                 headers: { 'x-auth-token': user.token }
@@ -361,10 +364,12 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
             }
         } catch (error) {
             console.error('Error fetching login history:', error);
+        } finally {
+            setHistoryLoading(false);
         }
-    };
+    }, [user.token]);
 
-    const fetchActiveSessions = async () => {
+    const fetchActiveSessions = useCallback(async () => {
         try {
             const response = await fetch(`${API_BASE_URL}/api/auth/active-sessions`, {
                 headers: { 'x-auth-token': user.token }
@@ -376,7 +381,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
         } catch (error) {
             console.error('Error fetching active sessions:', error);
         }
-    };
+    }, [user.token]);
 
     // Change password
     const handleChangePassword = async (e) => {
@@ -626,12 +631,15 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                     <button
                         className="refresh-btn"
                         onClick={fetchLoginHistory}
+                        disabled={historyLoading}
                     >
-                        Refresh
+                        {historyLoading ? 'Loading...' : 'Refresh'}
                     </button>
                 </div>
                 <div className="history-list">
-                    {loginHistory.length > 0 ? (
+                    {historyLoading ? (
+                        <p className="loading-text">Loading history...</p>
+                    ) : loginHistory.length > 0 ? (
                         loginHistory.map((entry, index) => (
                             <div key={index} className="history-item">
                                 <div className="history-info">
@@ -641,7 +649,35 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                                     </span>
                                 </div>
                                 <div className="history-details">
-                                    <span className="history-ip">{entry.ipAddress}</span>
+                                    <div className="history-location-info">
+                                        {entry.location?.city || entry.location?.country ? (
+                                            <span className="history-location">
+                                                📍 {entry.location?.city ? `${entry.location.city}, ` : ''}{entry.location?.country || 'Unknown'}
+                                            </span>
+                                        ) : (
+                                            <span className="history-location">📍 Location unavailable</span>
+                                        )}
+                                        <span className="history-ip">{entry.ipAddress || 'N/A'}</span>
+                                    </div>
+                                    {(entry.device || entry.browser) && (
+                                        <div className="history-device-info">
+                                            {entry.device?.icon && (
+                                                <span className="device-icon" title={entry.device?.type || 'Device'}>
+                                                    {entry.device.icon} {entry.device?.type || ''}
+                                                </span>
+                                            )}
+                                            {entry.browser?.icon && (
+                                                <span className="browser-icon" title={entry.browser?.name || 'Browser'}>
+                                                    {entry.browser.icon} {entry.browser?.name || ''}
+                                                </span>
+                                            )}
+                                            {entry.os?.name && (
+                                                <span className="os-info" title="Operating System">
+                                                    {entry.os.name}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))
