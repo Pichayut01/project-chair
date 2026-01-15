@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../component/Navbar';
+import Navbar from '../components/Navbar';
 import '../CSS/AppSettings.css';
 import '../CSS/Main.css';
 import { FiSettings, FiDatabase, FiShield, FiBell, FiUsers, FiGlobe, FiHelpCircle } from 'react-icons/fi';

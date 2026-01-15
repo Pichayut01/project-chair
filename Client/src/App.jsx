@@ -1,6 +1,6 @@
 // src/App.js
 
-import Loader from './component/Loader';
+import Loader from './components/Loader';
 import ErrorPage from './pages/ErrorPage';
 import React, { useState, useEffect, lazy, Suspense, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
@@ -20,7 +20,7 @@ const ClassDetailPage = lazy(() => import('./pages/ClassDetailPage')); // ✨ Ad
 const AppSettingsPage = lazy(() => import('./pages/AppSettingsPage')); // ✨ Add App Settings Page
 const PrivateClassroomPage = lazy(() => import('./pages/PrivateClassroomPage')); // ✨ Add Private Classroom Page
 const ClassroomErrorPage = lazy(() => import('./pages/ClassroomErrorPage')); // ✨ Add Classroom Error Page
-const Layout = lazy(() => import('./component/Layout')); // ✨ Add Layout component
+const Layout = lazy(() => import('./components/Layout')); // ✨ Add Layout component
 
 const backendUrl = 'http://localhost:5000/api/auth';
 
@@ -141,9 +141,9 @@ function App() {
     return (
         <Router>
             <Suspense fallback={<Loader />}>
-                <AppRoutes 
-                    user={user} 
-                    onLoginSuccess={handleLoginSuccess} 
+                <AppRoutes
+                    user={user}
+                    onLoginSuccess={handleLoginSuccess}
                     handleSignOut={handleSignOut}
                     updateUserProfile={updateUserProfile}
                     isSidebarOpen={isSidebarOpen}
@@ -172,7 +172,7 @@ function AppRoutes({ user, onLoginSuccess, handleSignOut, updateUserProfile, isS
             <Routes>
                 <Route
                     path="/login"
-                    element={user ? <Navigate to="/" /> : 
+                    element={user ? <Navigate to="/" /> :
                         <Layout user={null} handleSignOut={handleSignOut} classrooms={[]} isLoginPage={true} onAddNotification={onAddNotification}>
                             <LoginPage onLoginSuccess={onLoginSuccess} />
                         </Layout>
@@ -180,7 +180,7 @@ function AppRoutes({ user, onLoginSuccess, handleSignOut, updateUserProfile, isS
                 />
                 <Route
                     path="/reset-password/:token"
-                    element={user ? <Navigate to="/" /> : 
+                    element={user ? <Navigate to="/" /> :
                         <Layout user={null} handleSignOut={handleSignOut} classrooms={[]} isLoginPage={true} onAddNotification={onAddNotification}>
                             <ResetPasswordPage />
                         </Layout>
@@ -188,7 +188,7 @@ function AppRoutes({ user, onLoginSuccess, handleSignOut, updateUserProfile, isS
                 />
                 <Route
                     path="/otp-verification"
-                    element={user ? <Navigate to="/" /> : 
+                    element={user ? <Navigate to="/" /> :
                         <OtpVerificationPage onLogin={onLoginSuccess} />
                     }
                 />

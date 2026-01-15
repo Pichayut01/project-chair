@@ -9,7 +9,7 @@ import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import Loader from "../component/Loader"; 
+import Loader from "../components/Loader";
 
 const backendUrl = "http://localhost:5000/api/auth";
 const MySwal = withReactContent(Swal);
@@ -37,7 +37,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
   const handleModeSwitch = (mode) => {
     setIsRegisterMode(mode);
     setAnimationKey(prev => prev + 1);
-  }; 
+  };
 
   useEffect(() => {
     setPasswordsMatch(password === confirmPassword && confirmPassword !== "");
@@ -52,7 +52,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
       number: /\d/.test(pwd),
       special: /[!@#$%^&*(),.?":{}|<>]/.test(pwd)
     };
-    
+
     const score = Object.values(requirements).filter(Boolean).length;
     return { requirements, score, isValid: score >= 4 };
   };
@@ -73,12 +73,12 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
 
       localStorage.setItem("authToken", token);
       localStorage.setItem("userProfile", JSON.stringify(user));
-      
+
       // Ensure photoURL is properly stored for Google login
       if (user.photoURL) {
         localStorage.setItem("userPhotoURL", user.photoURL);
       }
-      
+
       MySwal.fire({
         title: "Success!",
         text: isNewUser ? "Account created and logged in with Google successfully!" : "Login with Google successful.",
@@ -102,7 +102,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
 
   const handleManualLogin = async (e) => {
     e.preventDefault();
-    
+
     // Client-side validation
     if (!email || !password) {
       MySwal.fire({
@@ -147,7 +147,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
 
       localStorage.setItem("authToken", token);
       localStorage.setItem("userProfile", JSON.stringify(user));
-      
+
       // Ensure photoURL is properly stored for manual login
       if (user.photoURL) {
         localStorage.setItem("userPhotoURL", user.photoURL);
@@ -177,7 +177,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
 
   const handleManualRegister = async (e) => {
     e.preventDefault();
-    
+
     // Client-side validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -224,10 +224,10 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
         displayName: displayName.trim(),
       });
       const { token, user } = response.data;
-      
+
       localStorage.setItem("authToken", token);
       localStorage.setItem("userProfile", JSON.stringify(user));
-      
+
       // Ensure photoURL is properly stored for registration
       if (user.photoURL) {
         localStorage.setItem("userPhotoURL", user.photoURL);
@@ -257,7 +257,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-    
+
     if (!forgotPasswordEmail) {
       MySwal.fire({
         icon: "error",
@@ -301,7 +301,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
 
     } catch (error) {
       console.error("Forgot password error:", error);
-      
+
       let errorMessage = "An error occurred while sending the reset email.";
       if (error.response?.data?.msg) {
         errorMessage = error.response.data.msg;
@@ -361,10 +361,10 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   placeholder="your@email.com"
                 />
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="registerPassword">
-                  Password 
+                  Password
                   <span className="password-hint">(min 8 chars, mixed case, numbers, symbols)</span>
                 </label>
                 <div className="password-input-container">
@@ -385,12 +385,12 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
-                
+
                 {/* Simplified Password Strength Indicator */}
                 {password && (
                   <div className="password-strength-simple">
                     <div className="strength-bar">
-                      <div 
+                      <div
                         className={`strength-fill strength-${passwordValidation.score}`}
                         style={{ width: `${(passwordValidation.score / 5) * 100}%` }}
                       ></div>
@@ -398,15 +398,15 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                     <div className="strength-info">
                       <span className="strength-text">
                         {passwordValidation.score <= 2 ? 'Weak' :
-                         passwordValidation.score <= 3 ? 'Fair' :
-                         passwordValidation.score <= 4 ? 'Good' : 'Strong'}
+                          passwordValidation.score <= 3 ? 'Fair' :
+                            passwordValidation.score <= 4 ? 'Good' : 'Strong'}
                       </span>
                       <span className="strength-score">{passwordValidation.score}/5</span>
                     </div>
                   </div>
                 )}
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="confirmPassword">Confirm Password</label>
                 <div className="password-input-container">
@@ -427,7 +427,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                     {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
-                
+
                 {/* Simplified Password Match Indicator */}
                 {confirmPassword && (
                   <div className={`match-status-simple ${passwordsMatch ? 'match' : 'no-match'}`}>
@@ -435,7 +435,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   </div>
                 )}
               </div>
-              
+
               {/* Terms and Conditions Checkbox */}
               <div className="terms-checkbox-container">
                 <label className="terms-checkbox-label">
@@ -456,7 +456,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   </button>
                 </label>
               </div>
-              
+
               <button type="submit" className="submit-button" disabled={!acceptTerms || isRegisterLoading}>
                 {isRegisterLoading ? "Registering..." : "Register"}
               </button>
@@ -495,7 +495,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Forgot Password Link */}
               <div className="forgot-password-link">
                 <button
@@ -506,7 +506,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   Forgot Password?
                 </button>
               </div>
-              
+
               <button type="submit" className="submit-button" disabled={isLoginLoading}>
                 {isLoginLoading ? "Logging in..." : "Login"}
               </button>
@@ -514,7 +514,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
           )}
         </div>
 
-        
+
 
         <div className="google-login">
           <button onClick={handleGoogleSignIn} className="google-login-button">
@@ -526,14 +526,14 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
           </button>
         </div>
       </div>
-      
+
       {/* Terms and Conditions Modal */}
       {showTermsModal && (
         <div className="modal-overlay" onClick={() => setShowTermsModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Terms and Conditions</h3>
-              <button 
+              <button
                 className="modal-close"
                 onClick={() => setShowTermsModal(false)}
               >
@@ -543,24 +543,24 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
             <div className="modal-body">
               <h4>1. Acceptance of Terms</h4>
               <p>By using this service, you agree to be bound by these Terms and Conditions.</p>
-              
+
               <h4>2. User Accounts</h4>
               <p>You are responsible for maintaining the confidentiality of your account credentials.</p>
-              
+
               <h4>3. Privacy Policy</h4>
               <p>We respect your privacy and handle your data according to our Privacy Policy.</p>
-              
+
               <h4>4. Prohibited Uses</h4>
               <p>You may not use this service for any unlawful or prohibited activities.</p>
-              
+
               <h4>5. Limitation of Liability</h4>
               <p>We are not liable for any damages arising from your use of this service.</p>
-              
+
               <h4>6. Changes to Terms</h4>
               <p>We reserve the right to modify these terms at any time.</p>
             </div>
             <div className="modal-footer">
-              <button 
+              <button
                 className="modal-accept-btn"
                 onClick={() => {
                   setAcceptTerms(true);
@@ -569,7 +569,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
               >
                 Accept Terms
               </button>
-              <button 
+              <button
                 className="modal-cancel-btn"
                 onClick={() => setShowTermsModal(false)}
               >
@@ -586,7 +586,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Reset Password</h3>
-              <button 
+              <button
                 className="modal-close"
                 onClick={() => setShowForgotPasswordModal(false)}
               >
@@ -610,14 +610,14 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                 </div>
               </div>
               <div className="modal-footer">
-                <button 
+                <button
                   type="submit"
                   className="modal-accept-btn"
                   disabled={isForgotPasswordLoading}
                 >
                   {isForgotPasswordLoading ? "Sending..." : "Send Reset Link"}
                 </button>
-                <button 
+                <button
                   type="button"
                   className="modal-cancel-btn"
                   onClick={() => setShowForgotPasswordModal(false)}

@@ -5,11 +5,11 @@ import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../utils/cropImage';
 import '../CSS/GoogleAccount.css';
-import nullUserPhoto from '../image/nulluser.png';
-import Navbar from '../component/Navbar'
+
+import Navbar from '../components/Navbar'
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
-import { getProfileImageSrc, getCurrentUserProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
+import { getProfileImageSrc, getCurrentUserProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, toggleSidebar }) => {
@@ -730,7 +730,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
             fetchLoginHistory();
             fetchActiveSessions();
         }
-    }, [activeSection]);
+    }, [activeSection, fetchActiveSessions, fetchLoginHistory]);
 
     return (
         <>

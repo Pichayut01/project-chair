@@ -4,15 +4,15 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import Navbar from '../component/Navbar';
-import Loader from '../component/Loader';
+import Navbar from '../components/Navbar';
+import Loader from '../components/Loader';
 import '../CSS/EditClassroomPage.css';
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
 import '../CSS/ClassroomPage.css';
 import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
-import Chair from '../component/Chair';
-import ChairPresets from '../component/ChairPresets';
+import Chair from '../components/Chair';
+import ChairPresets from '../components/ChairPresets';
 import { FaPalette, FaUsers, FaEllipsisH, FaChair, FaTh, FaRandom, FaBars, FaThLarge, FaArrowUp, FaArrowDown, FaUserSlash, FaCopy, FaCheck, FaCrown, FaUserGraduate, FaSpinner, FaSave } from 'react-icons/fa';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';

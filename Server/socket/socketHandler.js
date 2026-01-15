@@ -1,19 +1,23 @@
 const Class = require('../models/Class');
+const createLogger = require('../utils/logger');
+const logger = createLogger('Socket.IO');
 
 module.exports = (io) => {
+    logger.info('Setting up Socket.IO event handlers...');
     io.on('connection', (socket) => {
-        console.log('User connected:', socket.id);
+        logger.success(`Client connected: ${socket.id}`);
 
         // Join classroom room
         socket.on('join-classroom', (data) => {
             const { classId, userId, userName } = data;
             socket.join(classId);
-            console.log(`User ${userName} (${userId}) joined classroom ${classId}`);
+            logger.socket('join-classroom', { classId, userId, userName });
+            logger.info(`User ${userName} joined classroom ${classId}`);
         });
 
         // Handle score updates
         socket.on('update-score', (data) => {
-            console.log('Score update received:', data);
+            logger.socket('update-score', data);
             const { classId, studentId, newScore, presetName, studentName, updatedBy, timestamp } = data;
 
             // Emit to all users in the classroom
@@ -29,7 +33,7 @@ module.exports = (io) => {
 
         // Handle broadcast score updates
         socket.on('broadcast-score-update', (data) => {
-            console.log('Broadcasting score update:', data);
+            logger.socket('broadcast-score-update', data);
             const { classId } = data;
 
             // Broadcast to all users in the classroom including sender
@@ -38,7 +42,7 @@ module.exports = (io) => {
 
         // Handle chair seating updates
         socket.on('chair-seating-update', (data) => {
-            console.log('Chair seating update received:', data);
+            logger.socket('chair-seating-update', data);
             const { classId, chairId, assignedUsers, action, userName, updatedBy, timestamp } = data;
 
             // Emit to all users in the classroom except sender
@@ -54,7 +58,7 @@ module.exports = (io) => {
 
         // Handle chair movement updates
         socket.on('chair-movement-update', (data) => {
-            console.log('Chair movement update received:', data);
+            logger.socket('chair-movement-update', data);
             const { classId, chairPositions, movedChairId, updatedBy, timestamp } = data;
 
             // Emit to all users in the classroom except sender
@@ -68,7 +72,7 @@ module.exports = (io) => {
 
         // Handle chair group updates
         socket.on('chair-group-update', (data) => {
-            console.log('Chair group update received:', data);
+            logger.socket('chair-group-update', data);
             const { classId, chairGroups, updatedBy, timestamp } = data;
 
             // Emit to all users in the classroom except sender
@@ -108,7 +112,7 @@ module.exports = (io) => {
                     timestamp
                 });
             } catch (error) {
-                console.error('❌ Error saving chat message:', error);
+                logger.error('Error saving chat message:', error);
                 // Still broadcast even if save fails
                 io.to(classId).emit('chat-message-received', {
                     message,
@@ -122,7 +126,7 @@ module.exports = (io) => {
 
         // ✨ Handle chat messages
         socket.on('chat-message', async (data) => {
-            console.log('Chat message received:', data);
+            logger.socket('chat-message', { user: data.senderName, message: data.message.substring(0, 50) });
             const { classId, message, senderId, senderName, senderPhoto, timestamp } = data;
             await saveAndBroadcastChat(classId, message, senderId, senderName, senderPhoto, timestamp);
         });
@@ -131,7 +135,7 @@ module.exports = (io) => {
 
         // ✨ Handle Raise Hand
         socket.on('raise-hand', async (data) => {
-            console.log('Raise hand received:', data);
+            logger.socket('raise-hand', { user: data.userName, isRaised: data.isRaised });
             const { classId, userId, isRaised, userName, userPhoto } = data; // Added userPhoto
 
             // Broadcast to all users in the classroom (including sender, to confirm)
@@ -149,7 +153,7 @@ module.exports = (io) => {
 
         // ✨ Handle Emoji
         socket.on('send-emoji', async (data) => {
-            console.log('Emoji received:', data);
+            logger.socket('send-emoji', { user: data.userName, emoji: data.emoji });
             const { classId, userId, emoji, userName, userPhoto } = data; // Added userPhoto
 
             // Broadcast to all users in the classroom (including sender for confirmation/sync)
@@ -166,7 +170,7 @@ module.exports = (io) => {
 
         // ✨ Handle adding classroom events
         socket.on('add-classroom-event', async (data) => {
-            console.log('Add classroom event received:', data);
+            logger.socket('add-classroom-event', { classId: data.classId, eventType: data.event.type });
             const { classId, event } = data;
 
             try {
@@ -184,7 +188,7 @@ module.exports = (io) => {
                 // Broadcast to all users in the classroom
                 io.to(classId).emit('classroom-event-added', event);
             } catch (error) {
-                console.error('❌ Error saving classroom event:', error);
+                logger.error('Error saving classroom event:', error);
                 // Still broadcast for UI responsiveness
                 io.to(classId).emit('classroom-event-added', event);
             }
@@ -193,7 +197,7 @@ module.exports = (io) => {
 
         // ✨ Handle triggering classroom events (e.g., Random Student)
         socket.on('trigger-classroom-event', async (data) => {
-            console.log('Trigger classroom event received:', data);
+            logger.socket('trigger-classroom-event', { eventId: data.eventId });
             const { classId, eventId, updates } = data;
 
             try {
@@ -216,7 +220,7 @@ module.exports = (io) => {
                 io.to(classId).emit('classroom-event-triggered', { eventId, updates });
 
             } catch (error) {
-                console.error('❌ Error triggering classroom event:', error);
+                logger.error('Error triggering classroom event:', error);
                 // Still broadcast for UI responsiveness
                 io.to(classId).emit('classroom-event-triggered', { eventId, updates });
             }
@@ -224,7 +228,7 @@ module.exports = (io) => {
 
         // ✨ Handle deleting classroom events
         socket.on('delete-classroom-event', async (data) => {
-            console.log('Delete classroom event received:', data);
+            logger.socket('delete-classroom-event', { eventId: data.eventId });
             const { classId, eventId } = data;
 
             try {
@@ -241,15 +245,15 @@ module.exports = (io) => {
 
                 // Broadcast deletion to all users in the classroom
                 io.to(classId).emit('classroom-event-deleted', { eventId });
-                console.log(`✅ Event ${eventId} deleted from class ${classId}`);
+                logger.success(`Event ${eventId} deleted from class ${classId}`);
             } catch (error) {
-                console.error('❌ Error deleting classroom event:', error);
+                logger.error('Error deleting classroom event:', error);
             }
         });
 
         // ✨ Handle Answer Submission
         socket.on('submit-event-answer', async (data) => {
-            console.log('Submit event answer received:', data);
+            logger.socket('submit-event-answer', { eventId: data.eventId, answer: data.answer });
             const { classId, eventId, answer } = data;
 
             try {
@@ -279,16 +283,16 @@ module.exports = (io) => {
                     updates: { results: updatedEvent.results }
                 });
 
-                console.log(`✅ Answer added to event ${eventId}`);
+                logger.success(`Answer added to event ${eventId}`);
 
             } catch (error) {
-                console.error('❌ Error submitting answer:', error);
+                logger.error('Error submitting answer:', error);
             }
         });
 
         // ✨ Handle Raise Hand
         socket.on('raise-hand', (data) => {
-            console.log('Raise hand received:', data);
+            logger.socket('raise-hand [duplicate]', { user: data.userName });
             const { classId, userId, isRaised, userName } = data;
 
             // Broadcast to all users in the classroom (including sender, to confirm)
@@ -301,7 +305,7 @@ module.exports = (io) => {
 
         // ✨ Handle Emoji
         socket.on('send-emoji', (data) => {
-            console.log('Emoji received:', data);
+            logger.socket('send-emoji [duplicate]', { user: data.userName });
             const { classId, userId, emoji, userName } = data;
 
             // Broadcast to all users in the classroom (including sender for confirmation/sync)
@@ -314,7 +318,7 @@ module.exports = (io) => {
         });
 
         socket.on('disconnect', () => {
-            console.log('User disconnected:', socket.id);
+            logger.warn(`Client disconnected: ${socket.id}`);
         });
     });
 };

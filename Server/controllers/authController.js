@@ -9,9 +9,11 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
+const createLogger = require('../utils/logger');
+const logger = createLogger('AuthController');
 
 exports.googleLoginVerify = async (req, res) => {
-    console.log('Google login verification request received');
+    logger.info('Processing Google login verification...');
     const { idToken } = req.body;
 
     if (!idToken) {
@@ -21,7 +23,7 @@ exports.googleLoginVerify = async (req, res) => {
     try {
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const { uid, email, picture, name } = decodedToken;
-        console.log('Google token verified for user:', email);
+        logger.success(`Google token verified for user: ${email}`);
 
         let user = await User.findOne({ email });
         let isNewUser = false;
@@ -78,7 +80,7 @@ exports.googleLoginVerify = async (req, res) => {
             }
         );
     } catch (error) {
-        console.error("Error verifying Google token:", error);
+        logger.error(`Google authentication error:`, error);
         if (error.code === 'auth/id-token-expired') {
             res.status(401).json({ msg: 'Google token has expired. Please sign in again.' });
         } else if (error.code === 'auth/invalid-id-token') {
@@ -160,14 +162,14 @@ exports.register = async (req, res) => {
             }
         );
     } catch (err) {
-        console.error('Registration error:', err);
+        logger.error('User registration error:', err);
         try {
             const fs = require('fs');
             const path = require('path');
             const logPath = path.join(__dirname, '../server_error.log');
             fs.appendFileSync(logPath, `${new Date().toISOString()} - Registration Error: ${err.stack || err}\n`);
         } catch (logErr) {
-            console.error('Failed to write log:', logErr);
+            logger.error('Failed to write error log:', logErr);
         }
         if (err.code === 11000) {
             if (err.keyPattern && err.keyPattern.email) {
@@ -271,7 +273,7 @@ exports.login = async (req, res) => {
             }
         );
     } catch (err) {
-        console.error(err.message);
+        logger.error('Login error:', err.message);
         res.status(500).send('Server error');
     }
 };
@@ -310,7 +312,7 @@ exports.forgotPassword = async (req, res) => {
         await transporter.sendMail(mailOptions);
         res.json({ msg: 'If an account with that email exists, we have sent a password reset link.' });
     } catch (err) {
-        console.error('Forgot password error:', err);
+        logger.error('Forgot password error:', err);
         res.status(500).json({ msg: 'Server error', error: err.message });
     }
 };
@@ -331,7 +333,7 @@ exports.getResetTokenInfo = async (req, res) => {
 
         res.json({ email: user.email, username: user.displayName });
     } catch (error) {
-        console.error('Error fetching user info from token:', error);
+        logger.error('Error fetching reset token info:', error);
         res.status(500).json({ msg: 'Server error' });
     }
 };
@@ -360,7 +362,7 @@ exports.resetPassword = async (req, res) => {
 
         res.json({ msg: 'Password has been reset successfully.' });
     } catch (err) {
-        console.error('Reset password error:', err);
+        logger.error('Reset password error:', err);
         res.status(500).json({ msg: 'Server error', error: err.message });
     }
 };
@@ -397,7 +399,7 @@ exports.changePassword = async (req, res) => {
 
         res.json({ msg: 'Password changed successfully' });
     } catch (error) {
-        console.error('Change password error:', error);
+        logger.error('Change password error:', error);
         res.status(500).json({ msg: 'Server error' });
     }
 };
@@ -435,7 +437,7 @@ exports.toggle2FA = async (req, res) => {
             res.json({ msg: '2FA disabled.' });
         }
     } catch (error) {
-        console.error('2FA toggle error:', error);
+        logger.error('2FA toggle error:', error);
         res.status(500).json({ msg: 'Server error' });
     }
 };
@@ -463,7 +465,7 @@ exports.verify2FA = async (req, res) => {
 
         res.json({ msg: '2FA verified successfully' });
     } catch (error) {
-        console.error('2FA verify error:', error);
+        logger.error('2FA verify error:', error);
         res.status(500).json({ msg: 'Server error' });
     }
 };
@@ -492,7 +494,7 @@ exports.getLoginHistory = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Login history error:', error);
+        logger.error('Get login history error:', error);
         res.status(500).json({ msg: 'Server error' });
     }
 };
@@ -503,7 +505,7 @@ exports.getActiveSessions = async (req, res) => {
         const sessions = await ActiveSession.find({ userId }).sort({ lastActivity: -1 });
         res.json({ sessions });
     } catch (error) {
-        console.error('Active sessions error:', error);
+        logger.error('Get active sessions error:', error);
         res.status(500).json({ msg: 'Server error' });
     }
 };
@@ -515,7 +517,7 @@ exports.terminateSession = async (req, res) => {
         await ActiveSession.findOneAndDelete({ _id: sessionId, userId });
         res.json({ msg: 'Session terminated' });
     } catch (error) {
-        console.error('Terminate session error:', error);
+        logger.error('Terminate session error:', error);
         res.status(500).json({ msg: 'Server error' });
     }
 };

@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Navbar from '../component/Navbar';
-import AssignRate from '../component/AssignRate';
-import Scoreboard from '../component/Scoreboard';
-import Loader from '../component/Loader';
+import Navbar from '../components/Navbar';
+import AssignRate from '../components/AssignRate';
+import Scoreboard from '../components/Scoreboard';
+import Loader from '../components/Loader';
 import '../CSS/ClassDetailPage.css';
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';

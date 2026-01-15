@@ -1,5 +1,7 @@
 const Class = require('../models/Class');
 const User = require('../models/User');
+const createLogger = require('../utils/logger');
+const logger = createLogger('ClassController');
 
 exports.getClassrooms = async (req, res) => {
     try {
@@ -352,11 +354,11 @@ exports.getChatHistory = async (req, res) => {
     const limit = parseInt(req.query.limit) || 100; // Default to last 100 messages
 
     try {
-        console.log('📥 Fetching chat history for classroom:', classId);
+        logger.info(`Fetching chat history for classroom: ${classId}`);
 
         const classroom = await Class.findById(classId);
         if (!classroom) {
-            console.log('❌ Classroom not found:', classId);
+            logger.error(`Classroom not found: ${classId}`);
             return res.status(404).json({ msg: 'Classroom not found' });
         }
 
@@ -366,13 +368,13 @@ exports.getChatHistory = async (req, res) => {
         const isParticipant = classroom.participants.some(id => id.toString() === userId);
 
         if (!isCreator && !isParticipant) {
-            console.log('🚫 Access denied for user:', userId);
+            logger.warn(`Access denied for user: ${userId}`);
             return res.status(403).json({ msg: 'Access denied. You are not a member of this classroom.' });
         }
 
         // ✨ CRITICAL FIX: Initialize chatMessages if undefined (for existing classrooms)
         if (!classroom.chatMessages) {
-            console.log('⚠️ chatMessages undefined, initializing empty array');
+            logger.warn('chatMessages undefined, initializing empty array');
             classroom.chatMessages = [];
             await classroom.save();
         }
@@ -380,10 +382,10 @@ exports.getChatHistory = async (req, res) => {
         // Get the last N messages
         const chatMessages = classroom.chatMessages.slice(-limit);
 
-        console.log('✅ Returning', chatMessages.length, 'chat messages for classroom:', classId);
+        logger.success(`Returning ${chatMessages.length} chat messages for classroom: ${classId}`);
         res.json({ chatMessages });
     } catch (err) {
-        console.error('❌ Error fetching chat history:', err);
+        logger.error('Error fetching chat history:', err);
         res.status(500).send('Server error');
     }
 };

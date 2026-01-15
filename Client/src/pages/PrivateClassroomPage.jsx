@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Navbar from '../component/Navbar';
-import Loader from '../component/Loader';
+import Navbar from '../components/Navbar';
+import Loader from '../components/Loader';
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
 import '../CSS/PrivateClassroomPage.css';
@@ -12,10 +12,10 @@ import { FiLock, FiMail, FiArrowLeft } from 'react-icons/fi';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-const PrivateClassroomPage = ({ 
-    user, 
-    isSidebarOpen, 
-    toggleSidebar, 
+const PrivateClassroomPage = ({
+    user,
+    isSidebarOpen,
+    toggleSidebar,
     handleSignOut
 }) => {
     const { classroomId } = useParams();
@@ -90,20 +90,20 @@ const PrivateClassroomPage = ({
                 handleSignOut={handleSignOut}
                 classrooms={classrooms}
             />
-            
+
             <main className={`main__content ${isSidebarOpen ? 'shift' : ''}`}>
                 <div className="private-classroom-container">
                     <div className="private-classroom-content">
                         <div className="private-icon">
                             <FiLock size={64} />
                         </div>
-                        
+
                         <h1 className="private-title">Private Classroom</h1>
-                        
+
                         <p className="private-description">
                             This classroom is private and requires an invitation to access.
                         </p>
-                        
+
                         {classroomInfo && (
                             <div className="classroom-info">
                                 <h2 className="classroom-name">{classroomInfo.name}</h2>
@@ -113,23 +113,23 @@ const PrivateClassroomPage = ({
                                 )}
                             </div>
                         )}
-                        
+
                         {error && (
                             <div className="error-message">
                                 <p>{error}</p>
                             </div>
                         )}
-                        
+
                         <div className="private-actions">
-                            <button 
+                            <button
                                 className="private-btn primary"
                                 onClick={handleRequestAccess}
                             >
                                 <FiMail />
                                 Request Access
                             </button>
-                            
-                            <button 
+
+                            <button
                                 className="private-btn secondary"
                                 onClick={handleGoBack}
                             >
@@ -137,10 +137,10 @@ const PrivateClassroomPage = ({
                                 Go Back
                             </button>
                         </div>
-                        
+
                         <div className="private-help">
                             <p>
-                                If you believe you should have access to this classroom, 
+                                If you believe you should have access to this classroom,
                                 please contact the classroom creator or request an invitation.
                             </p>
                         </div>

@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import Navbar from '../component/Navbar';
-import Main from '../component/Main';
-import ClassActionModal from '../component/ClassActionModal';
-import Loader from '../component/Loader';
+import Navbar from '../components/Navbar';
+import Main from '../components/Main';
+import ClassActionModal from '../components/ClassActionModal';
+import Loader from '../components/Loader';
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
 
@@ -167,8 +167,8 @@ const DashboardPage = ({ user, updateUserProfile, onSignOut, isSidebarOpen, togg
                     setIsModalOpen(true);
                 }}
             />
-            
-            
+
+
             {!error && classrooms && classrooms.length === 0 && (
                 <div style={{ maxWidth: 960, margin: '16px auto', padding: '24px', textAlign: 'center', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8 }}>
                     <h3 style={{ margin: '0 0 8px' }}>No classrooms yet</h3>

@@ -4,26 +4,26 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import Navbar from '../component/Navbar';
-import Loader from '../component/Loader';
+import Navbar from '../components/Navbar';
+import Loader from '../components/Loader';
 import '../CSS/ClassroomPage.css';
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
 import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
-import Chair from '../component/Chair';
-import ChairAssignModal from '../component/ChairAssignModal';
-import ChairPresets from '../component/ChairPresets';
-import ChairDropdown from '../component/ChairDropdown';
-import StudentRatingModal from '../component/StudentRatingModal';
+import Chair from '../components/Chair';
+import ChairAssignModal from '../components/ChairAssignModal';
+import ChairPresets from '../components/ChairPresets';
+import ChairDropdown from '../components/ChairDropdown';
+import StudentRatingModal from '../components/StudentRatingModal';
 import { useSocket } from '../hooks/useSocket';
 
 
 import { FaEdit, FaTh, FaRandom, FaBars, FaThLarge, FaChevronUp, FaChevronDown, FaExchangeAlt, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaTimes, FaLayerGroup, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import ActionBar from '../component/ActionBar';
+import ActionBar from '../components/ActionBar';
 import { motion, AnimatePresence } from 'framer-motion';
-import GroupOverlay from '../component/GroupOverlay';
-import ClassroomEvent from '../component/ClassroomEvent';
-import ViewToggle from '../component/ViewToggle'; // ✨ Import ViewToggle
+import GroupOverlay from '../components/GroupOverlay';
+import ClassroomEvent from '../components/ClassroomEvent';
+import ViewToggle from '../components/ViewToggle'; // ✨ Import ViewToggle
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 const PRESETS_API_URL = process.env.REACT_APP_PRESETS_API_URL || 'http://localhost:5001';

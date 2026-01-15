@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../CSS/OtpVerification.css';
 import { FaShieldAlt, FaArrowLeft, FaEnvelope } from 'react-icons/fa';
-import Loader from '../component/Loader';
+import Loader from '../components/Loader';
 
 const OtpVerificationPage = ({ onLogin }) => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -45,7 +45,7 @@ const OtpVerificationPage = ({ onLogin }) => {
 
     const handleOtpChange = (index, value) => {
         if (value.length > 1) return;
-        
+
         const newOtp = [...otp];
         newOtp[index] = value;
         setOtp(newOtp);
@@ -189,7 +189,7 @@ const OtpVerificationPage = ({ onLogin }) => {
 
                 <form onSubmit={(e) => { e.preventDefault(); handleVerifyOtp(); }} className="otp-form">
                     {error && <div className="error-message">{error}</div>}
-                    
+
                     <div className="otp-inputs">
                         {otp.map((digit, index) => (
                             <input
@@ -218,8 +218,8 @@ const OtpVerificationPage = ({ onLogin }) => {
                         )}
                     </div>
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         className="verify-button"
                         disabled={loading || otp.some(digit => !digit)}
                     >

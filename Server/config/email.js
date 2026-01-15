@@ -1,4 +1,8 @@
 const nodemailer = require('nodemailer');
+const createLogger = require('../utils/logger');
+const logger = createLogger('Email');
+
+logger.info('Configuring email transporter...');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -14,9 +18,11 @@ const transporter = nodemailer.createTransport({
 // Test email configuration on startup
 transporter.verify(function (error, success) {
     if (error) {
-        console.log('Email configuration error:', error);
+        logger.error('Email configuration error:', error);
+        logger.warn('Email functionality may not work properly');
     } else {
-        console.log('Email server is ready to send messages');
+        logger.success('Email server is ready to send messages');
+        logger.debug(`Email user: ${process.env.EMAIL_USER}`);
     }
 });
 
