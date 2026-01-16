@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const LoginHistory = require('../models/LoginHistory');
 const ActiveSession = require('../models/ActiveSession');
+const SystemSettings = require('../models/SystemSettings');
 const admin = require('../config/firebase');
 const transporter = require('../config/email');
 const bcrypt = require('bcryptjs');
@@ -27,9 +28,23 @@ exports.googleLoginVerify = async (req, res) => {
         logger.success(`Google token verified for user: ${email}`);
 
         let user = await User.findOne({ email });
+
+        // System Settings Checks
+        const settings = await SystemSettings.getSettings();
+
+        // Maintenance Check
+        if (user && settings.site.maintenanceMode && user.role !== 'admin') {
+            return res.status(503).json({ msg: settings.site.maintenanceMessage });
+        }
+
         let isNewUser = false;
 
         if (!user) {
+            // Registration Check
+            if (!settings.security.allowRegistration) {
+                return res.status(403).json({ msg: 'New user registration is currently disabled.' });
+            }
+
             isNewUser = true;
             user = new User({
                 email,
@@ -139,15 +154,17 @@ exports.register = async (req, res) => {
     const hasNumber = /\d/.test(password);
     const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-    const strengthScore = [hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
-
-    if (strengthScore < 3) {
-        return res.status(400).json({
-            msg: 'Password must contain at least 3 of the following: uppercase letter, lowercase letter, number, special character.'
-        });
+    if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+        return res.status(400).json({ msg: 'Password must include uppercase, lowercase, number, and special character.' });
     }
 
     try {
+        // Validation: Check if registration is allowed
+        const settings = await SystemSettings.getSettings();
+        if (!settings.security.allowRegistration) {
+            return res.status(403).json({ msg: 'New user registration is currently disabled.' });
+        }
+
         const normalizedEmail = email.toLowerCase().trim();
         let user = await User.findOne({
             email: { $regex: new RegExp(`^${normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
@@ -230,6 +247,12 @@ exports.login = async (req, res) => {
         let user = await User.findOne({ email }).select('+password +twoFactorEnabled +loginOtpCode +loginOtpExpires +role');
         if (!user) {
             return res.status(400).json({ msg: 'Invalid Credentials.' });
+        }
+
+        // Maintenance Mode Check
+        const settings = await SystemSettings.getSettings();
+        if (settings.site.maintenanceMode && user.role !== 'admin') {
+            return res.status(503).json({ msg: settings.site.maintenanceMessage });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);

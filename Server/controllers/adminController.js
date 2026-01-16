@@ -4,6 +4,7 @@ const User = require('../models/User');
 const LoginHistory = require('../models/LoginHistory');
 const ActiveSession = require('../models/ActiveSession');
 const Class = require('../models/Class');
+const SystemSettings = require('../models/SystemSettings');
 const createLogger = require('../utils/logger');
 const logger = createLogger('AdminController');
 
@@ -502,6 +503,71 @@ exports.getSystemLogs = async (req, res) => {
     } catch (error) {
         logger.error('Error fetching system logs:', { message: error.message, stack: error.stack });
         res.status(500).json({ msg: 'Server error fetching logs' });
+    }
+};
+
+// ==================== SYSTEM SETTINGS ====================
+
+/**
+ * Get System Settings
+ * @route GET /api/admin/system-settings
+ * @access Admin only
+ */
+exports.getSystemSettings = async (req, res) => {
+    logger.info('Fetching system settings...');
+    try {
+        const settings = await SystemSettings.getSettings();
+        res.set('Cache-Control', 'no-store');
+        res.json({ settings });
+    } catch (error) {
+        logger.error('Error fetching settings:', error);
+        res.status(500).json({ msg: 'Server error fetching settings' });
+    }
+};
+
+/**
+ * Update System Settings
+ * @route PUT /api/admin/system-settings
+ * @access Admin only
+ */
+exports.updateSystemSettings = async (req, res) => {
+    logger.info('Updating system settings via Atomic Update...');
+    try {
+        const { email, site, security } = req.body;
+        console.log('[DEBUG] Atomic Update Payload:', JSON.stringify(req.body, null, 2));
+
+        const updateOps = { $set: { updatedAt: Date.now() } };
+
+        // Build atomic $set object
+        if (email) {
+            if (email.user !== undefined) updateOps.$set['email.user'] = email.user;
+            if (email.pass !== undefined) updateOps.$set['email.pass'] = email.pass;
+            if (email.service !== undefined) updateOps.$set['email.service'] = email.service;
+            if (email.enabled !== undefined) updateOps.$set['email.enabled'] = email.enabled;
+        }
+
+        if (site) {
+            if (site.name !== undefined) updateOps.$set['site.name'] = site.name;
+            if (site.maintenanceMode !== undefined) updateOps.$set['site.maintenanceMode'] = site.maintenanceMode;
+            if (site.maintenanceMessage !== undefined) updateOps.$set['site.maintenanceMessage'] = site.maintenanceMessage;
+        }
+
+        if (security) {
+            if (security.allowRegistration !== undefined) updateOps.$set['security.allowRegistration'] = security.allowRegistration;
+            if (security.sessionTimeout !== undefined) updateOps.$set['security.sessionTimeout'] = security.sessionTimeout;
+        }
+
+        const settings = await SystemSettings.findOneAndUpdate(
+            { key: 'general' },
+            updateOps,
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+
+        logger.success('System settings updated atomically');
+        res.json({ msg: 'Settings updated successfully', settings });
+    } catch (error) {
+        logger.error('Error updating settings:', error);
+        res.status(500).json({ msg: 'Server error updating settings' });
     }
 };
 

@@ -31,6 +31,10 @@ router.get('/logs', adminAuth, adminController.getAllLogs);
 // System Logs
 router.get('/system-logs', adminAuth, adminController.getSystemLogs);
 
+// System Settings (Dynamic Config)
+router.get('/system-settings', adminAuth, adminController.getSystemSettings);
+router.put('/system-settings', adminAuth, adminController.updateSystemSettings);
+
 logger.info('Admin routes registered');
 
 module.exports = router;
