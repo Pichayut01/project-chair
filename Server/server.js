@@ -59,6 +59,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 logger.debug('Static files serving enabled for /uploads');
 
 // Routes
+// ✨ DEBUG: Log all requests to check if /api/upload is hit
+app.use((req, res, next) => {
+    logger.info(`[DEBUG ROOT] ${req.method} ${req.url}`);
+    next();
+});
+
+app.get('/api/test-upload', (req, res) => res.send('Upload Route Works!')); // ✨ TEST ROUTE
+
 logger.info('Registering API routes...');
 app.use('/api', require('./routes/health')); // Health check endpoints
 app.use('/api/auth', require('./routes/auth'));
@@ -66,6 +74,7 @@ app.use('/api/classrooms', require('./routes/classrooms'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/presets', require('./routes/presets'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/upload', require('./routes/upload')); // ✨ Generic Upload Route
 logger.success('All API routes registered successfully');
 
 // Socket Handler

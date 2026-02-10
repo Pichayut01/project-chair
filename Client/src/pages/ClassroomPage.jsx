@@ -444,8 +444,12 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 newEvent.title = '🎲 Random Student';
             } else if (eventConfig.type === 'question') {
                 newEvent.title = '❓ Question';
-            } else {
-                newEvent.title = 'Event';
+            } else if (eventConfig.type === 'buzz') {
+                newEvent.title = '🔴 Buzz Button';
+            } else if (eventConfig.type === 'wordcloud') {
+                newEvent.title = '☁️ Word Cloud';
+            } else if (eventConfig.type === 'poll') {
+                newEvent.title = '📊 Poll';
             }
             newEvent.type = eventConfig.type;
             newEvent.config = eventConfig; // Save config like count
@@ -459,7 +463,14 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     };
 
     // ✨ Handler for triggering an event (Creator only)
-    const handleTriggerEvent = (event) => {
+    const handleTriggerEvent = (event, updates) => {
+        // ✨ Generic trigger support (Buzz Button, etc.)
+        if (updates) {
+            emitTriggerClassroomEvent(event.id, updates);
+            return;
+        }
+
+        // ✨ Existing Random Student Logic
         if (event.type === 'random') {
             const count = event.config?.count || 1;
 
@@ -1362,7 +1373,6 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                             transform: `scale(${zoomLevel})`,
                             transformOrigin: 'top left',
                             transition: 'transform 0.5s ease',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                         }}>
                             <div className="rotation-wrapper" style={{
                                 width: '100%',
@@ -1622,6 +1632,15 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 onClick: handleToggleEditMode,
                 isActive: false
             });
+
+            // ✨ Random Student Button
+            actionBarActions.push({
+                id: 'random',
+                icon: <FaRandom />,
+                label: 'Random Student',
+                onClick: () => handleAddEvent({ type: 'random', count: 1 }),
+                isActive: false
+            });
         }
     }
 
@@ -1739,7 +1758,28 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                             </div>
 
                             {/* Render Content Based on View Mode */}
-                            {viewMode === 'seating' ? renderSeatingChart() : (
+                            {viewMode === 'seating' ? (
+                                <>
+                                    {renderSeatingChart()}
+                                    {/* ✨ Show Events below Seating Chart */}
+                                    <div style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+                                        <h3 style={{ fontSize: '1.1rem', color: '#4b5563', marginBottom: '15px' }}>Classroom Events</h3>
+                                        <ClassroomEvent
+                                            isCreator={isCreator}
+                                            events={classroomEvents}
+                                            onAddEvent={handleAddEvent}
+                                            onTriggerEvent={handleTriggerEvent}
+                                            onDeleteEvent={handleDeleteEvent}
+                                            onSubmitAnswer={handleSubmitAnswer}
+                                            candidates={Object.values(assignedUsers).map(u => ({
+                                                name: u.userName,
+                                                photoSrc: getProfileImageSrc(u.photoURL, isGoogleUser(u))
+                                            }))}
+                                            currentUser={user}
+                                        />
+                                    </div>
+                                </>
+                            ) : (
                                 <ClassroomEvent
                                     isCreator={isCreator}
                                     events={classroomEvents}
@@ -1750,7 +1790,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                     candidates={Object.values(assignedUsers).map(u => ({
                                         name: u.userName,
                                         photoSrc: getProfileImageSrc(u.photoURL, isGoogleUser(u))
-                                    }))} // ✨ Pass candidates with images
+                                    }))}
+                                    currentUser={user} // ✨ Pass current user for answer tracking
                                 />
                             )}
                         </div>

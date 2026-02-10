@@ -445,10 +445,10 @@ const Navbar = ({
                                 <span>Scoreboard</span>
                             </li>
                             <li
-                                className={`sidebar-list-item ${classDetailActiveSection === '3' ? 'active' : ''}`}
-                                onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('3')}
+                                className={`sidebar-list-item ${classDetailActiveSection === 'history' ? 'active' : ''}`}
+                                onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('history')}
                             >
-                                <span>3</span>
+                                <span>Event History</span>
                             </li>
                             <li
                                 className={`sidebar-list-item ${classDetailActiveSection === '4' ? 'active' : ''}`}

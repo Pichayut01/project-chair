@@ -10,6 +10,7 @@ import Loader from '../components/Loader';
 import '../CSS/ClassDetailPage.css';
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
+import EventHistoryView from '../components/events/EventHistoryView'; // ✨ Import EventHistoryView
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
@@ -94,19 +95,8 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
                         </div>
                     </div>
                 );
-            case '3':
-                return (
-                    <div className="class-detail-content">
-                        <h2>Menu Item 3</h2>
-                        <p>This is the content for menu item 3. You can add any functionality here.</p>
-                        <div className="content-placeholder">
-                            <div className="placeholder-card">
-                                <h3>Feature 3</h3>
-                                <p>Description of feature 3 functionality.</p>
-                            </div>
-                        </div>
-                    </div>
-                );
+            case 'history': // ✨ Match with Navbar's new key
+                return <EventHistoryView events={classroom.classroomEvents} />;
             case '4':
                 return (
                     <div className="class-detail-content">

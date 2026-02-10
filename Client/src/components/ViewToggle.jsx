@@ -40,7 +40,6 @@ const StyledWrapper = styled.div`
     display: flex;
     position: relative;
     background-color: #fff;
-    box-shadow: 0 0 1px 0 rgba(76, 175, 80, 0.15), 0 6px 12px 0 rgba(76, 175, 80, 0.15);
     padding: 0.5rem; /* Reduced padding slightly */
     border-radius: 99px;
   }

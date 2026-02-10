@@ -21,6 +21,7 @@ const AppSettingsPage = lazy(() => import('./pages/AppSettingsPage')); // ✨ Ad
 const PrivateClassroomPage = lazy(() => import('./pages/PrivateClassroomPage')); // ✨ Add Private Classroom Page
 const ClassroomErrorPage = lazy(() => import('./pages/ClassroomErrorPage')); // ✨ Add Classroom Error Page
 const Layout = lazy(() => import('./components/Layout')); // ✨ Add Layout component
+const EventPresentationPage = lazy(() => import('./pages/EventPresentationPage')); // ✨ Add Presentation Page
 
 const backendUrl = 'http://localhost:5000/api/auth';
 
@@ -273,6 +274,10 @@ function AppRoutes({ user, onLoginSuccess, handleSignOut, updateUserProfile, isS
                         handleSignOut={handleSignOutAndNavigate}
                     /> : <Navigate to="/login" />}
                 /> {/* ✨ Add Classroom Error route */}
+                <Route 
+                    path="/presentation/:classId/:eventId" 
+                    element={<EventPresentationPage />} 
+                /> {/* ✨ Add Presentation route */}
                 <Route path="*" element={<p style={{ textAlign: 'center', fontSize: '2em', marginTop: '100px' }}>404 Page Not Found</p>} />
             </Routes>
         </Suspense>

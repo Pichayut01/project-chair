@@ -218,17 +218,15 @@ module.exports = (io) => {
 
             try {
                 // Update specific event in database
-                // We need to find the class, then find the subdocument in classroomEvents array matches eventId
-                // and update its fields (e.g. results)
+                // We construct the update object dynamically based on 'updates'
+                const updateFields = {};
+                for (const [key, value] of Object.entries(updates)) {
+                    updateFields[`classroomEvents.$.${key}`] = value;
+                }
 
                 await Class.findOneAndUpdate(
                     { _id: classId, "classroomEvents.id": eventId },
-                    {
-                        $set: {
-                            "classroomEvents.$.results": updates.results,
-                            "classroomEvents.$.status": "completed" // Optional status
-                        }
-                    },
+                    { $set: updateFields },
                     { new: true }
                 );
 
@@ -269,6 +267,12 @@ module.exports = (io) => {
 
         // ✨ Handle Answer Submission
         socket.on('submit-event-answer', async (data) => {
+            // Force server-side timestamp for fairness
+            const serverTimestamp = Date.now();
+            if (data.answer) {
+                data.answer.timestamp = serverTimestamp;
+            }
+
             logger.socket('submit-event-answer', { eventId: data.eventId, answer: data.answer });
             const { classId, eventId, answer } = data;
 
@@ -294,10 +298,94 @@ module.exports = (io) => {
                 const updatedClass = await Class.findById(classId);
                 const updatedEvent = updatedClass.classroomEvents.find(e => e.id === eventId);
 
+                // ✨ SCORING LOGIC (Per Option)
+                let scoreUpdateData = null;
+                if (updatedEvent && updatedEvent.config && updatedEvent.config.scoreConfig) {
+                    const { optionScores } = updatedEvent.config.scoreConfig;
+                    if (optionScores) {
+                        const answerText = answer.text;
+                        const scoreDetail = optionScores[answerText];
+                        if (scoreDetail) {
+                            const pointValue = Math.abs(parseInt(scoreDetail.points) || 0);
+                            const scoreDelta = scoreDetail.action === 'subtract' ? -pointValue : pointValue;
+
+                            if (scoreDelta !== 0) {
+                                const studentId = answer.userId;
+                                const scoreField = `studentScores.${studentId}`;
+                                const scoreUpdate = {};
+                                scoreUpdate[scoreField] = scoreDelta;
+
+                                const updatedClassWithScore = await Class.findByIdAndUpdate(
+                                    classId,
+                                    { $inc: scoreUpdate },
+                                    { new: true }
+                                );
+
+                                const newTotalScore = updatedClassWithScore.studentScores ? updatedClassWithScore.studentScores[studentId] : 0;
+                                scoreUpdateData = {
+                                    studentId,
+                                    newScore: newTotalScore,
+                                    delta: scoreDelta,
+                                    reason: `Event: ${updatedEvent.config.questionText || 'Poll'}`,
+                                    timestamp: Date.now()
+                                };
+                                logger.success(`Score updated for ${studentId}: ${scoreDelta} points`);
+                            }
+                        }
+                    }
+                }
+
+                // OLD LOGIC (Disabled)
+                if (false && updatedEvent && updatedEvent.config && updatedEvent.config.isScored) {
+                    const { correctOptions, points, action } = updatedEvent.config; // correctOptions is array of strings (text)
+
+                    // Check if answer is correct
+                    // We answer with text, so check if text is in correctOptions
+                    const isCorrect = correctOptions && correctOptions.some(opt => opt && opt.trim() === answer.text.trim());
+
+                    if (isCorrect) {
+                        const pointValue = Math.abs(parseInt(points) || 0);
+                        const scoreDelta = action === 'subtract' ? -pointValue : pointValue;
+                        const studentId = answer.userId;
+
+                        // Update student score in DB using dot notation for Mixed type field
+                        // field: studentScores.USER_ID
+                        const scoreField = `studentScores.${studentId}`;
+                        const scoreUpdate = {};
+                        scoreUpdate[scoreField] = scoreDelta;
+
+                        // Update the class doc again to increment score
+                        const updatedClassWithScore = await Class.findByIdAndUpdate(
+                            classId,
+                            { $inc: scoreUpdate },
+                            { new: true }
+                        );
+
+                        // Prepare data for score-updated emit
+                        // Access the score using bracket notation since key is dynamic
+                        const newTotalScore = updatedClassWithScore.studentScores ? updatedClassWithScore.studentScores[studentId] : 0;
+
+                        scoreUpdateData = {
+                            studentId,
+                            newScore: newTotalScore,
+                            delta: scoreDelta,
+                            reason: `Event: ${updatedEvent.config.questionText || 'Poll'}`,
+                            timestamp: Date.now()
+                        };
+
+                        logger.success(`Score updated for ${studentId}: ${scoreDelta} points`);
+                    }
+                }
+
                 io.to(classId).emit('classroom-event-updated', {
                     eventId,
                     updates: { results: updatedEvent.results }
                 });
+
+                // If score updated, emit score-updated
+                if (scoreUpdateData) {
+                    io.to(classId).emit('score-updated', scoreUpdateData);
+                }
 
                 logger.success(`Answer added to event ${eventId}`);
 
