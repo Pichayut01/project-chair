@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../CSS/Navbar.css";
 import icon from "../image/icon.ico";
-import { FiPlus, FiLogOut, FiArrowLeft, FiShare2, FiEdit2, FiSave, FiX, FiChevronDown, FiChevronRight, FiBell } from "react-icons/fi"; // ✨ เพิ่ม icon ใหม่
+import { FiPlus, FiLogOut, FiArrowLeft, FiShare2, FiEdit2, FiSave, FiX, FiChevronDown, FiChevronRight, FiBell, FiMenu } from "react-icons/fi"; // ✨ เพิ่ม icon ใหม่
 import { FaCog, FaCrown } from 'react-icons/fa'; // ✨ เพิ่ม FaCrown icon
 import { useNavigate, Link } from 'react-router-dom';
 import { getProfileImageSrc, getCurrentUserProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
@@ -221,7 +221,7 @@ const Navbar = ({
             <nav className="navbar">
                 <div className="navbar__logo">
                     <button className="navbar__burger" onClick={toggleSidebar}>
-                        &#9776;
+                        <FiMenu size={24} />
                     </button>
                     <img src={icon} alt="Logo" className="navbar__logo-image" />
                     <h1 style={{ color: "#414141ff", fontSize: "24px" }}>EChair <span style={{ color: "#0aa158" }}></span></h1>

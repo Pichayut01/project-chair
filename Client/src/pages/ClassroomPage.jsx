@@ -18,7 +18,7 @@ import StudentRatingModal from '../components/StudentRatingModal';
 import { useSocket } from '../hooks/useSocket';
 
 
-import { FaEdit, FaTh, FaRandom, FaBars, FaThLarge, FaChevronUp, FaChevronDown, FaExchangeAlt, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaTimes, FaLayerGroup, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaEdit, FaTh, FaRandom, FaBars, FaThLarge, FaChevronUp, FaChevronDown, FaExchangeAlt, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaTimes, FaLayerGroup, FaChevronLeft, FaChevronRight, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaTrophy, FaUser } from 'react-icons/fa';
 import ActionBar from '../components/ActionBar';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupOverlay from '../components/GroupOverlay';
@@ -165,7 +165,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         if (newRaisedState) {
             Swal.fire({
                 icon: 'info',
-                title: 'Hand Raised ✋',
+                title: 'Hand Raised',
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
@@ -534,15 +534,15 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         } else {
             // Config object
             if (eventConfig.type === 'random') {
-                newEvent.title = '🎲 Random Student';
+                newEvent.title = 'Random Student';
             } else if (eventConfig.type === 'question') {
-                newEvent.title = '❓ Question';
+                newEvent.title = 'Question';
             } else if (eventConfig.type === 'buzz') {
-                newEvent.title = '🔴 Buzz Button';
+                newEvent.title = 'Buzz Button';
             } else if (eventConfig.type === 'wordcloud') {
-                newEvent.title = '☁️ Word Cloud';
+                newEvent.title = 'Word Cloud';
             } else if (eventConfig.type === 'poll') {
-                newEvent.title = '📊 Poll';
+                newEvent.title = 'Poll';
             }
             newEvent.type = eventConfig.type;
             newEvent.config = eventConfig; // Save config like count
@@ -594,7 +594,10 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             // ✨ Send result to chat after animation (approx 3.5s)
             setTimeout(() => {
                 const winnerNames = results.map(r => r.userName).join(', ');
-                emitSystemMessage(`🎲 Random Selection Result: ${winnerNames}`);
+            setTimeout(() => {
+                const winnerNames = results.map(r => r.userName).join(', ');
+                emitSystemMessage(`Random Selection Result: ${winnerNames}`);
+            }, 3500);
             }, 3500);
         }
     };

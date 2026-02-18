@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../CSS/ClassroomEvent.css';
 import WordCloudViz from './events/WordCloudViz';
-import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaClipboardList, FaTrophy, FaUser, FaUndo } from 'react-icons/fa';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
@@ -213,6 +213,18 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
         setOptionScores(newScores);
     };
 
+    const getEventIcon = (type) => {
+        const style = { color: '#0aa158', fontSize: '1.2em', verticalAlign: 'middle', marginRight: '8px' };
+        switch (type) {
+            case 'random': return <FaDice style={style} />;
+            case 'question': return <FaQuestionCircle style={style} />;
+            case 'buzz': return <FaBullhorn style={style} />;
+            case 'wordcloud': return <FaCloud style={style} />;
+            case 'poll': return <FaPoll style={style} />;
+            default: return <FaClipboardList style={style} />;
+        }
+    };
+
     return (
         <div className="classroom-event-container">
             {events.length === 0 ? (
@@ -220,7 +232,9 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                     <div className="event-placeholder">
                         <h3>No events yet</h3>
                         <p>Create an event to engage with your students!</p>
-                        <div className="event-illustration">🎈</div>
+                        <div className="event-illustration">
+                             <FaClipboardList style={{ fontSize: '4rem', color: '#cbd5e1' }} />
+                        </div>
                     </div>
                     {isCreator && (
                         <div className="add-event-card" onClick={handleAddEventClick} style={{ marginTop: '20px', width: '200px', height: 'auto', minHeight: '150px' }}>
@@ -250,7 +264,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                 return (
                                     <div key={event.id} className="event-card" style={{ width: '100%' }}>
                                         <div className="event-card-header">
-                                            <h3>{event.title}</h3>
+                                            <h3>{getEventIcon(event.type)} {event.title}</h3>
                                             {isCreator && onDeleteEvent && (
                                                 <button
                                                     className="delete-event-btn"
@@ -292,35 +306,35 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                 className="event-option-card"
                                 onClick={() => openConfigModal('random')}
                             >
-                                <div className="event-icon">🎲</div>
+                                <div className="event-icon"><FaDice style={{ color: '#0aa158' }} /></div>
                                 <span>Random Student</span>
                             </div>
                             <div
                                 className="event-option-card"
                                 onClick={() => handleSelectEvent({ type: 'buzz' })}
                             >
-                                <div className="event-icon">🔴</div>
+                                <div className="event-icon"><FaBullhorn style={{ color: '#0aa158' }} /></div>
                                 <span>Buzz Button</span>
                             </div>
                             <div
                                 className="event-option-card"
                                 onClick={() => openConfigModal('wordcloud')}
                             >
-                                <div className="event-icon">☁️</div>
+                                <div className="event-icon"><FaCloud style={{ color: '#0aa158' }} /></div>
                                 <span>Word Cloud</span>
                             </div>
                             <div
                                 className="event-option-card"
                                 onClick={() => openConfigModal('question')}
                             >
-                                <div className="event-icon">❓</div>
+                                <div className="event-icon"><FaQuestionCircle style={{ color: '#0aa158' }} /></div>
                                 <span>Ask Question</span>
                             </div>
                             <div
                                 className="event-option-card"
                                 onClick={() => openConfigModal('poll')}
                             >
-                                <div className="event-icon">📊</div>
+                                <div className="event-icon"><FaPoll style={{ color: '#0aa158' }} /></div>
                                 <span>Multiple Choice</span>
                             </div>
                         </div>
@@ -336,9 +350,10 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                 <div className="event-modal-overlay" onClick={() => setIsConfigModalOpen(false)}>
                     <div className="event-modal-content config-modal" onClick={(e) => e.stopPropagation()}>
                         <h3>
-                            {selectedConfigType === 'random' && '🎲 Random Students'}
-                            {selectedConfigType === 'question' && '❓ Ask Question'}
-                            {selectedConfigType === 'poll' && '📊 Multiple Choice'}
+                            {selectedConfigType === 'random' && <><FaDice style={{ color: '#0aa158', marginRight: '10px' }} /> Random Students</>}
+                            {selectedConfigType === 'question' && <><FaQuestionCircle style={{ color: '#0aa158', marginRight: '10px' }} /> Ask Question</>}
+                            {selectedConfigType === 'poll' && <><FaPoll style={{ color: '#0aa158', marginRight: '10px' }} /> Multiple Choice</>}
+                            {selectedConfigType === 'wordcloud' && <><FaCloud style={{ color: '#0aa158', marginRight: '10px' }} /> Word Cloud</>}
                         </h3>
 
                         <div className="modal-body">
@@ -678,7 +693,9 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
                                     {candidate.photoSrc ? (
                                         <img src={candidate.photoSrc} alt="avatar" className="animating-avatar" />
                                     ) : (
-                                        <div className="animating-avatar" style={{ background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>👤</div>
+                                        <div className="animating-avatar" style={{ background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#0aa158' }}>
+                                            <FaUser />
+                                        </div>
                                     )}
                                     <span className="animating-name">{candidate.name}</span>
                                 </div>
@@ -689,14 +706,18 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
                     {/* Results Display */}
                     {showResults && event.results && event.results.length > 0 && (
                         <div className="random-results">
-                            <h4 style={{ textAlign: 'center', width: '100%', marginBottom: '1rem', color: '#ea580c' }}>🎉 Winners!</h4>
+                            <h4 style={{ textAlign: 'center', width: '100%', marginBottom: '1rem', color: '#0aa158' }}>
+                                <FaTrophy style={{ marginRight: '8px' }} /> Winners!
+                            </h4>
                             <div className="winners-list" style={{ justifyContent: 'center' }}>
                                 {event.results.map((r, i) => (
                                     <div key={i} className="winner-card">
                                         {r.photoSrc ? (
                                             <img src={r.photoSrc} alt="avatar" className="winner-avatar-large" />
                                         ) : (
-                                            <div className="winner-avatar-large" style={{ background: '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>🏆</div>
+                                            <div className="winner-avatar-large" style={{ background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#0aa158' }}>
+                                                <FaTrophy />
+                                            </div>
                                         )}
                                         <div className="winner-info">
                                             <div className="winner-name">{r.userName || 'Unknown'}</div>
@@ -716,7 +737,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
                     {/* Creator Controls */}
                     {isCreator && !isAnimating && (
                         <button className="start-random-btn" onClick={() => onTrigger(event)}>
-                            {event.results ? 'Reroll 🔄' : 'Start Random 🎲'}
+                            {event.results ? <><FaUndo style={{ marginRight: '5px' }} /> Reroll</> : <><FaDice style={{ marginRight: '5px' }} /> Start Random</>}
                         </button>
                     )}
                 </div>
