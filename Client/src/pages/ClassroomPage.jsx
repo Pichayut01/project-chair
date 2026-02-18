@@ -246,6 +246,30 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 background: '#f0fdf4',
                 color: '#166534'
             });
+
+            // ✨ Fallback: Ensure user is added to participants list when they sit
+            if (data.action === 'sit' && data.userName) {
+                 setClassroom(prev => {
+                     const userId = data.userId; // Assuming data has userId
+                     // Check if user exists in participants (by _id or id)
+                     const exists = prev.participants.some(p => p._id === userId || p.id === userId);
+                     
+                     if (!exists) {
+                         // Construct minimal user object
+                         const newParticipant = {
+                             _id: userId,
+                             displayName: data.userName,
+                             photoURL: data.userPhoto || null, // data might not have photo, acceptable
+                             ...data
+                         };
+                         return {
+                             ...prev,
+                             participants: [...prev.participants, newParticipant]
+                         };
+                     }
+                     return prev;
+                 });
+            }
         }
     }, [user.id]);
 
@@ -381,6 +405,72 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }, 3000);
     }, []);
 
+    // ✨ Handle User Joined with Normalization
+    const handleUserJoined = useCallback((data) => {
+        console.log('User joined Raw:', data);
+        let newUser = data.user || data; 
+        
+        // ✨ Normalize User Data
+        if (!newUser._id && newUser.userId) {
+            newUser = {
+                _id: newUser.userId,
+                displayName: newUser.userName || newUser.username || 'Unknown',
+                photoURL: newUser.userPhoto || newUser.photoURL,
+                email: newUser.email,
+                ...newUser
+            };
+        }
+
+        // Update classroom participants
+        setClassroom(prev => {
+            if (!prev) return prev;
+            // Avoid duplicates check with both _id and id
+            if (prev.participants.some(p => (p._id && newUser._id && p._id === newUser._id) || (p.id && newUser.id && p.id === newUser.id))) return prev;
+            
+            return {
+                ...prev,
+                participants: [...prev.participants, newUser]
+            };
+        });
+
+        // Optional: Show toast
+        Swal.fire({
+            icon: 'info',
+            text: `${newUser.displayName || newUser.username} joined the class`,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2000
+        });
+
+        // ✨ Force refresh classroom details to be sure (Fallback)
+        // fetchClassroomDetails(); // If available
+    }, []);
+
+    // ✨ Handle User Left with Normalization
+    const handleUserLeft = useCallback((data) => {
+        console.log('User left Raw:', data);
+        const userId = data.userId || data._id || data.id;
+
+        setClassroom(prev => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                participants: prev.participants.filter(p => (p._id !== userId && p.id !== userId))
+            };
+        });
+    }, []);
+
+    // ✨ Handle Full Classroom Update
+    const handleClassroomUpdated = useCallback((data) => {
+        console.log('Classroom updated:', data);
+        const updatedClassroom = data.classroom || data;
+        setClassroom(prev => ({
+            ...prev,
+            ...updatedClassroom
+        }));
+    }, []);
+
     const handleDeleteEvent = (event) => {
         Swal.fire({
             title: 'Delete Event?',
@@ -422,7 +512,10 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         handleClassroomEventTriggered, // ✨ Pass new listener
         handleClassroomEventDeleted, // ✨ Pass delete listener
         handleRaiseHandUpdate, // ✨ Pass raise hand listener
-        handleEmojiSent // ✨ Pass emoji listener
+        handleEmojiSent, // ✨ Pass emoji listener
+        handleUserJoined, // ✨ Pass user joined listener
+        handleUserLeft, // ✨ Pass user left listener
+        handleClassroomUpdated // ✨ Pass full update listener
     );
 
     // ✨ Handler for adding new events via ClassroomEvent component
@@ -991,6 +1084,19 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
     }, [classId, user, fetchClassroomDetails, fetchChatHistory, fetchRatePresets, isCreator]);
 
+    // ✨ Polling Fallback: Fetch classroom details every 5 seconds to ensure member list is up-to-date
+    // (Since server join events are not reliably broadcasting)
+    useEffect(() => {
+        if (!classId || !user?.token) return;
+
+        const interval = setInterval(() => {
+            // Silently fetch updates (don't set loading state)
+            fetchClassroomDetails();
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [classId, user, fetchClassroomDetails]);
+
     const handleAssign = async (name) => {
         if (!selectedChairId || !user) return;
 
@@ -1340,7 +1446,6 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                         overflowX: 'auto',
                         overflowY: 'auto',
                         maxHeight: '70vh',
-                        border: '2px solid #e5e7eb',
                         borderRadius: '12px',
                         backgroundColor: '#f8fafc',
                         backgroundColor: '#f8fafc',
@@ -1633,14 +1738,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 isActive: false
             });
 
-            // ✨ Random Student Button
-            actionBarActions.push({
-                id: 'random',
-                icon: <FaRandom />,
-                label: 'Random Student',
-                onClick: () => handleAddEvent({ type: 'random', count: 1 }),
-                isActive: false
-            });
+
         }
     }
 

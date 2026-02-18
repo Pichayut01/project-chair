@@ -5,7 +5,7 @@ import io from 'socket.io-client';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage, onClassroomEventAdded, onClassroomEventTriggered, onClassroomEventDeleted, onRaiseHandUpdated, onEmojiSent) => { // ✨ Added onEmojiSent
+export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage, onClassroomEventAdded, onClassroomEventTriggered, onClassroomEventDeleted, onRaiseHandUpdated, onEmojiSent, onUserJoined, onUserLeft, onClassroomUpdated) => { // ✨ Added onClassroomUpdated
     const socketRef = useRef(null);
 
     useEffect(() => {
@@ -58,6 +58,38 @@ export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMo
         socketRef.current.on('classroom-event-deleted', (data) => onClassroomEventDeleted && onClassroomEventDeleted(data));
         socketRef.current.on('classroom-event-updated', (data) => onClassroomEventTriggered && onClassroomEventTriggered(data));
 
+        // ✨ Listen for classroom updates (generic)
+        socketRef.current.on('classroom-updated', (data) => {
+            console.log('Socket received classroom-updated:', data);
+            if (onClassroomUpdated) onClassroomUpdated(data);
+        });
+
+        // ✨ Listen for user joined (Shotgun approach)
+        const handleUserJoinedEvent = (data) => {
+            console.log('Socket received user join event:', data);
+            if (onUserJoined) onUserJoined(data);
+        };
+        [
+            'user-joined', 'member-joined', 'participant-joined', 'new-member',
+            'user:joined', 'member:joined', 'participant:joined',
+            'join-room', 'user-connected'
+        ].forEach(event => {
+            socketRef.current.on(event, handleUserJoinedEvent);
+        });
+
+        // ✨ Listen for user left (Shotgun approach)
+        const handleUserLeftEvent = (data) => {
+            console.log('Socket received user left event:', data);
+            if (onUserLeft) onUserLeft(data);
+        };
+        [
+            'user-left', 'member-left', 'participant-left', 'left-room',
+            'user:left', 'member:left', 'participant:left',
+            'leave-room', 'user-disconnected'
+        ].forEach(event => {
+            socketRef.current.on(event, handleUserLeftEvent);
+        });
+
         // ... (connect/disconnect)
         socketRef.current.on('connect', () => console.log('Socket connected successfully'));
         socketRef.current.on('connect_error', (error) => console.error('Socket connection error:', error));
@@ -66,7 +98,7 @@ export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMo
         return () => {
             if (socketRef.current) socketRef.current.disconnect();
         };
-    }, [classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage, onClassroomEventAdded, onClassroomEventTriggered, onClassroomEventDeleted, onRaiseHandUpdated, onEmojiSent]);
+    }, [classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage, onClassroomEventAdded, onClassroomEventTriggered, onClassroomEventDeleted, onRaiseHandUpdated, onEmojiSent, onUserJoined, onUserLeft, onClassroomUpdated]);
 
     // ... (emitters)
 

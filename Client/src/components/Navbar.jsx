@@ -131,14 +131,15 @@ const Navbar = ({
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-        maxWidth: '100%',
+        flex: 1, // ✨ Change to flex: 1 to fill available space
+        minWidth: 0,
         display: 'block'
     };
 
     const memberContainerStyle = {
         display: 'flex',
         alignItems: 'center',
-        width: '100%',
+        flex: 1, // ✨ Change to flex: 1
         minWidth: 0
     };
 

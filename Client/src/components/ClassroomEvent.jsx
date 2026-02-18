@@ -572,7 +572,18 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
     // Effect to handle result arrival and animation
     useEffect(() => {
         if (event.results && event.results.length > 0) {
-            // ... (existing poll/random animation logic) ...
+            if (event.type === 'random') {
+                // Only animate if the update is recent (e.g., within last 10 seconds)
+                // This prevents re-animation on page load if event is already done
+                const isRecent = (Date.now() - new Date(event.updatedAt).getTime()) < 10000;
+                if (isRecent) {
+                    startAnimation();
+                } else {
+                    setShowResults(true);
+                }
+            } else {
+                setShowResults(true);
+            }
             
             // For Buzz: If we have a winner, stop countdown if any
             if (event.type === 'buzz') {

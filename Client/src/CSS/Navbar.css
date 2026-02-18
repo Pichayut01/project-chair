@@ -392,13 +392,19 @@ html {
     margin-left: 8px;
     cursor: pointer;
     border-radius: 50%;
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.2s, color 0.2s, opacity 0.2s;
     padding: 4px;
+    opacity: 0; /* ✨ Hide by default */
 }
 
 .menu-btn:hover {
     background: #f0f0f0;
     color: #7ec282;
+}
+
+/* ✨ Show on hover */
+.sidebar-list-item:hover .menu-btn {
+    opacity: 1;
 }
 
 /* Collapsible Category Styles - Google Classroom inspired */
