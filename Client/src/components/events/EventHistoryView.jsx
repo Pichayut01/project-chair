@@ -51,13 +51,16 @@ const EventHistoryView = ({ events }) => {
                     {sortedEvents.map(event => (
                         <div key={event.id} className="event-history-card" style={{
                             background: 'white',
-                            borderRadius: '12px',
-                            padding: '16px',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                            border: '1px solid #e2e8f0',
+                            borderRadius: '16px',
+                            padding: '20px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03)',
+                            border: '1px solid #f1f5f9',
+                            borderTop: '5px solid #10b981',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '15px'
+                            gap: '15px',
+                            transition: 'transform 0.2s',
+                            cursor: 'pointer'
                         }}>
                              <div className="event-icon-wrapper" style={{ 
                                  width: '40px', height: '40px', 

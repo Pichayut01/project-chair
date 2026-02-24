@@ -545,7 +545,9 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 newEvent.title = 'Poll';
             }
             newEvent.type = eventConfig.type;
-            newEvent.config = eventConfig; // Save config like count
+            newEvent.config = eventConfig.config 
+                ? { ...eventConfig, ...eventConfig.config }
+                : eventConfig; // Flatten nested config
         }
 
         // Emit via socket
@@ -589,15 +591,12 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             }));
 
             // Emit trigger
-            emitTriggerClassroomEvent(event.id, { results });
+            emitTriggerClassroomEvent(event.id, { results, animationDuration: 3500 });
 
             // ✨ Send result to chat after animation (approx 3.5s)
             setTimeout(() => {
                 const winnerNames = results.map(r => r.userName).join(', ');
-            setTimeout(() => {
-                const winnerNames = results.map(r => r.userName).join(', ');
                 emitSystemMessage(`Random Selection Result: ${winnerNames}`);
-            }, 3500);
             }, 3500);
         }
     };

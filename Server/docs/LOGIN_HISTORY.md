@@ -5,6 +5,7 @@
 เมื่อ User login (ทั้ง Email/Password และ Google Login) ระบบจะบันทึกข้อมูลดังนี้:
 
 ### 1. Location Information
+
 - **Country**: ประเทศ (เช่น Thailand, United States)
 - **Region**: ภูมิภาค/จังหวัด
 - **City**: เมือง
@@ -12,21 +13,25 @@
 - **Coordinates**: พิกัด [latitude, longitude]
 
 ### 2. Device Information
+
 - **Type**: ประเภทอุปกรณ์ (mobile, desktop, tablet, smarttv, wearable, console)
 - **Vendor**: ยี่ห้อ (Apple, Samsung, etc.)
 - **Model**: รุ่น
 - **Icon**: Emoji icon (📱💻📱📺⌚🎮)
 
 ### 3. Browser Information
+
 - **Name**: ชื่อ Browser (Chrome, Firefox, Safari, Edge, Opera, IE)
 - **Version**: เวอร์ชัน Browser
 - **Icon**: Emoji icon (🌐🦊🧭🌊🎭🗑️)
 
 ### 4. Operating System
+
 - **Name**: ชื่อ OS (Windows, macOS, Android, iOS, Linux)
 - **Version**: เวอร์ชัน OS
 
 ### 5. Other Info
+
 - **IP Address**: IP ที่ใช้ login
 - **User Agent**: User agent string แบบเต็ม
 - **Timestamp**: วันเวลาที่ login
@@ -35,18 +40,21 @@
 ## 🔒 Rate Limiting
 
 ### Login/Register Endpoints
+
 - **Limit**: 5 attempts per 15 minutes
-- **Applies to**: 
+- **Applies to**:
   - `/api/auth/login`
   - `/api/auth/register`
   - `/api/auth/google-login-verify`
   - `/api/auth/forgot-password`
 
 ### Login History Endpoint
+
 - **Limit**: 10 requests per minute
 - **Applies to**: `/api/auth/login-history`
 
 ### Active Sessions Endpoint
+
 - **Limit**: 10 requests per minute
 - **Applies to**: `/api/auth/active-sessions`
 
@@ -101,6 +109,7 @@
 ## 💡 Frontend Display Suggestions
 
 ### Basic Display
+
 ```typescript
 {loginInfo.device.icon} {loginInfo.browser.name} on {loginInfo.os.name}
 {loginInfo.location.city}, {loginInfo.location.country}
@@ -108,6 +117,7 @@
 ```
 
 Example output:
+
 ```
 💻 Chrome on Windows
 Bangkok, Thailand
@@ -115,6 +125,7 @@ Bangkok, Thailand
 ```
 
 ### Detailed Display
+
 ```typescript
 Login from {location.city}, {location.country}
 Device: {device.icon} {device.type} {device.vendor && `(${device.vendor})`}
@@ -127,6 +138,7 @@ Time: {timestamp}
 ## 🔧 Testing
 
 ### Test with different devices:
+
 1. Desktop Chrome
 2. Mobile Safari (iPhone)
 3. Mobile Chrome (Android)
@@ -134,6 +146,7 @@ Time: {timestamp}
 5. Different locations (VPN)
 
 ### Expected Results:
+
 - Different device types should show different icons
 - Different browsers should be detected correctly
 - Location should be determined from IP (localhost will show "Local Development")

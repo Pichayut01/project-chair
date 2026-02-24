@@ -38,29 +38,28 @@ const WordCloudViz = ({ results = [], config = {}, emptyMessage = "Waiting for r
     
     // Generate a color scale based on counts
     // We'll use a nice palette
-    const colorScale = chroma.scale(['#60a5fa', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af']).mode('lch');
+    // Generate a color scale based on counts — GREEN theme
+    const colorScale = chroma.scale(['#6ee7b7', '#34d399', '#10b981', '#059669', '#047857']).mode('lch');
 
     return (
         <div className="wordcloud-container">
             {words.map((w, idx) => {
-                // Calculate size relative to max
-                // Logarithmic scale often looks better for word clouds to prevent huge disparities
                 const size = maxCount === 1 
                     ? 2.5 
                     : minSize + (Math.log(w.count) / Math.log(maxCount)) * (maxSize - minSize);
                 
-                // Get color based on relative count (0 to 1)
                 const colorRatio = maxCount === 1 ? 0.5 : (w.count - 1) / (maxCount - 1);
-                // Mix in some random variation for aesthetics
                 const color = colorScale(colorRatio).brighten(idx % 2 === 0 ? 0.2 : 0).hex();
                 
-                // Random rotation between -10 and 10 degrees for organic feel
-                // Use a deterministic random based on word text so it doesn't jitter on re-render
                 const rotation = (w.text.length % 4 - 1.5) * 5; 
+
+                // Random float animation params per word
+                const floatDuration = 3 + (w.text.length % 3);
+                const floatDelay = (idx * 0.3) % 2;
 
                 return (
                     <motion.span 
-                        key={w.text} // Use text as key correctly
+                        key={w.text}
                         className="word-tag" 
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -70,7 +69,7 @@ const WordCloudViz = ({ results = [], config = {}, emptyMessage = "Waiting for r
                             damping: 20, 
                             delay: idx * 0.05 
                         }}
-                        whileHover={{ scale: 1.1, rotate: 0, zIndex: 10 }}
+                        whileHover={{ scale: 1.15, rotate: 0, zIndex: 10 }}
                         style={{ 
                             fontSize: `${size}rem`, 
                             color: color,
@@ -79,7 +78,8 @@ const WordCloudViz = ({ results = [], config = {}, emptyMessage = "Waiting for r
                             display: 'inline-block',
                             rotate: `${rotation}deg`,
                             cursor: 'default',
-                            textShadow: '1px 1px 0px rgba(255,255,255,0.5)'
+                            textShadow: '1px 1px 0px rgba(255,255,255,0.5)',
+                            animation: `wcFloat ${floatDuration}s ease-in-out infinite ${floatDelay}s`
                         }}
                         title={`${w.count} occurrence${w.count > 1 ? 's' : ''}`}
                     >

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import axios from 'axios';
 import '../CSS/ClassroomEvent.css';
 import WordCloudViz from './events/WordCloudViz';
-import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaClipboardList, FaTrophy, FaUser, FaUndo } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaClipboardList, FaTrophy, FaUser, FaUndo, FaMagic, FaUsers, FaChevronRight } from 'react-icons/fa';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
@@ -263,21 +264,23 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                 const event = item;
                                 return (
                                     <div key={event.id} className="event-card" style={{ width: '100%' }}>
-                                        <div className="event-card-header">
-                                            <h3>{getEventIcon(event.type)} {event.title}</h3>
-                                            {isCreator && onDeleteEvent && (
-                                                <button
-                                                    className="delete-event-btn"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onDeleteEvent(event);
-                                                    }}
-                                                    title="Delete Event"
-                                                >
-                                                    <FaTrash />
-                                                </button>
-                                            )}
-                                        </div>
+                                        {!['random', 'wordcloud', 'question', 'poll', 'buzz'].includes(event.type) && (
+                                            <div className="event-card-header">
+                                                <h3>{getEventIcon(event.type)} {event.title}</h3>
+                                                {isCreator && onDeleteEvent && (
+                                                    <button
+                                                        className="delete-event-btn"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onDeleteEvent(event);
+                                                        }}
+                                                        title="Delete Event"
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="event-card-body">
                                             <EventCardContent
                                                 event={event}
@@ -286,6 +289,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                                 onSubmitAnswer={onSubmitAnswer}
                                                 currentUser={currentUser}
                                                 candidates={candidates}
+                                                onDeleteEvent={onDeleteEvent}
                                             />
                                         </div>
                                     </div>
@@ -297,115 +301,126 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             )}
 
             {/* Event Type Selection Modal */}
-            {isAddEventModalOpen && (
-                <div className="event-modal-overlay" onClick={() => setIsAddEventModalOpen(false)}>
-                    <div className="event-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h3>Select an Event</h3>
-                        <div className="event-options-grid">
-                            <div
-                                className="event-option-card"
-                                onClick={() => openConfigModal('random')}
-                            >
-                                <div className="event-icon"><FaDice style={{ color: '#0aa158' }} /></div>
-                                <span>Random Student</span>
-                            </div>
-                            <div
-                                className="event-option-card"
-                                onClick={() => handleSelectEvent({ type: 'buzz' })}
-                            >
-                                <div className="event-icon"><FaBullhorn style={{ color: '#0aa158' }} /></div>
-                                <span>Buzz Button</span>
-                            </div>
-                            <div
-                                className="event-option-card"
-                                onClick={() => openConfigModal('wordcloud')}
-                            >
-                                <div className="event-icon"><FaCloud style={{ color: '#0aa158' }} /></div>
-                                <span>Word Cloud</span>
-                            </div>
-                            <div
-                                className="event-option-card"
-                                onClick={() => openConfigModal('question')}
-                            >
-                                <div className="event-icon"><FaQuestionCircle style={{ color: '#0aa158' }} /></div>
-                                <span>Ask Question</span>
-                            </div>
-                            <div
-                                className="event-option-card"
-                                onClick={() => openConfigModal('poll')}
-                            >
-                                <div className="event-icon"><FaPoll style={{ color: '#0aa158' }} /></div>
-                                <span>Multiple Choice</span>
+            {isAddEventModalOpen && ReactDOM.createPortal(
+                <div className="modal-overlay-new" onClick={() => setIsAddEventModalOpen(false)}>
+                    <div className="modal-card-new" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header-new" style={{ background: 'linear-gradient(to right, #10b981, #059669)' }}>
+                            <h3><FaMagic style={{ marginRight: '8px' }} /> Create New Event</h3>
+                            <p>Choose an activity for your classroom</p>
+                            <button className="modal-close-x" onClick={() => setIsAddEventModalOpen(false)}><FaTimes /></button>
+                        </div>
+                        <div className="modal-body-new">
+                            <div className="event-type-grid">
+                                <div className="event-type-card" onClick={() => openConfigModal('random')} style={{ '--card-accent': '#10b981' }}>
+                                    <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}><FaDice /></div>
+                                    <div className="etc-info">
+                                        <span className="etc-name">Random Student</span>
+                                        <span className="etc-desc">Randomly select students</span>
+                                    </div>
+                                    <FaChevronRight className="etc-arrow" />
+                                </div>
+                                <div className="event-type-card" onClick={() => openConfigModal('question')} style={{ '--card-accent': '#3b82f6' }}>
+                                    <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}><FaQuestionCircle /></div>
+                                    <div className="etc-info">
+                                        <span className="etc-name">Ask Question</span>
+                                        <span className="etc-desc">Get open-ended answers</span>
+                                    </div>
+                                    <FaChevronRight className="etc-arrow" />
+                                </div>
+                                <div className="event-type-card" onClick={() => openConfigModal('poll')} style={{ '--card-accent': '#f59e0b' }}>
+                                    <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}><FaPoll /></div>
+                                    <div className="etc-info">
+                                        <span className="etc-name">Multiple Choice</span>
+                                        <span className="etc-desc">Create a poll with options</span>
+                                    </div>
+                                    <FaChevronRight className="etc-arrow" />
+                                </div>
+                                <div className="event-type-card" onClick={() => openConfigModal('wordcloud')} style={{ '--card-accent': '#10b981' }}>
+                                    <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}><FaCloud /></div>
+                                    <div className="etc-info">
+                                        <span className="etc-name">Word Cloud</span>
+                                        <span className="etc-desc">Collect words visually</span>
+                                    </div>
+                                    <FaChevronRight className="etc-arrow" />
+                                </div>
+                                <div className="event-type-card" onClick={() => handleSelectEvent({ type: 'buzz' })} style={{ '--card-accent': '#ef4444' }}>
+                                    <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}><FaBullhorn /></div>
+                                    <div className="etc-info">
+                                        <span className="etc-name">Buzz Button</span>
+                                        <span className="etc-desc">First to buzz wins!</span>
+                                    </div>
+                                    <FaChevronRight className="etc-arrow" />
+                                </div>
                             </div>
                         </div>
-                        <button className="close-modal-btn" onClick={() => setIsAddEventModalOpen(false)}>
-                            Cancel
-                        </button>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Configuration Modal */}
-            {isConfigModalOpen && (
-                <div className="event-modal-overlay" onClick={() => setIsConfigModalOpen(false)}>
-                    <div className="event-modal-content config-modal" onClick={(e) => e.stopPropagation()}>
-                        <h3>
-                            {selectedConfigType === 'random' && <><FaDice style={{ color: '#0aa158', marginRight: '10px' }} /> Random Students</>}
-                            {selectedConfigType === 'question' && <><FaQuestionCircle style={{ color: '#0aa158', marginRight: '10px' }} /> Ask Question</>}
-                            {selectedConfigType === 'poll' && <><FaPoll style={{ color: '#0aa158', marginRight: '10px' }} /> Multiple Choice</>}
-                            {selectedConfigType === 'wordcloud' && <><FaCloud style={{ color: '#0aa158', marginRight: '10px' }} /> Word Cloud</>}
-                        </h3>
+            {isConfigModalOpen && ReactDOM.createPortal(
+                <div className="modal-overlay-new" onClick={() => setIsConfigModalOpen(false)}>
+                    <div className="modal-card-new config-modal-new" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header-new" style={{
+                            background: selectedConfigType === 'random' ? 'linear-gradient(to right, #10b981, #059669)'
+                                : selectedConfigType === 'question' ? 'linear-gradient(to right, #3b82f6, #2563eb)'
+                                : selectedConfigType === 'poll' ? 'linear-gradient(to right, #f59e0b, #d97706)'
+                                : 'linear-gradient(to right, #10b981, #059669)'
+                        }}>
+                            <h3>
+                                {selectedConfigType === 'random' && <><FaDice style={{ marginRight: '10px' }} /> Random Students</>}
+                                {selectedConfigType === 'question' && <><FaQuestionCircle style={{ marginRight: '10px' }} /> Ask Question</>}
+                                {selectedConfigType === 'poll' && <><FaPoll style={{ marginRight: '10px' }} /> Multiple Choice</>}
+                                {selectedConfigType === 'wordcloud' && <><FaCloud style={{ marginRight: '10px' }} /> Word Cloud</>}
+                            </h3>
+                            <p>Configure your event settings</p>
+                            <button className="modal-close-x" onClick={() => setIsConfigModalOpen(false)}><FaTimes /></button>
+                        </div>
 
-                        <div className="modal-body">
+                        <div className="modal-body-new">
                             {selectedConfigType === 'random' && (
-                                <div className="input-group">
-                                    <label>Number of students to select:</label>
-                                    <div className="number-input-wrapper">
-                                        <button onClick={() => setStudentCountInput(prev => Math.max(1, prev - 1))}>-</button>
+                                <div className="cfg-group">
+                                    <label className="cfg-label">Number of students to select</label>
+                                    <div className="cfg-number-wrapper">
+                                        <button className="cfg-num-btn" onClick={() => setStudentCountInput(prev => Math.max(1, prev - 1))}>−</button>
                                         <input
                                             type="number"
+                                            className="cfg-num-input"
                                             value={studentCountInput}
                                             onChange={(e) => setStudentCountInput(parseInt(e.target.value) || '')}
                                             min="1"
                                             max={candidates.length}
                                         />
-                                        <button onClick={() => setStudentCountInput(prev => Math.min(candidates.length, prev + 1))}>+</button>
+                                        <button className="cfg-num-btn" onClick={() => setStudentCountInput(prev => Math.min(candidates.length, prev + 1))}>+</button>
                                     </div>
-                                    <p className="input-helper">Max available: {candidates.length}</p>
+                                    <p className="cfg-helper">Max available: {candidates.length}</p>
                                 </div>
                             )}
 
                             {selectedConfigType === 'question' && (
                                 <>
-                                    <div className="input-group">
-                                        <label>Your Question:</label>
+                                    <div className="cfg-group">
+                                        <label className="cfg-label">Your Question</label>
                                         <textarea
-                                            className="modal-textarea"
+                                            className="cfg-textarea"
                                             value={questionTextInput}
                                             onChange={(e) => setQuestionTextInput(e.target.value)}
                                             placeholder="Type your question here..."
                                             rows="3"
                                         />
                                     </div>
-                                    {/* ✨ Image Upload UI (Question) */}
-                                    <div className="input-group">
-                                        <label>Attachment (Optional):</label>
-                                        <div className="file-upload-wrapper">
-                                            <input 
-                                                type="file" 
-                                                accept="image/*" 
-                                                onChange={handleImageUpload}
-                                                id="question-image-upload"
-                                                className="file-input-hidden" 
-                                                style={{ display: 'none' }}
-                                            />
-                                            <label htmlFor="question-image-upload" className="file-upload-btn">
-                                                {isUploading ? 'Uploading...' : <><FaImage /> Add Image</>}
+                                    <div className="cfg-group">
+                                        <label className="cfg-label">Attachment (Optional)</label>
+                                        <div className="cfg-upload-area">
+                                            <input type="file" accept="image/*" onChange={handleImageUpload} id="question-image-upload" style={{ display: 'none' }} />
+                                            <label htmlFor="question-image-upload" className="cfg-upload-btn">
+                                                {isUploading ? 'Uploading...' : <><FaImage style={{ marginRight: '6px' }} /> Add Image</>}
                                             </label>
                                             {selectedImage && (
-                                                <div className="image-preview-container">
-                                                    <img src={`${API_BASE_URL}${selectedImage}`} alt="Preview" className="image-preview-thumb" />
-                                                    <button className="remove-image-btn" onClick={() => setSelectedImage(null)}><FaTimes /></button>
+                                                <div className="cfg-image-preview">
+                                                    <img src={`${API_BASE_URL}${selectedImage}`} alt="Preview" />
+                                                    <button className="cfg-remove-img" onClick={() => setSelectedImage(null)}><FaTimes /></button>
                                                 </div>
                                             )}
                                         </div>
@@ -414,148 +429,114 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                             )}
 
                             {selectedConfigType === 'wordcloud' && (
-                                <div className="config-section">
-                                    <div className="input-group">
-                                        <label>Topic / Question:</label>
-                                        <input
-                                            type="text"
-                                            className="modal-input"
-                                            value={cloudTopic}
-                                            onChange={(e) => setCloudTopic(e.target.value)}
-                                            placeholder="e.g. Describe your feeling in one word..."
-                                        />
-                                    </div>
+                                <div className="cfg-group">
+                                    <label className="cfg-label">Topic / Question</label>
+                                    <input
+                                        type="text"
+                                        className="cfg-input"
+                                        value={cloudTopic}
+                                        onChange={(e) => setCloudTopic(e.target.value)}
+                                        placeholder="e.g. Describe your feeling in one word..."
+                                    />
                                 </div>
                             )}
 
                             {selectedConfigType === 'poll' && (
                                 <>
-                                    <div className="input-group">
-                                        <label>Question:</label>
+                                    <div className="cfg-group">
+                                        <label className="cfg-label">Question</label>
                                         <textarea
-                                            className="modal-textarea"
+                                            className="cfg-textarea"
                                             value={questionTextInput}
                                             onChange={(e) => setQuestionTextInput(e.target.value)}
                                             placeholder="e.g., Which topic should we review?"
                                             rows="2"
                                         />
                                     </div>
-                                    {/* ✨ Image Upload UI (Poll) */}
-                                    <div className="input-group">
-                                        <label>Attachment (Optional):</label>
-                                        <div className="file-upload-wrapper">
-                                            <input 
-                                                type="file" 
-                                                accept="image/*" 
-                                                onChange={handleImageUpload}
-                                                id="poll-image-upload"
-                                                className="file-input-hidden"
-                                                style={{ display: 'none' }}
-                                            />
-                                            <label htmlFor="poll-image-upload" className="file-upload-btn">
-                                                {isUploading ? 'Uploading...' : <><FaImage /> Add Image</>}
+                                    <div className="cfg-group">
+                                        <label className="cfg-label">Attachment (Optional)</label>
+                                        <div className="cfg-upload-area">
+                                            <input type="file" accept="image/*" onChange={handleImageUpload} id="poll-image-upload" style={{ display: 'none' }} />
+                                            <label htmlFor="poll-image-upload" className="cfg-upload-btn">
+                                                {isUploading ? 'Uploading...' : <><FaImage style={{ marginRight: '6px' }} /> Add Image</>}
                                             </label>
                                             {selectedImage && (
-                                                <div className="image-preview-container">
-                                                    <img src={`${API_BASE_URL}${selectedImage}`} alt="Preview" className="image-preview-thumb" />
-                                                    <button className="remove-image-btn" onClick={() => setSelectedImage(null)}><FaTimes /></button>
+                                                <div className="cfg-image-preview">
+                                                    <img src={`${API_BASE_URL}${selectedImage}`} alt="Preview" />
+                                                    <button className="cfg-remove-img" onClick={() => setSelectedImage(null)}><FaTimes /></button>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="input-group">
-                                        <label>Options:</label>
-                                        <div className="poll-options-config">
+                                    <div className="cfg-group">
+                                        <label className="cfg-label">Options</label>
+                                        <div className="cfg-options-list">
                                             {pollOptions.map((opt, idx) => (
-                                                <div key={idx} className="poll-option-row-compact">
-                                                    <span className="option-number">{idx + 1}.</span>
+                                                <div key={idx} className="cfg-option-row">
+                                                    <span className="cfg-opt-num">{idx + 1}</span>
                                                     <input
                                                         type="text"
-                                                        className="poll-option-input-compact"
+                                                        className="cfg-opt-input"
                                                         value={opt}
                                                         onChange={(e) => handleOptionChange(idx, e.target.value)}
                                                         placeholder={`Option ${idx + 1}`}
                                                     />
-                                                    
-                                                    {/* Compact Score Config */}
                                                     {isScored && (
-                                                        <div className="poll-option-score-compact">
+                                                        <div className="cfg-score-mini">
                                                             <input
                                                                 type="number"
-                                                                className="score-points-input-tiny"
+                                                                className="cfg-score-pts"
                                                                 value={optionScores[idx]?.points || 0}
                                                                 onChange={(e) => handleScoreChange(idx, 'points', e.target.value)}
                                                                 placeholder="Pts"
-                                                                title="Points"
                                                                 min="0"
                                                             />
-                                                            <div className="score-action-wrapper">
-                                                                <select
-                                                                    className={`score-action-select-tiny ${optionScores[idx]?.action === 'subtract' ? 'action-sub' : 'action-add'}`}
-                                                                    value={optionScores[idx]?.action || 'add'}
-                                                                    onChange={(e) => handleScoreChange(idx, 'action', e.target.value)}
-                                                                    title="Add or Reduce Score"
-                                                                >
-                                                                    <option value="add">+</option>
-                                                                    <option value="subtract">-</option>
-                                                                </select>
-                                                            </div>
+                                                            <select
+                                                                className={`cfg-score-action ${optionScores[idx]?.action === 'subtract' ? 'action-sub' : 'action-add'}`}
+                                                                value={optionScores[idx]?.action || 'add'}
+                                                                onChange={(e) => handleScoreChange(idx, 'action', e.target.value)}
+                                                            >
+                                                                <option value="add">+</option>
+                                                                <option value="subtract">−</option>
+                                                            </select>
                                                         </div>
                                                     )}
-
                                                     {pollOptions.length > 2 && (
-                                                        <button
-                                                            className="remove-option-btn-compact"
-                                                            onClick={() => handleRemoveOption(idx)}
-                                                            title="Remove option"
-                                                        >
-                                                            ✕
-                                                        </button>
+                                                        <button className="cfg-opt-remove" onClick={() => handleRemoveOption(idx)}>✕</button>
                                                     )}
                                                 </div>
                                             ))}
-                                            <button className="add-option-btn" onClick={handleAddOption}>
-                                                + Add Option
-                                            </button>
+                                            <button className="cfg-add-opt" onClick={handleAddOption}>+ Add Option</button>
                                         </div>
                                     </div>
-
-                                    {/* Scoring Toggle Only */}
-                                    <div className="scoring-config-section">
-                                        <div className="input-group-row">
-                                            <label className="toggle-label">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isScored}
-                                                    onChange={(e) => setIsScored(e.target.checked)}
-                                                />
-                                                Enable Scoring (Per Option)
-                                            </label>
-                                        </div>
+                                    <div className="cfg-group">
+                                        <label className="cfg-toggle">
+                                            <input type="checkbox" checked={isScored} onChange={(e) => setIsScored(e.target.checked)} />
+                                            <span>Enable Scoring (Per Option)</span>
+                                        </label>
                                     </div>
                                 </>
                             )}
 
-                            {configError && <p className="error-msg">{configError}</p>}
+                            {configError && <p className="cfg-error">{configError}</p>}
                         </div>
 
-                        <div className="modal-actions">
-                            <button className="cancel-btn" onClick={() => setIsConfigModalOpen(false)}>
-                                Back
-                            </button>
-                            <button className="confirm-btn" onClick={handleConfigSubmit}>
-                                Create Event
+                        <div className="modal-footer-new">
+                            <button className="cfg-cancel-btn" onClick={() => setIsConfigModalOpen(false)}>Back</button>
+                            <button className="cfg-create-btn" onClick={handleConfigSubmit}>
+                                <FaPlus style={{ marginRight: '6px' }} /> Create Event
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
 };
 
 /* Helper Component for Event Card Content */
-const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candidates = [], currentUser }) => {
+const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candidates = [], currentUser, onDeleteEvent }) => {
     const [displayNames, setDisplayNames] = useState([]);
     const [isAnimating, setIsAnimating] = useState(false);
     const [showResults, setShowResults] = useState(false);
@@ -594,9 +575,11 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
                 if (isRecent) {
                     startAnimation();
                 } else {
+                    setIsAnimating(false);
                     setShowResults(true);
                 }
             } else {
+                setIsAnimating(false);
                 setShowResults(true);
             }
             
@@ -669,294 +652,413 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
             setDisplayNames(randomPicks);
         }, 100); // Change every 100ms
 
-        // Stop after 3 seconds
-        setTimeout(() => {
-            clearInterval(interval);
-            setIsAnimating(false);
-            setShowResults(true);
-        }, 3000);
+        // Calculate remaining animation time based on when the event was updated globally
+        const animationDuration = event.animationDuration || 3500;
+        const timeElapsed = Date.now() - new Date(event.updatedAt).getTime();
+        const timeRemaining = Math.max(0, animationDuration - timeElapsed);
+
+        if (timeRemaining <= 0) {
+             clearInterval(interval);
+             setIsAnimating(false);
+             setShowResults(true);
+        } else {
+             setTimeout(() => {
+                 clearInterval(interval);
+                 setIsAnimating(false);
+                 setShowResults(true);
+             }, timeRemaining);
+        }
     };
 
     return (
         <div className="event-card-content">
             {event.type === 'random' && (
-                <div className="random-event-content">
-                    <div className="random-info">
-                        <span className="random-badge">Random x{event.config?.count || 1}</span>
+                <div className="random-event-content-new">
+                    {/* Header */}
+                    <div className="random-header-new">
+                        <div className="random-header-bg-icon">
+                            <FaTrophy size={120} />
+                        </div>
+                        {isCreator && onDeleteEvent && (
+                            <button
+                                className="delete-event-btn"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteEvent(event);
+                                }}
+                                title="Delete Event"
+                                style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 20, color: 'white', background: 'rgba(0,0,0,0.1)' }}
+                            >
+                                <FaTrash />
+                            </button>
+                        )}
+                        <h2 className="random-header-title">
+                            <FaMagic style={{ color: '#d1fae5' }} /> Random Student <FaMagic style={{ color: '#d1fae5' }} />
+                        </h2>
+                        <p className="random-header-subtitle">Random student x{event.config?.count || 1}</p>
                     </div>
 
-                    {/* Animation Area */}
-                    {isAnimating && (
-                        <div className="random-animating">
-                            {displayNames.map((candidate, i) => (
-                                <div key={i} className="animating-card">
-                                    {candidate.photoSrc ? (
-                                        <img src={candidate.photoSrc} alt="avatar" className="animating-avatar" />
-                                    ) : (
-                                        <div className="animating-avatar" style={{ background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#0aa158' }}>
-                                            <FaUser />
+                    <div className="random-body-new">
+                        {/* Display Area for Spinning/Winner */}
+                        <div className={`random-display-area ${isAnimating ? 'spinning' : ''} ${(showResults && event.results?.length > 0) ? 'winner' : ''} ${(!isAnimating && !showResults) ? 'idle' : ''}`}>
+                            
+                            {!isAnimating && !showResults && (
+                                <h3 className="random-idle-text">Click to start!</h3>
+                            )}
+
+                            {isAnimating && !showResults && (
+                                <div className="random-animating-container">
+                                    {displayNames.map((candidate, i) => (
+                                        <div key={i} className="random-animating-item">
+                                            {candidate.photoSrc ? (
+                                                <img src={candidate.photoSrc} alt="avatar" className="random-avatar animating" />
+                                            ) : (
+                                                <div className="random-avatar-placeholder animating">
+                                                    <FaUser />
+                                                </div>
+                                            )}
+                                            <h3 className="random-name animating">{candidate.name}</h3>
                                         </div>
-                                    )}
-                                    <span className="animating-name">{candidate.name}</span>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            )}
 
-                    {/* Results Display */}
-                    {showResults && event.results && event.results.length > 0 && (
-                        <div className="random-results">
-                            <h4 style={{ textAlign: 'center', width: '100%', marginBottom: '1rem', color: '#0aa158' }}>
-                                <FaTrophy style={{ marginRight: '8px' }} /> Winners!
-                            </h4>
-                            <div className="winners-list" style={{ justifyContent: 'center' }}>
-                                {event.results.map((r, i) => (
-                                    <div key={i} className="winner-card">
-                                        {r.photoSrc ? (
-                                            <img src={r.photoSrc} alt="avatar" className="winner-avatar-large" />
-                                        ) : (
-                                            <div className="winner-avatar-large" style={{ background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#0aa158' }}>
-                                                <FaTrophy />
+                            {showResults && event.results && event.results.length > 0 && (
+                                <div className="random-winners-container">
+                                    <span className="winner-label" style={{color: '#16a34a'}}><FaTrophy size={16} /> Winner</span>
+                                    <div className="random-winners-list">
+                                        {[event.results[event.results.length - 1]].map((r, i) => (
+                                            <div key={i} className="random-winner-item text-center flex flex-col items-center">
+                                                {r.photoSrc ? (
+                                                    <img src={r.photoSrc} alt="avatar" className="random-avatar winner mx-auto" style={{ display: 'block' }} />
+                                                ) : (
+                                                    <div className="random-avatar-placeholder winner mx-auto" style={{ display: 'flex' }}>
+                                                        <FaTrophy />
+                                                    </div>
+                                                )}
+                                                <h3 className="random-name winner mt-3 text-center w-full">{r.userName || 'Unknown'}</h3>
                                             </div>
-                                        )}
-                                        <div className="winner-info">
-                                            <div className="winner-name">{r.userName || 'Unknown'}</div>
-                                            {/* Optional: Add email or other info if available */}
-                                        </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            )}
                         </div>
-                    )}
 
-                    {/* Waiting Status */}
-                    {!isAnimating && !showResults && (
-                        <div className="random-status">Waiting to start...</div>
-                    )}
+                        {/* Participant Count Display */}
+                        <div className="random-participant-count">
+                            <div className="rpc-left">
+                                <FaUsers />
+                                <span>Total Participants</span>
+                            </div>
+                            <span className="rpc-right">{candidates.length} students</span>
+                        </div>
 
-                    {/* Creator Controls */}
-                    {isCreator && !isAnimating && (
-                        <button className="start-random-btn" onClick={() => onTrigger(event)}>
-                            {event.results ? <><FaUndo style={{ marginRight: '5px' }} /> Reroll</> : <><FaDice style={{ marginRight: '5px' }} /> Start Random</>}
-                        </button>
-                    )}
+                        {/* Creator Action Button */}
+                        {isCreator && (
+                            <button
+                                onClick={() => { if(!isAnimating) onTrigger(event); }}
+                                disabled={isAnimating || candidates.length === 0}
+                                className={`random-action-btn ${isAnimating ? 'spinning' : ''}`}
+                            >
+                                {isAnimating ? (
+                                    <>
+                                        <FaDice className="spin-icon" /> Rolling...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FaDice /> {event.results ? 'Roll Again!' : 'Roll Now!'}
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
 
             {/* ✨ Question Event Content */}
             {event.type === 'question' && (
-                <div className="question-event-content">
-                    {/* ✨ Display Image if present */}
-                    {event.config?.imageUrl && (
-                        <div className="event-illustration-container">
-                            <img 
-                                src={`${API_BASE_URL}${event.config.imageUrl}`} 
-                                alt="Question Illustration" 
-                                className="event-illustration-image" 
-                            />
+                <div className="ev-card-new question-card-new">
+                    {/* Header */}
+                    <div className="ev-header-new" style={{ background: 'linear-gradient(to right, #3b82f6, #2563eb)' }}>
+                        <div className="ev-header-bg-icon">
+                            <FaQuestionCircle size={120} />
                         </div>
-                    )}
-                    <p className="question-text">{event.config?.questionText}</p>
+                        {isCreator && onDeleteEvent && (
+                            <button
+                                className="delete-event-btn"
+                                onClick={(e) => { e.stopPropagation(); onDeleteEvent(event); }}
+                                title="Delete Event"
+                                style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 20, color: 'white', background: 'rgba(0,0,0,0.1)' }}
+                            >
+                                <FaTrash />
+                            </button>
+                        )}
+                        <h2 className="ev-header-title">
+                            <FaQuestionCircle style={{ color: '#bfdbfe' }} /> Question
+                        </h2>
+                        <p className="ev-header-subtitle">Open-ended question</p>
+                    </div>
 
-                    {/* Creator View: List Answers */}
-                    {isCreator ? (
-                        <div className="answers-section">
-                            <h4>Answers ({event.results ? event.results.length : 0})</h4>
-                            <div className="answers-list">
-                                {event.results && event.results.map((ans, idx) => {
-                                    // Construct a user-like object for the helper if needed, or just pass ans if it has expected fields
-                                    // The helper expects an object like { photoURL: string, googleId: string? }
-                                    // We'll pass `ans` directly if it has `photoURL`.
-                                    // If `ans` is just { userId, userName, text, photoURL, ... }
-                                    const imgSrc = getProfileImageSrc(ans.photoURL, isGoogleUser(ans));
+                    <div className="ev-body-new">
+                        {/* Featured Question Text */}
+                        <div className="ev-featured-question">
+                            <span className="ev-fq-icon">Q</span>
+                            <p className="ev-fq-text">{event.config?.questionText || 'Open Question'}</p>
+                        </div>
+                        {/* Image if present */}
+                        {event.config?.imageUrl && (
+                            <div className="ev-image-container">
+                                <img 
+                                    src={`${API_BASE_URL}${event.config.imageUrl}`} 
+                                    alt="Question" 
+                                    className="ev-image" 
+                                />
+                            </div>
+                        )}
 
-                                    return (
-                                        <div key={idx} className="answer-card">
-                                            <div className="answer-header">
-                                                <img 
-                                                    src={imgSrc} 
-                                                    alt={ans.userName} 
-                                                    className="answer-avatar"
-                                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(ans.userName || 'U') + '&background=random'; }}
-                                                />
-                                                <div className="answer-user-info">
-                                                    <span className="answer-username">{ans.userName || 'Anonymous'}</span>
-                                                    <span className="answer-timestamp">Just now</span>
+                        {/* Creator View: Answers */}
+                        {isCreator ? (
+                            <div className="ev-answers-section">
+                                <div className="ev-answers-header">
+                                    <span>Answers</span>
+                                    <span className="ev-answers-count">{event.results ? event.results.length : 0}</span>
+                                </div>
+                                <div className="ev-answers-list">
+                                    {event.results && event.results.map((ans, idx) => {
+                                        const imgSrc = getProfileImageSrc(ans.photoURL, isGoogleUser(ans));
+                                        return (
+                                            <div key={idx} className="ev-answer-card">
+                                                <div className="ev-answer-header">
+                                                    <img 
+                                                        src={imgSrc} 
+                                                        alt={ans.userName} 
+                                                        className="ev-answer-avatar"
+                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(ans.userName || 'U') + '&background=random'; }}
+                                                    />
+                                                    <div className="ev-answer-user-info">
+                                                        <span className="ev-answer-username">{ans.userName || 'Anonymous'}</span>
+                                                        <span className="ev-answer-time">Just now</span>
+                                                    </div>
                                                 </div>
+                                                <div className="ev-answer-body">{ans.text}</div>
                                             </div>
-                                            <div className="answer-body">
-                                                {ans.text}
-                                            </div>
+                                        );
+                                    })}
+                                    {(!event.results || event.results.length === 0) && (
+                                        <div className="ev-empty-state">
+                                            <FaQuestionCircle style={{ fontSize: '2rem', opacity: 0.2, marginBottom: '8px' }} />
+                                            <p>Waiting for students to answer...</p>
                                         </div>
-                                    );
-                                })}
-                                {(!event.results || event.results.length === 0) && (
-                                    <div className="no-answers-placeholder">
-                                        <div className="loader-dots"></div>
-                                        <p>Waiting for students to answer...</p>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            /* Student View */
+                            <div className="ev-input-section">
+                                {!isSubmitted ? (
+                                    <>
+                                        <textarea
+                                            className="ev-textarea"
+                                            placeholder="Type your answer..."
+                                            value={answerInput}
+                                            onChange={(e) => setAnswerInput(e.target.value)}
+                                            rows="3"
+                                        />
+                                        <button
+                                            className="ev-submit-btn"
+                                            style={{ background: 'linear-gradient(to right, #3b82f6, #2563eb)' }}
+                                            onClick={handleAnswerSubmit}
+                                            disabled={!answerInput.trim()}
+                                        >
+                                            Submit Answer
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div className="ev-submitted-msg" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
+                                        <span style={{ color: '#1d4ed8' }}>Answer Submitted! ✅</span>
+                                        <p style={{ color: '#1e40af' }}>Waiting for other students...</p>
                                     </div>
                                 )}
                             </div>
-                        </div>
-                    ) : (
-                        /* Student View: Input Form */
-                        <div className="answer-input-section">
-                            {!isSubmitted ? (
-                                <>
-                                    <textarea
-                                        className="answer-textarea"
-                                        placeholder="Type your answer..."
-                                        value={answerInput}
-                                        onChange={(e) => setAnswerInput(e.target.value)}
-                                        rows="2"
-                                    />
-                                    <button
-                                        className="submit-answer-btn"
-                                        onClick={handleAnswerSubmit}
-                                        disabled={!answerInput.trim()}
-                                    >
-                                        Submit Answer
-                                    </button>
-                                </>
-                            ) : (
-                                <div className="answer-submitted-msg">
-                                    <div>Answer Submitted!</div>
-                                    <span>Waiting for other students...</span>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             )}
 
             {/* ✨ Poll Event Content */}
             {event.type === 'poll' && (
-                <div className="poll-event-content">
-                    {/* ✨ Display Image if present */}
-                    {event.config?.imageUrl && (
-                        <div className="event-illustration-container">
-                            <img 
-                                src={`${API_BASE_URL}${event.config.imageUrl}`} 
-                                alt="Poll Illustration" 
-                                className="event-illustration-image" 
-                            />
+                <div className="ev-card-new poll-card-new">
+                    {/* Header */}
+                    <div className="ev-header-new" style={{ background: 'linear-gradient(to right, #f59e0b, #d97706)' }}>
+                        <div className="ev-header-bg-icon">
+                            <FaPoll size={120} />
                         </div>
-                    )}
-                    <p className="question-text">{event.config?.questionText}</p>
+                        {isCreator && onDeleteEvent && (
+                            <button
+                                className="delete-event-btn"
+                                onClick={(e) => { e.stopPropagation(); onDeleteEvent(event); }}
+                                title="Delete Event"
+                                style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 20, color: 'white', background: 'rgba(0,0,0,0.1)' }}
+                            >
+                                <FaTrash />
+                            </button>
+                        )}
+                        <h2 className="ev-header-title">
+                            <FaPoll style={{ color: '#fef3c7' }} /> Poll
+                        </h2>
+                        <p className="ev-header-subtitle">Vote for your choice</p>
+                    </div>
 
-                    {isCreator ? (
-                        /* Creator View: Results */
-                        <div className="poll-results-container">
-                            {event.config?.options?.map((opt, idx) => {
-                                const count = event.results?.filter(r => r.text === opt).length || 0;
-                                const total = event.results?.length || 0;
-                                // ✨ Real percentage with 1 decimal place if needed, or stick to integer if preferred. 
-                                // User asked for "real %", usually implies avoiding 0% when there is 1 vote if rounding down, or just precision.
-                                // Let's use 1 decimal place for precision.
-                                const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
+                    <div className="ev-body-new">
+                        {/* Featured Question Text */}
+                        <div className="ev-featured-question">
+                            <span className="ev-fq-icon" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>Q</span>
+                            <p className="ev-fq-text">{event.config?.questionText || 'Vote now!'}</p>
+                        </div>
+                        {/* Image if present */}
+                        {event.config?.imageUrl && (
+                            <div className="ev-image-container">
+                                <img 
+                                    src={`${API_BASE_URL}${event.config.imageUrl}`} 
+                                    alt="Poll" 
+                                    className="ev-image" 
+                                />
+                            </div>
+                        )}
 
-                                return (
-                                    <div key={idx} className="poll-result-item">
-                                        <div className="poll-result-label">
-                                            <span>{opt}</span>
-                                            <span className="poll-result-count">{count} ({percentage}%)</span>
+                        {isCreator ? (
+                            /* Creator View: Results */
+                            <div className="ev-poll-results">
+                                {event.config?.options?.map((opt, idx) => {
+                                    const count = event.results?.filter(r => r.text === opt).length || 0;
+                                    const total = event.results?.length || 0;
+                                    const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
+
+                                    return (
+                                        <div key={idx} className="ev-poll-result-item">
+                                            <div className="ev-poll-result-label">
+                                                <span>{opt}</span>
+                                                <span className="ev-poll-result-count">{count} ({percentage}%)</span>
+                                            </div>
+                                            <div className="ev-poll-bar-bg">
+                                                <div
+                                                    className="ev-poll-bar-fill"
+                                                    style={{ width: `${percentage}%` }}
+                                                ></div>
+                                            </div>
                                         </div>
-                                        <div className="poll-progress-bar-bg">
-                                            <div
-                                                className="poll-progress-bar-fill"
-                                                style={{ width: `${percentage}%`, transition: 'width 0.5s ease-in-out' }}
-                                            ></div>
-                                        </div>
+                                    );
+                                })}
+                                <div className="ev-poll-total">
+                                    Total: {event.results?.length || 0} votes {event.results?.length > 0 && <span className="ev-poll-live-badge">● LIVE</span>}
+                                </div>
+                            </div>
+                        ) : (
+                            /* Student View: Voting */
+                            <div className="ev-poll-voting">
+                                {!isSubmitted ? (
+                                    <div className="ev-poll-options">
+                                        {event.config?.options?.map((opt, idx) => (
+                                            <button
+                                                key={idx}
+                                                className="ev-poll-vote-btn"
+                                                onClick={() => {
+                                                    if (onSubmitAnswer) {
+                                                        onSubmitAnswer(event, opt);
+                                                        setIsSubmitted(true);
+                                                    }
+                                                }}
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
                                     </div>
-                                );
-                            })}
-                            <div className="poll-total-votes">Total: {event.results?.length || 0} votes {event.results?.length > 0 && '(Live)'}</div>
-                        </div>
-                    ) : (
-                        /* Student View: Voting */
-                        <div className="poll-voting-container">
-                            {!isSubmitted ? (
-                                <div className="poll-options-list">
-                                    {event.config?.options?.map((opt, idx) => (
-                                        <button
-                                            key={idx}
-                                            className="poll-vote-btn"
-                                            onClick={() => {
-                                                if (onSubmitAnswer) {
-                                                    onSubmitAnswer(event, opt); // Pass option text directly? Yes, onSubmitAnswer handles formatting? 
-                                                    // Ensure onSubmitAnswer expects string or object? 
-                                                    // In logic above "onSubmitAnswer(event, answerInput)" -> string.
-                                                    // Here "opt" -> string.
-                                                    setIsSubmitted(true);
-                                                }
-                                            }}
-                                        >
-                                            {opt}
-                                        </button>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="poll-submitted-msg">
-                                    <div>Vote Submitted!</div>
-                                    <span>Waiting for results...</span>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                ) : (
+                                    <div className="ev-submitted-msg" style={{ background: '#fffbeb', borderColor: '#fde68a' }}>
+                                        <span style={{ color: '#b45309' }}>Vote Submitted! 📊</span>
+                                        <p style={{ color: '#92400e' }}>Waiting for results...</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
             {/* ✨ Buzz Button Content */}
             {event.type === 'buzz' && (
-                <div className="buzz-event-content">
-                    {/* Status Display */}
-                    <div className={`buzz-status ${event.status === 'active' && countdown === 0 ? 'active' : ''}`}>
-                        {event.status === 'active' 
-                            ? (countdown > 0 ? `Ready... ${countdown}` : 'GO! 🖐️') 
-                            : 'Waiting... 🔴'}
+                <div className="ev-card-new buzz-card-new">
+                    {/* Header */}
+                    <div className="ev-header-new" style={{ background: 'linear-gradient(to right, #ef4444, #dc2626)' }}>
+                        <div className="ev-header-bg-icon">
+                            <FaBullhorn size={120} />
+                        </div>
+                        {isCreator && onDeleteEvent && (
+                            <button
+                                className="delete-event-btn"
+                                onClick={(e) => { e.stopPropagation(); onDeleteEvent(event); }}
+                                title="Delete Event"
+                                style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 20, color: 'white', background: 'rgba(0,0,0,0.1)' }}
+                            >
+                                <FaTrash />
+                            </button>
+                        )}
+                        <h2 className="ev-header-title">
+                            <FaBullhorn style={{ color: '#fecaca' }} /> Buzz Button
+                        </h2>
+                        <p className="ev-header-subtitle">First to buzz wins!</p>
                     </div>
 
-                    {isCreator ? (
-                        <div className="buzz-controls">
-                            <div className="buzz-actions">
-                                <button 
-                                    className="buzz-start-btn" 
-                                    onClick={() => onTrigger(event, { status: 'active', startTime: Date.now(), results: [] })}
-                                    disabled={event.status === 'active'}
-                                >
-                                    Start Countdown
-                                </button>
-                                <button 
-                                    className="buzz-reset-btn" 
-                                    onClick={() => onTrigger(event, { status: 'idle', results: [] })}
-                                >
-                                    Reset
-                                </button>
-                            </div>
-                            
-                            {/* Winner Display */}
-                            {event.results && event.results.length > 0 && (
-                                <div className="buzz-winner-section">
-                                    <h4>🎉 Winner!</h4>
-                                    <div className="buzz-winner-card">
-                                        <img 
-                                            src={getProfileImageSrc(event.results[0].photoURL, isGoogleUser(event.results[0]))} 
-                                            alt="winner" 
-                                            className="buzz-winner-avatar"
-                                        />
-                                        <div className="buzz-winner-name">{event.results[0].userName}</div>
-                                        <div className="buzz-time">
-                                            {((event.results[0].timestamp - (event.startTime || event.results[0].timestamp)) / 1000).toFixed(2)}s
+                    <div className="ev-body-new">
+                        {/* Status */}
+                        <div className={`ev-buzz-status ${event.status === 'active' && countdown === 0 ? 'go' : ''} ${event.status === 'active' && countdown > 0 ? 'ready' : ''}`}>
+                            {event.status === 'active' 
+                                ? (countdown > 0 ? `Ready... ${countdown}` : '🖐️ GO!') 
+                                : '🔴 Waiting...'}
+                        </div>
+
+                        {isCreator ? (
+                            <div className="ev-buzz-controls">
+                                <div className="ev-buzz-actions">
+                                    <button 
+                                        className="ev-buzz-start-btn"
+                                        onClick={() => onTrigger(event, { status: 'active', startTime: Date.now(), results: [] })}
+                                        disabled={event.status === 'active'}
+                                    >
+                                        Start Countdown
+                                    </button>
+                                    <button 
+                                        className="ev-buzz-reset-btn"
+                                        onClick={() => onTrigger(event, { status: 'idle', results: [] })}
+                                    >
+                                        <FaUndo style={{ marginRight: '6px' }} /> Reset
+                                    </button>
+                                </div>
+                                
+                                {/* Winner Display */}
+                                {event.results && event.results.length > 0 && (
+                                    <div className="ev-buzz-winner">
+                                        <h4><FaTrophy style={{ color: '#f59e0b', marginRight: '6px' }} /> Winner!</h4>
+                                        <div className="ev-buzz-winner-card">
+                                            <img 
+                                                src={getProfileImageSrc(event.results[0].photoURL, isGoogleUser(event.results[0]))} 
+                                                alt="winner" 
+                                                className="ev-buzz-winner-avatar"
+                                            />
+                                            <div className="ev-buzz-winner-info">
+                                                <span className="ev-buzz-winner-name">{event.results[0].userName}</span>
+                                                <span className="ev-buzz-winner-time">
+                                                    {((event.results[0].timestamp - (event.startTime || event.results[0].timestamp)) / 1000).toFixed(2)}s
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="buzz-student-view">
-                            <div className="buzz-hand-container">
+                                )}
+                            </div>
+                        ) : (
+                            <div className="ev-buzz-student">
                                 <button
-                                    className={`buzz-hand-btn ${event.status === 'active' && countdown === 0 && !isSubmitted ? 'active' : ''}`}
+                                    className={`ev-buzz-hand-btn ${event.status === 'active' && countdown === 0 && !isSubmitted ? 'active' : ''}`}
                                     onClick={() => {
                                         if (event.status === 'active' && countdown === 0 && !isSubmitted) {
                                             onSubmitAnswer(event, 'BUZZ!');
@@ -965,12 +1067,17 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
                                     }}
                                     disabled={event.status !== 'active' || countdown > 0 || isSubmitted}
                                 >
-                                    <FaHandPaper />
+                                    <FaHandPaper size={48} />
                                 </button>
+                                {isSubmitted && (
+                                    <div className="ev-submitted-msg" style={{ background: '#fef2f2', borderColor: '#fecaca', marginTop: '16px' }}>
+                                        <span style={{ color: '#dc2626' }}>Buzz Sent! 🚀</span>
+                                        <p style={{ color: '#991b1b' }}>Waiting for results...</p>
+                                    </div>
+                                )}
                             </div>
-                            {isSubmitted && <div className="buzz-feedback">Buzz Sent! 🚀</div>}
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -978,54 +1085,93 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
 
             {/* ✨ Word Cloud Content */}
             {event.type === 'wordcloud' && (
-                <div className="wordcloud-event-content">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-                        <h4 className="wordcloud-topic">{event.config?.topic}</h4>
+                <div className="wc-card-new">
+                    {/* Header */}
+                    <div className="wc-header-new">
+                        <div className="wc-header-bg-icon">
+                            <FaCloud size={120} />
+                        </div>
+                        {isCreator && onDeleteEvent && (
+                            <button
+                                className="delete-event-btn"
+                                onClick={(e) => { e.stopPropagation(); onDeleteEvent(event); }}
+                                title="Delete Event"
+                                style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 20, color: 'white', background: 'rgba(0,0,0,0.1)' }}
+                            >
+                                <FaTrash />
+                            </button>
+                        )}
+                        <h2 className="wc-header-title">
+                            <FaMagic style={{ color: '#fef08a' }} /> Word Cloud <FaMagic style={{ color: '#fef08a' }} />
+                        </h2>
+                        <p className="wc-header-subtitle">{event.config?.topic || 'Share your words!'}</p>
                         {isCreator && (
-                            <button 
-                                className="icon-btn" 
+                            <button
+                                className="wc-present-btn"
                                 title="Open Presentation Mode"
                                 onClick={() => window.open(`/presentation/${window.location.pathname.split('/')[2]}/${event.id}`, '_blank')}
-                                style={{ fontSize: '1.2rem', color: '#3b82f6' }}
                             >
-                                <FaExternalLinkAlt />
+                                <FaExternalLinkAlt style={{ marginRight: '6px' }} /> Present
                             </button>
                         )}
                     </div>
-                    
-                    {isCreator ? (
-                        <WordCloudViz results={event.results || []} config={event.config} />
-                    ) : (
-                        <div className="wordcloud-student-view">
-                            {!isSubmitted ? (
-                                <div className="wordcloud-input-group">
-                                    <input
-                                        type="text"
-                                        className="wordcloud-input"
-                                        placeholder="Enter your word..."
-                                        value={answerInput}
-                                        onChange={(e) => setAnswerInput(e.target.value)}
-                                        maxLength={30}
-                                        onKeyPress={(e) => {
-                                            if (e.key === 'Enter') handleAnswerSubmit();
-                                        }}
-                                    />
-                                    <button 
-                                        className="wordcloud-submit-btn"
-                                        onClick={handleAnswerSubmit}
-                                        disabled={!answerInput.trim()}
-                                    >
-                                        Send
-                                    </button>
+
+                    <div className="wc-body-new">
+                        {/* Word Cloud Preview */}
+                        <div className="wc-preview-area">
+                            {(!event.results || event.results.length === 0) ? (
+                                <div className="wc-empty-state">
+                                    <FaCloud style={{ fontSize: '3rem', opacity: 0.2, marginBottom: '12px' }} />
+                                    <p>No words yet. Start typing!</p>
                                 </div>
                             ) : (
-                                <div className="wordcloud-submitted-msg">
-                                    <div>Sent! ☁️</div>
-                                    <p>Look at the board!</p>
-                                </div>
+                                <WordCloudViz results={event.results || []} config={event.config} />
                             )}
                         </div>
-                    )}
+
+                        {/* Input Area (students only, or creator can also submit) */}
+                        {!isCreator && (
+                            <div className="wc-input-section">
+                                {!isSubmitted ? (
+                                    <div className="wc-input-row">
+                                        <input
+                                            type="text"
+                                            className="wc-text-input"
+                                            placeholder="Type your word here..."
+                                            value={answerInput}
+                                            onChange={(e) => setAnswerInput(e.target.value)}
+                                            maxLength={25}
+                                            onKeyPress={(e) => { if (e.key === 'Enter') handleAnswerSubmit(); }}
+                                        />
+                                        <button
+                                            className="wc-send-btn"
+                                            onClick={handleAnswerSubmit}
+                                            disabled={!answerInput.trim()}
+                                        >
+                                            Send
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="wc-submitted-msg">
+                                        <span>Sent! ☁️</span>
+                                        <p>Look at the board!</p>
+                                    </div>
+                                )}
+                                <div className="wc-char-count">
+                                    {answerInput.length}/25 characters
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Word Count */}
+                        <div className="random-participant-count">
+                            <div className="rpc-left">
+                                <FaCloud />
+                                <span>Total Words</span>
+                            </div>
+                            <span className="rpc-right">{event.results?.length || 0} submitted</span>
+                        </div>
+                    </div>
                 </div>
             )}
 
