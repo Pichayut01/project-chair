@@ -4350,9 +4350,9 @@
 }
 
 .add-event-card {
-  min-width: 320px !important;
+  min-width: 500px !important;
   width: 100% !important;
-  max-width: 100% !important;
+  max-width: 320px !important;
   display: flex !important;
   margin-bottom: 0 !important;
   box-sizing: border-box !important;
@@ -4391,6 +4391,348 @@
   }
   .ev-poll-vote-btn {
     padding: 12px 16px !important;
+  }
+}
+
+/* ✨ Event Scoring Footer */
+.ev-end-score-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  margin-top: 14px;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border-radius: 12px;
+  border: 1px solid #fde68a;
+  gap: 12px;
+}
+
+.ev-scoring-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ev-scoring-badge {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.ev-scoring-points {
+  font-size: 0.78rem;
+  color: #b45309;
+  margin-left: 20px;
+}
+
+.ev-end-score-btn {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3);
+  white-space: nowrap;
+}
+
+.ev-end-score-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+  background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+.ev-end-score-btn:active {
+  transform: translateY(0);
+}
+
+.ev-scored-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  margin-top: 14px;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border-radius: 12px;
+  border: 1px solid #a7f3d0;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #065f46;
+}
+
+/* ✨ Student Ended Banner (compact) */
+.ev-ended-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  margin-top: 10px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.ev-ended-pts {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #b45309;
+  background: #fffbeb;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #fde68a;
+}
+
+/* Scoring section in config modal */
+.cfg-scoring-section {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+/* ==========================================
+   COMPACT EVENT CARDS — Global Size Reduction
+   ========================================== */
+
+.event-card {
+  padding: 14px !important;
+}
+
+.event-card-header {
+  margin-bottom: 12px !important;
+  padding-bottom: 10px !important;
+}
+
+.event-card-header h3 {
+  font-size: 0.95rem !important;
+}
+
+.event-card:has(.random-event-content-new) {
+  padding: 0 !important;
+}
+
+.random-header-new {
+  padding: 16px !important;
+}
+
+.random-header-title {
+  font-size: 1.15rem !important;
+  margin: 0 0 4px 0 !important;
+}
+
+.random-header-subtitle {
+  font-size: 0.82rem !important;
+}
+
+.random-body-new {
+  padding: 14px !important;
+  gap: 12px !important;
+}
+
+.random-display-area {
+  min-height: 100px !important;
+  padding: 16px !important;
+}
+
+.random-participant-count {
+  padding: 8px 12px !important;
+  font-size: 0.8rem !important;
+}
+
+.random-action-btn {
+  padding: 10px 16px !important;
+  font-size: 0.85rem !important;
+}
+
+/* Compact Question/Poll/WC cards */
+.ev-card-new {
+  padding: 0 !important;
+}
+
+.ev-card-new .ev-header-bar {
+  padding: 12px 14px !important;
+}
+
+.ev-card-new .ev-header-bar h3 {
+  font-size: 0.95rem !important;
+}
+
+.ev-card-new .ev-body-section {
+  padding: 12px 14px !important;
+  gap: 10px !important;
+}
+
+/* Compact WC card */
+.wc-card-new .wc-header {
+  padding: 14px !important;
+}
+
+.wc-card-new .wc-header h3 {
+  font-size: 1rem !important;
+}
+
+.wc-card-new .wc-body {
+  padding: 12px !important;
+}
+
+/* ==========================================
+   RANDOM WINNERS — Avatar Cluster with Tooltip
+   ========================================== */
+
+.random-winners-container {
+  text-align: center;
+}
+
+.random-winners-container .winner-label {
+  font-size: 0.82rem !important;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.random-winners-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.random-winner-bubble {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 3px solid #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.random-winner-bubble:hover {
+  transform: scale(1.15);
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.winner-bubble-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.winner-bubble-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+}
+
+/* Tooltip — hidden by default, shown on hover */
+.winner-bubble-tooltip {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+}
+
+.winner-bubble-tooltip::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 4px 4px 4px;
+  border-style: solid;
+  border-color: transparent transparent #1e293b transparent;
+}
+
+.random-winner-bubble:hover .winner-bubble-tooltip {
+  opacity: 1;
+}
+
+/* ==========================================
+   MULTI-RANDOM SPIN — Avatar Cluster Animation
+   ========================================== */
+
+.random-multi-spin-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+}
+
+.spin-bubble {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid #10b981;
+  overflow: hidden;
+  animation: spinBubblePulse 0.3s ease-in-out infinite alternate;
+}
+
+.spin-bubble-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.spin-bubble-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6ee7b7, #34d399);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+}
+
+@keyframes spinBubblePulse {
+  0% {
+    transform: scale(0.9);
+    border-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3);
+  }
+  100% {
+    transform: scale(1.08);
+    border-color: #059669;
+    box-shadow: 0 0 12px 2px rgba(16, 185, 129, 0.25);
   }
 }
 

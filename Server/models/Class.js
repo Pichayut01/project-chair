@@ -44,9 +44,24 @@ const classSchema = new mongoose.Schema({
             type: { type: String, default: 'default' },
             config: { type: mongoose.Schema.Types.Mixed }, // Store event config
             results: { type: mongoose.Schema.Types.Mixed }, // Store results
-            status: { type: String, default: 'active' },
+            status: { type: String, default: 'idle' },
             createdAt: { type: Number },
             updatedAt: { type: Number }
+        }],
+        default: []
+    },
+    eventHistory: {
+        type: [{
+            id: { type: String },
+            title: { type: String },
+            description: { type: String },
+            type: { type: String },
+            config: { type: mongoose.Schema.Types.Mixed },
+            results: { type: mongoose.Schema.Types.Mixed },
+            status: { type: String },
+            createdAt: { type: Number },
+            updatedAt: { type: Number },
+            deletedAt: { type: Number }
         }],
         default: []
     }

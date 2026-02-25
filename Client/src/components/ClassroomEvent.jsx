@@ -3,12 +3,12 @@ import ReactDOM from 'react-dom';
 import axios from 'axios';
 import '../CSS/ClassroomEvent.css';
 import WordCloudViz from './events/WordCloudViz';
-import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaClipboardList, FaTrophy, FaUser, FaUndo, FaMagic, FaUsers, FaChevronRight } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaClipboardList, FaTrophy, FaUser, FaUndo, FaMagic, FaUsers, FaChevronRight, FaFlagCheckered, FaStar } from 'react-icons/fa';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, onDeleteEvent, onSubmitAnswer, candidates = [], currentUser }) => {
+const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, onDeleteEvent, onSubmitAnswer, onEndEvent, candidates = [], currentUser }) => {
     const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
     const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [selectedConfigType, setSelectedConfigType] = useState(null);
@@ -28,6 +28,10 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
 
     // ✨ Word Cloud Config
     const [cloudTopic, setCloudTopic] = useState('');
+
+    // ✨ Event-level Scoring Config (applies to all event types)
+    const [eventScoreEnabled, setEventScoreEnabled] = useState(false);
+    const [eventScorePoints, setEventScorePoints] = useState(5);
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
@@ -96,6 +100,8 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
         setConfigError('');
         setSelectedImage(null); // ✨ Reset Image
         setCloudTopic(''); // ✨ Reset Word Cloud Topic
+        setEventScoreEnabled(false); // ✨ Reset Event Scoring
+        setEventScorePoints(5);
         setIsConfigModalOpen(true);
         setIsAddEventModalOpen(false);
     };
@@ -114,7 +120,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                 return;
             }
 
-            handleSelectEvent({ type: 'random', count: count });
+            handleSelectEvent({ type: 'random', count: count, scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined });
             setIsConfigModalOpen(false);
         } else if (selectedConfigType === 'question') {
             if (!questionTextInput.trim()) {
@@ -122,7 +128,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                 return;
             }
 
-            handleSelectEvent({ type: 'question', questionText: questionTextInput, imageUrl: selectedImage });
+            handleSelectEvent({ type: 'question', questionText: questionTextInput, imageUrl: selectedImage, scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined });
             setIsConfigModalOpen(false);
         } else if (selectedConfigType === 'poll') {
             const validOptions = pollOptions.filter(opt => opt.trim() !== '');
@@ -132,6 +138,12 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             }
             if (validOptions.length < 2) {
                 setConfigError('Please provide at least 2 options.');
+                return;
+            }
+            // ✨ Prevent duplicate option text
+            const uniqueOptions = new Set(validOptions.map(o => o.trim().toLowerCase()));
+            if (uniqueOptions.size !== validOptions.length) {
+                setConfigError('Each option must have unique text. Please remove duplicates.');
                 return;
             }
 
@@ -157,11 +169,11 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             handleSelectEvent({
                 type: 'poll',
                 questionText: questionTextInput,
-                imageUrl: selectedImage, // ✨ Add Image URL
-                options: validOptionsWithScores.map(o => o.text), // For backward compat just sending text array as 'options'
+                imageUrl: selectedImage,
+                // For polls, scoring is driven by per-option scores only
+                scoring: isScored ? { enabled: true, points: 0 } : undefined,
+                options: validOptionsWithScores.map(o => o.text),
                 scoreConfig: isScored ? {
-                    // Send map of text -> score details
-                    // This assumes text is unique. If duplicates, only one score config will survive (but duplicates are bad anyway)
                     optionScores: validOptionsWithScores.reduce((acc, curr) => {
                         acc[curr.text] = { 
                             points: parseInt(curr.points) || 0, 
@@ -178,9 +190,13 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                 return;
             }
             handleSelectEvent({
+                scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined,
                 type: 'wordcloud',
-                config: { topic: cloudTopic }
+                config: { topic: cloudTopic, scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined }
             });
+            setIsConfigModalOpen(false);
+        } else if (selectedConfigType === 'buzz') {
+            handleSelectEvent({ type: 'buzz', scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined });
             setIsConfigModalOpen(false);
         }
     };
@@ -287,6 +303,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                                 isCreator={isCreator}
                                                 onTrigger={onTriggerEvent}
                                                 onSubmitAnswer={onSubmitAnswer}
+                                                onEndEvent={onEndEvent}
                                                 currentUser={currentUser}
                                                 candidates={candidates}
                                                 onDeleteEvent={onDeleteEvent}
@@ -343,7 +360,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                     </div>
                                     <FaChevronRight className="etc-arrow" />
                                 </div>
-                                <div className="event-type-card" onClick={() => handleSelectEvent({ type: 'buzz' })} style={{ '--card-accent': '#ef4444' }}>
+                                <div className="event-type-card" onClick={() => openConfigModal('buzz')} style={{ '--card-accent': '#ef4444' }}>
                                     <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}><FaBullhorn /></div>
                                     <div className="etc-info">
                                         <span className="etc-name">Buzz Button</span>
@@ -366,6 +383,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                             background: selectedConfigType === 'random' ? 'linear-gradient(to right, #10b981, #059669)'
                                 : selectedConfigType === 'question' ? 'linear-gradient(to right, #3b82f6, #2563eb)'
                                 : selectedConfigType === 'poll' ? 'linear-gradient(to right, #f59e0b, #d97706)'
+                                : selectedConfigType === 'buzz' ? 'linear-gradient(to right, #ef4444, #dc2626)'
                                 : 'linear-gradient(to right, #10b981, #059669)'
                         }}>
                             <h3>
@@ -373,6 +391,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                 {selectedConfigType === 'question' && <><FaQuestionCircle style={{ marginRight: '10px' }} /> Ask Question</>}
                                 {selectedConfigType === 'poll' && <><FaPoll style={{ marginRight: '10px' }} /> Multiple Choice</>}
                                 {selectedConfigType === 'wordcloud' && <><FaCloud style={{ marginRight: '10px' }} /> Word Cloud</>}
+                                {selectedConfigType === 'buzz' && <><FaBullhorn style={{ marginRight: '10px' }} /> Buzz Button</>}
                             </h3>
                             <p>Configure your event settings</p>
                             <button className="modal-close-x" onClick={() => setIsConfigModalOpen(false)}><FaTimes /></button>
@@ -518,6 +537,33 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                 </>
                             )}
 
+                            {/* ✨ Event Scoring Section (hide for polls — polls use per-option scoring) */}
+                            {selectedConfigType !== 'poll' && (
+                            <div className="cfg-group cfg-scoring-section">
+                                <label className="cfg-toggle">
+                                    <input type="checkbox" checked={eventScoreEnabled} onChange={(e) => setEventScoreEnabled(e.target.checked)} />
+                                    <span><FaStar style={{ color: '#f59e0b', marginRight: '4px' }} /> Enable Event Scoring</span>
+                                </label>
+                                {eventScoreEnabled && (
+                                    <div className="cfg-score-config" style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: '#fffbeb', borderRadius: '10px', border: '1px solid #fde68a' }}>
+                                        <span style={{ fontWeight: 600, color: '#92400e', fontSize: '0.9rem' }}>Points per participant:</span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <button className="cfg-num-btn" onClick={() => setEventScorePoints(prev => Math.max(1, prev - 1))}>−</button>
+                                            <input
+                                                type="number"
+                                                className="cfg-num-input"
+                                                value={eventScorePoints}
+                                                onChange={(e) => setEventScorePoints(Math.max(1, parseInt(e.target.value) || 1))}
+                                                min="1"
+                                                style={{ width: '60px' }}
+                                            />
+                                            <button className="cfg-num-btn" onClick={() => setEventScorePoints(prev => prev + 1)}>+</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            )}
+
                             {configError && <p className="cfg-error">{configError}</p>}
                         </div>
 
@@ -536,7 +582,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
 };
 
 /* Helper Component for Event Card Content */
-const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candidates = [], currentUser, onDeleteEvent }) => {
+const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEvent, candidates = [], currentUser, onDeleteEvent }) => {
     const [displayNames, setDisplayNames] = useState([]);
     const [isAnimating, setIsAnimating] = useState(false);
     const [showResults, setShowResults] = useState(false);
@@ -569,8 +615,13 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
     useEffect(() => {
         if (event.results && event.results.length > 0) {
             if (event.type === 'random') {
+                // Don't animate if event is already ended
+                if (event.status === 'ended') {
+                    setIsAnimating(false);
+                    setShowResults(true);
+                    return;
+                }
                 // Only animate if the update is recent (e.g., within last 10 seconds)
-                // This prevents re-animation on page load if event is already done
                 const isRecent = (Date.now() - new Date(event.updatedAt).getTime()) < 10000;
                 if (isRecent) {
                     startAnimation();
@@ -588,7 +639,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
                 setCountdown(null);
             }
         }
-    }, [event.results, event.updatedAt, event.type]);
+    }, [event.results, event.updatedAt, event.type, event.status]);
 
     // ✨ Buzz Button Logic: Countdown & Reset
     const [countdown, setCountdown] = useState(null);
@@ -707,36 +758,54 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
                             )}
 
                             {isAnimating && !showResults && (
-                                <div className="random-animating-container">
-                                    {displayNames.map((candidate, i) => (
-                                        <div key={i} className="random-animating-item">
-                                            {candidate.photoSrc ? (
-                                                <img src={candidate.photoSrc} alt="avatar" className="random-avatar animating" />
-                                            ) : (
-                                                <div className="random-avatar-placeholder animating">
-                                                    <FaUser />
-                                                </div>
-                                            )}
-                                            <h3 className="random-name animating">{candidate.name}</h3>
-                                        </div>
-                                    ))}
-                                </div>
+                                (event.config?.count || 1) === 1 ? (
+                                    /* Single random — big avatar + name */
+                                    <div className="random-animating-container">
+                                        {displayNames.map((candidate, i) => (
+                                            <div key={i} className="random-animating-item">
+                                                {candidate.photoSrc ? (
+                                                    <img src={candidate.photoSrc} alt="avatar" className="random-avatar animating" />
+                                                ) : (
+                                                    <div className="random-avatar-placeholder animating">
+                                                        <FaUser />
+                                                    </div>
+                                                )}
+                                                <h3 className="random-name animating">{candidate.name}</h3>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    /* Multi random — circular avatar cluster, no names */
+                                    <div className="random-multi-spin-cluster">
+                                        {displayNames.map((candidate, i) => (
+                                            <div key={i} className="spin-bubble">
+                                                {candidate.photoSrc ? (
+                                                    <img src={candidate.photoSrc} alt="avatar" className="spin-bubble-img" />
+                                                ) : (
+                                                    <div className="spin-bubble-placeholder">
+                                                        <FaUser />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )
                             )}
 
                             {showResults && event.results && event.results.length > 0 && (
                                 <div className="random-winners-container">
-                                    <span className="winner-label" style={{color: '#16a34a'}}><FaTrophy size={16} /> Winner</span>
-                                    <div className="random-winners-list">
-                                        {[event.results[event.results.length - 1]].map((r, i) => (
-                                            <div key={i} className="random-winner-item text-center flex flex-col items-center">
+                                    <span className="winner-label" style={{color: '#16a34a'}}><FaTrophy size={14} /> {event.results.length > 1 ? 'Winners' : 'Winner'}</span>
+                                    <div className="random-winners-cluster">
+                                        {event.results.map((r, i) => (
+                                            <div key={i} className="random-winner-bubble" title={r.userName || 'Unknown'}>
                                                 {r.photoSrc ? (
-                                                    <img src={r.photoSrc} alt="avatar" className="random-avatar winner mx-auto" style={{ display: 'block' }} />
+                                                    <img src={r.photoSrc} alt={r.userName} className="winner-bubble-img" />
                                                 ) : (
-                                                    <div className="random-avatar-placeholder winner mx-auto" style={{ display: 'flex' }}>
-                                                        <FaTrophy />
+                                                    <div className="winner-bubble-placeholder">
+                                                        <FaUser />
                                                     </div>
                                                 )}
-                                                <h3 className="random-name winner mt-3 text-center w-full">{r.userName || 'Unknown'}</h3>
+                                                <span className="winner-bubble-tooltip">{r.userName || 'Unknown'}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -756,8 +825,8 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
                         {/* Creator Action Button */}
                         {isCreator && (
                             <button
-                                onClick={() => { if(!isAnimating) onTrigger(event); }}
-                                disabled={isAnimating || candidates.length === 0}
+                                onClick={() => { if(!isAnimating && event.status !== 'ended') onTrigger(event); }}
+                                disabled={isAnimating || candidates.length === 0 || event.status === 'ended'}
                                 className={`random-action-btn ${isAnimating ? 'spinning' : ''}`}
                             >
                                 {isAnimating ? (
@@ -766,7 +835,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
                                     </>
                                 ) : (
                                     <>
-                                        <FaDice /> {event.results ? 'Roll Again!' : 'Roll Now!'}
+                                        <FaDice /> {event.status === 'ended' ? '✅ Ended' : event.results ? 'Roll Again!' : 'Roll Now!'}
                                     </>
                                 )}
                             </button>
@@ -1177,6 +1246,70 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, candida
 
             {/* Fallback for basic events */}
             {event.type === 'default' && <p>{event.description}</p>}
+
+            {/* ✨ Student Ended Banner — compact inline bar */}
+            {!isCreator && event.status === 'ended' && (
+                <div className="ev-ended-banner">
+                    <FaFlagCheckered /> <span>Event Ended</span>
+                    {event.config?.scoring?.enabled && <span className="ev-ended-pts"><FaStar /> Scored</span>}
+                </div>
+            )}
+
+            {/* ✨ End & Score Footer — Creator view */}
+            {isCreator && event.config?.scoring?.enabled && event.status !== 'ended' && (
+                <div className="ev-end-score-footer">
+                    <div className="ev-scoring-info">
+                        <div className="ev-scoring-badge">
+                            <FaStar style={{ color: '#f59e0b', marginRight: '4px' }} />
+                            <span>Scoring Enabled</span>
+                        </div>
+                        <span className="ev-scoring-points">
+                            {event.type === 'poll' && event.config?.scoreConfig ? 'Per-option scoring' : `+${event.config.scoring.points} pts/participant`}
+                        </span>
+                    </div>
+                    <button
+                        className="ev-end-score-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (onEndEvent) onEndEvent(event);
+                        }}
+                    >
+                        <FaFlagCheckered style={{ marginRight: '6px' }} />
+                        End & Score
+                    </button>
+                </div>
+            )}
+            {/* Creator Scored Badge */}
+            {isCreator && event.status === 'ended' && event.config?.scoring?.enabled && (
+                <div className="ev-scored-badge">
+                    <FaTrophy style={{ color: '#f59e0b', marginRight: '6px' }} /> 
+                    {event.type === 'poll' && event.config?.scoreConfig ? 'Scored — Per-option' : `Scored — +${event.config.scoring.points} pts`}
+                </div>
+            )}
+            {/* Creator End button for non-scoring events */}
+            {isCreator && event.status !== 'ended' && !event.config?.scoring?.enabled && ['poll', 'wordcloud', 'question'].includes(event.type) && (
+                <div className="ev-end-score-footer" style={{ justifyContent: 'center' }}>
+                    <button
+                        className="ev-end-score-btn" style={{ background: 'linear-gradient(135deg, #6b7280, #4b5563)' }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (onEndEvent) {
+                                // For non-scoring events, just end them
+                                onEndEvent({ ...event, config: { ...event.config, scoring: { enabled: false } } });
+                            }
+                        }}
+                    >
+                        <FaFlagCheckered style={{ marginRight: '6px' }} />
+                        End Event
+                    </button>
+                </div>
+            )}
+            {/* Non-scoring ended badge */}
+            {event.status === 'ended' && !event.config?.scoring?.enabled && (
+                <div className="ev-scored-badge" style={{ background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)', color: '#475569', borderColor: '#cbd5e1' }}>
+                    <FaFlagCheckered style={{ color: '#6b7280', marginRight: '6px' }} /> Event Ended
+                </div>
+            )}
         </div>
     );
 };

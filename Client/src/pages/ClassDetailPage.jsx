@@ -96,7 +96,12 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
                     </div>
                 );
             case 'history': // ✨ Match with Navbar's new key
-                return <EventHistoryView events={classroom.classroomEvents} />;
+                return <EventHistoryView 
+                    classroom={classroom} 
+                    user={user} 
+                    onUpdateScores={handleUpdateScores}
+                    onRefresh={fetchClassroomDetails}
+                />;
             case '4':
                 return (
                     <div className="class-detail-content">

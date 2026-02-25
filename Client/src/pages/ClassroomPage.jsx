@@ -611,6 +611,130 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         emitSubmitEventAnswer(event.id, answerText);
     };
 
+    // ✨ Handle End & Score Event — awards points to participants
+    const handleEndAndScoreEvent = async (event) => {
+        if (!event) return;
+        
+        // Non-scoring events: just end them
+        if (!event.config?.scoring?.enabled) {
+            emitTriggerClassroomEvent(event.id, { status: 'ended' });
+            return;
+        }
+        
+        const basePoints = event.config.scoring.points;
+        const category = `${event.title || event.type} (Event)`;
+        const hasPerOptionScoring = event.type === 'poll' && event.config?.scoreConfig?.optionScores;
+        
+        // Determine who gets scored and how many points
+        let scoredEntries = []; // { userId, userName, points }
+        
+        if (event.type === 'buzz') {
+            // Only the winner (first result)
+            if (event.results?.length > 0) {
+                scoredEntries = [{ userId: event.results[0].userId, userName: event.results[0].userName, points: basePoints }];
+            }
+        } else if (event.type === 'poll') {
+            if (event.results?.length > 0) {
+                const seen = new Set();
+                scoredEntries = event.results.filter(r => {
+                    if (seen.has(r.userId)) return false;
+                    seen.add(r.userId);
+                    return true;
+                }).map(r => {
+                    let pts = basePoints;
+                    if (hasPerOptionScoring && r.text) {
+                        const optScore = event.config.scoreConfig.optionScores[r.text];
+                        if (optScore) {
+                            pts = optScore.action === 'subtract' ? -(optScore.points || 0) : (optScore.points || 0);
+                        }
+                    }
+                    return { userId: r.userId, userName: r.userName, points: pts };
+                });
+            }
+        } else if (event.type === 'wordcloud' || event.type === 'question') {
+            if (event.results?.length > 0) {
+                const seen = new Set();
+                scoredEntries = event.results.filter(r => {
+                    if (seen.has(r.userId)) return false;
+                    seen.add(r.userId);
+                    return true;
+                }).map(r => ({ userId: r.userId, userName: r.userName, points: basePoints }));
+            }
+        } else if (event.type === 'random') {
+            if (event.results?.length > 0) {
+                scoredEntries = event.results.map(r => ({ userId: r.userId, userName: r.userName, points: basePoints }));
+            }
+        }
+
+        if (scoredEntries.length === 0) {
+            Swal.fire('No Participants', 'No students participated in this event to score.', 'info');
+            return;
+        }
+
+        // Confirmation dialog
+        const totalAwarded = scoredEntries.reduce((sum, e) => sum + e.points, 0);
+        const confirm = await Swal.fire({
+            title: '🏁 End & Score',
+            html: `
+                <div style="text-align:left;max-height:200px;overflow-y:auto;margin:10px 0;">
+                    ${scoredEntries.map(s => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;">
+                        <span>${s.userName}</span>
+                        <b style="color:${s.points >= 0 ? '#16a34a' : '#dc2626'}">${s.points >= 0 ? '+' : ''}${s.points} pts</b>
+                    </div>`).join('')}
+                </div>
+                <p style="margin-top:8px;font-weight:600;">Total: ${totalAwarded >= 0 ? '+' : ''}${totalAwarded} pts to ${scoredEntries.length} student(s)</p>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '🏆 Award Scores',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#f59e0b'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            let updatedStudentScores = { ...studentScores };
+            
+            scoredEntries.forEach(entry => {
+                const currentScores = updatedStudentScores[entry.userId] || {};
+                const currentCategoryScore = currentScores[category] || 0;
+                updatedStudentScores[entry.userId] = {
+                    ...currentScores,
+                    [category]: currentCategoryScore + entry.points
+                };
+            });
+
+            // Save to database
+            await axios.put(`${API_BASE_URL}/api/classrooms/${classId}/seating`, {
+                studentScores: updatedStudentScores
+            }, {
+                headers: { 'x-auth-token': user.token }
+            });
+
+            setStudentScores(updatedStudentScores);
+
+            // Emit real-time score updates
+            scoredEntries.forEach(entry => {
+                emitScoreUpdate(entry.userId, updatedStudentScores[entry.userId], category, entry.userName);
+            });
+
+            // ✨ Set event status to 'ended' — use direct trigger (NOT handleTriggerEvent which re-runs random)
+            emitTriggerClassroomEvent(event.id, { status: 'ended' });
+
+            Swal.fire({
+                icon: 'success',
+                title: '🏆 Scores Awarded!',
+                html: `<b>${scoredEntries.length}</b> student(s) scored<br><small>Category: ${category}</small>`,
+                timer: 2500,
+                showConfirmButton: false
+            });
+        } catch (error) {
+            console.error('Error scoring event:', error);
+            Swal.fire('Error', 'Failed to award scores.', 'error');
+        }
+    };
+
     const handleShareClick = () => {
         if (!classroom) return;
         Swal.fire({
@@ -1871,6 +1995,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                             onTriggerEvent={handleTriggerEvent}
                                             onDeleteEvent={handleDeleteEvent}
                                             onSubmitAnswer={handleSubmitAnswer}
+                                            onEndEvent={handleEndAndScoreEvent}
                                             candidates={Object.values(assignedUsers).map(u => ({
                                                 name: u.userName,
                                                 photoSrc: getProfileImageSrc(u.photoURL, isGoogleUser(u))
@@ -1886,7 +2011,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                     onAddEvent={handleAddEvent}
                                     onTriggerEvent={handleTriggerEvent}
                                     onDeleteEvent={handleDeleteEvent} // ✨ Pass delete handler
-                                    onSubmitAnswer={handleSubmitAnswer} // ✨ Pass answer submit handler
+                                    onSubmitAnswer={handleSubmitAnswer}
+                                    onEndEvent={handleEndAndScoreEvent}
                                     candidates={Object.values(assignedUsers).map(u => ({
                                         name: u.userName,
                                         photoSrc: getProfileImageSrc(u.photoURL, isGoogleUser(u))

@@ -240,26 +240,37 @@ module.exports = (io) => {
             }
         });
 
-        // ✨ Handle deleting classroom events
+        // ✨ Handle deleting classroom events (archive to eventHistory first)
         socket.on('delete-classroom-event', async (data) => {
             logger.socket('delete-classroom-event', { eventId: data.eventId });
             const { classId, eventId } = data;
 
             try {
-                // Remove event from database
-                await Class.findByIdAndUpdate(
-                    classId,
-                    {
-                        $pull: {
-                            classroomEvents: { id: eventId }
-                        }
-                    },
-                    { new: true }
-                );
+                // Find the event first to archive it
+                const classroom = await Class.findById(classId);
+                const eventToDelete = classroom?.classroomEvents?.find(e => e.id === eventId);
+
+                if (eventToDelete) {
+                    // Archive to eventHistory with deletedAt timestamp
+                    const archivedEvent = {
+                        ...eventToDelete.toObject(),
+                        status: 'deleted',
+                        deletedAt: Date.now()
+                    };
+                    await Class.findByIdAndUpdate(classId, {
+                        $push: { eventHistory: archivedEvent },
+                        $pull: { classroomEvents: { id: eventId } }
+                    });
+                } else {
+                    // Event not found, just try to remove
+                    await Class.findByIdAndUpdate(classId, {
+                        $pull: { classroomEvents: { id: eventId } }
+                    });
+                }
 
                 // Broadcast deletion to all users in the classroom
                 io.to(classId).emit('classroom-event-deleted', { eventId });
-                logger.success(`Event ${eventId} deleted from class ${classId}`);
+                logger.success(`Event ${eventId} archived and deleted from class ${classId}`);
             } catch (error) {
                 logger.error('Error deleting classroom event:', error);
             }
