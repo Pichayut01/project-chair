@@ -15,6 +15,7 @@ router.put('/:classId/promote', authMiddleware, classController.promoteUser);
 router.put('/:classId/demote', authMiddleware, classController.demoteUser);
 router.put('/:classId/theme', authMiddleware, classController.updateTheme);
 router.put('/:classId/settings', authMiddleware, classController.updateSettings);
+router.put('/:classId/attendance', authMiddleware, classController.updateAttendance);
 router.get('/:classId/chat', authMiddleware, classController.getChatHistory);
 
 // Toggle pin route is technically under /api/classrooms/:classId/toggle-pin

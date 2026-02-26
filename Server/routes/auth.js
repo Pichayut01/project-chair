@@ -9,6 +9,7 @@ const { authLimiter, loginHistoryLimiter, activeSessionsLimiter } = require('../
 router.post('/google-login-verify', authLimiter, authController.googleLoginVerify);
 router.post('/register', authLimiter, authController.register);
 router.post('/login', authLimiter, authController.login);
+router.post('/logout', authMiddleware, authController.logout);
 router.post('/forgot-password', authLimiter, authController.forgotPassword);
 router.get('/reset-token-info/:token', authController.getResetTokenInfo);
 router.post('/reset-password/:token', authController.resetPassword);

@@ -11,7 +11,6 @@ body {
   margin: 0;
 }
 
-
 .main__content {
   position: fixed;
   /* เปลี่ยนเป็น fixed position */
@@ -21,7 +20,7 @@ body {
   right: 0;
   bottom: 0;
   /* ขยายไปจนถึงด้านล่างของหน้าจอ */
-  background-color: #E8F2E9;
+  background-color: #e8f2e9;
   border-top-left-radius: 15px;
   padding: 20px;
   padding-bottom: 20px;
@@ -108,7 +107,7 @@ body {
   flex-grow: 1;
 }
 
-.classroom-card>.classroom-text-content>h2 {
+.classroom-card > .classroom-text-content > h2 {
   font-weight: normal;
   white-space: nowrap;
   overflow: hidden;
@@ -316,7 +315,7 @@ body {
   }
 
   /* Fix classroom title overflow on mobile */
-  .classroom-card>.classroom-text-content>h2 {
+  .classroom-card > .classroom-text-content > h2 {
     white-space: normal;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -399,7 +398,7 @@ body {
 
 /* SweetAlert2 specific styles */
 .swal2-confirm {
-  background-color: #4CAF50 !important;
+  background-color: #4caf50 !important;
   color: white !important;
   border: none !important;
   box-shadow: none !important;
@@ -413,8 +412,8 @@ body {
   margin: 0 !important;
 }
 
-/* For green code box inside SweetAlert */
-.swal2-html-container>div {
+/* For green code box inside SweetAlert - use specific class instead of all divs */
+.swal2-class-code-box {
   background-color: #eaf6ea;
   border: 1px solid #d4ecd4;
   border-radius: 4px;

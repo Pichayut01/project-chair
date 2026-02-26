@@ -9,7 +9,7 @@ import NoUserInChair from '../image/ืNoUserInChair.png';
 import { FaUser, FaHandPaper } from 'react-icons/fa';
 import nullUserPhoto from '../image/nulluser.png';
 
-const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, userPhotoURL, userName, onChairClick, userScore, minScore, maxScore, hasAnyScores, isCreator, rotation = 0, isSelectedForGroup = false, selectionIndex, zoomScale = 1, isHandRaised = false, currentEmoji = null }) => {
+const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, userPhotoURL, userName, onChairClick, userScore, minScore, maxScore, hasAnyScores, isCreator, rotation = 0, isSelectedForGroup = false, selectionIndex, zoomScale = 1, isHandRaised = false, currentEmoji = null, groupColor = null }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [position, setPosition] = useState(initialPosition);
     const offset = useRef({ x: 0, y: 0 });
@@ -160,8 +160,9 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
                 top: position.y + 'px',
                 zIndex: isDragging ? 1000 : 10,
                 transform: `rotate(${rotation}deg)`, // Apply counter-rotation
-                boxShadow: isSelectedForGroup ? '0 0 0 3px #4CAF50, 0 4px 6px rgba(0,0,0,0.1)' : undefined, // ✨ Highlight selection
-                border: isSelectedForGroup ? '2px solid #fff' : undefined // Optional extra contrast
+                boxShadow: isSelectedForGroup ? '0 0 0 3px #4CAF50, 0 4px 6px rgba(0,0,0,0.1)' : undefined, 
+                border: isSelectedForGroup ? '2px solid #fff' : undefined,
+                transition: 'box-shadow 0.3s ease, border 0.3s ease'
             }}
             onMouseDown={handleMouseDown}
             onClick={handleClick}
@@ -267,7 +268,15 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
                 {userName && !userPhotoURL && <FaUser size={30} color="#555" />}
                 {/* Shows user photo if available, generic icon if user present but no photo, NoUserInChair if empty */}
             </div>
-            <div className="user-name-under">
+            <div 
+                className="user-name-under" 
+                style={groupColor ? { 
+                    backgroundColor: groupColor, 
+                    color: chroma(groupColor).luminance() > 0.5 ? '#000' : '#fff',
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+                } : {}}
+            >
                 {userName || ''}
             </div>
         </div>

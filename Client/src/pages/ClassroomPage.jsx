@@ -18,11 +18,12 @@ import StudentRatingModal from '../components/StudentRatingModal';
 import { useSocket } from '../hooks/useSocket';
 
 
-import { FaEdit, FaTh, FaRandom, FaBars, FaThLarge, FaChevronUp, FaChevronDown, FaExchangeAlt, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaTimes, FaLayerGroup, FaChevronLeft, FaChevronRight, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaTrophy, FaUser } from 'react-icons/fa';
+import { FaEdit, FaTh, FaRandom, FaBars, FaThLarge, FaChevronUp, FaChevronDown, FaExchangeAlt, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaTimes, FaLayerGroup, FaChevronLeft, FaChevronRight, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaTrophy, FaUser, FaUsers, FaUsersSlash } from 'react-icons/fa';
 import ActionBar from '../components/ActionBar';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupOverlay from '../components/GroupOverlay';
 import ClassroomEvent from '../components/ClassroomEvent';
+import GroupingModal from '../components/GroupingModal';
 import ViewToggle from '../components/ViewToggle'; // ✨ Import ViewToggle
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
@@ -37,6 +38,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const [seatingPositions, setSeatingPositions] = useState({});
     const [isEditing, setIsEditing] = useState(false);
     const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false); // ✨ State for hierarchical edit menu
+    const [isGroupModalOpen, setIsGroupModalOpen] = useState(false); // ✨ State for grouping modal
     const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(() => {
         // ✨ Read from localStorage, default to true (open) on desktop, false on mobile
         const saved = localStorage.getItem(`chat-sidebar-open-${classId}`);
@@ -61,6 +63,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const [studentScores, setStudentScores] = useState({});
     const [viewMode, setViewMode] = useState('seating'); // ✨ 'seating' or 'event'
     const [classroomEvents, setClassroomEvents] = useState([]); // ✨ State for classroom events
+    const [attendance, setAttendance] = useState({}); // ✨ State for attendance
+    const [attendanceDays, setAttendanceDays] = useState(0); // ✨ State for attendance days
 
     // Pan functionality state
     const [isPanning, setIsPanning] = useState(false);
@@ -88,10 +92,15 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const [newMessage, setNewMessage] = useState('');
     const chatContainerRef = useRef(null);
 
-    // Zoom functionality state
+    // Zoom functionality state (seating)
     const [zoomLevel, setZoomLevel] = useState(1);
     const minZoom = 0.5;
     const maxZoom = 3;
+
+    // ✨ Separate zoom state for event view
+    const [eventZoomLevel, setEventZoomLevel] = useState(1);
+    const eventMinZoom = 0.3;
+    const eventMaxZoom = 2;
 
     // Auto-collapse banner on mobile
     useEffect(() => {
@@ -557,6 +566,35 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         setClassroomEvents(prev => [...prev, { ...newEvent, createdBy: user.id, createdAt: Date.now() }]);
     };
 
+    // ✨ Handler for creating student groups
+    const handleCreateGroups = (groups) => {
+        const newEvent = {
+            id: `event-${Date.now()}`,
+            title: 'Student Groups',
+            description: 'Join your group!',
+            type: 'grouping',
+            config: {
+                type: 'grouping',
+                groups: groups
+            },
+            results: [],
+            status: 'active',
+            createdAt: Date.now(),
+            createdBy: user.id
+        };
+
+        emitAddClassroomEvent(newEvent);
+        setClassroomEvents(prev => [...prev, { ...newEvent }]);
+
+        // ✨ Send grouping card to chat as special JSON message
+        const chatPayload = JSON.stringify({
+            type: 'grouping',
+            eventId: newEvent.id,
+            groups: groups
+        });
+        emitChatMessage(chatPayload);
+    };
+
     // ✨ Handler for triggering an event (Creator only)
     const handleTriggerEvent = (event, updates) => {
         // ✨ Generic trigger support (Buzz Button, etc.)
@@ -804,7 +842,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
     }, [isPanning, handleMouseMove, handleMouseUp]);
 
-    // Zoom functionality handlers
+    // Zoom functionality handlers (seating)
     const handleZoomIn = useCallback(() => {
         setZoomLevel(prev => Math.min(prev + 0.2, maxZoom));
     }, [maxZoom]);
@@ -815,6 +853,19 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
     const handleZoomReset = useCallback(() => {
         setZoomLevel(1);
+    }, []);
+
+    // ✨ Zoom functionality handlers (event view - scales individual cards)
+    const handleEventZoomIn = useCallback(() => {
+        setEventZoomLevel(prev => Math.min(prev + 0.1, eventMaxZoom));
+    }, [eventMaxZoom]);
+
+    const handleEventZoomOut = useCallback(() => {
+        setEventZoomLevel(prev => Math.max(prev - 0.1, eventMinZoom));
+    }, [eventMinZoom]);
+
+    const handleEventZoomReset = useCallback(() => {
+        setEventZoomLevel(1);
     }, []);
 
     const handleToggleView = useCallback(() => {
@@ -1055,10 +1106,123 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         setRatingModalOpen(true);
     };
 
-    const handleFunction2 = () => {
+    const handleCheckAttendance = async () => {
         setDropdownOpen(false);
-        // Implement function 2 logic here
-        console.log('Function 2 clicked for chair:', selectedStudentChair);
+        const studentUser = assignedUsers[selectedStudentChair];
+        if (!studentUser) return;
+
+        const currentDays = attendanceDays || 20;
+        const days = Array.from({ length: currentDays }, (_, i) => i + 1);
+        const dayOptions = days.map(day => `<option value="${day}">Day ${day}</option>`).join('');
+        const photoSrc = getProfileImageSrc(studentUser.photoURL);
+
+        const { value: formValues } = await Swal.fire({
+            title: 'Attendance Check',
+            html: `
+                <div class="attendance-modal-content">
+                    <div class="attendance-student-info">
+                        <img src="${photoSrc}" class="attendance-student-photo" onerror="this.src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'"/>
+                        <div class="attendance-student-details">
+                            <h3 class="attendance-student-name">${studentUser.userName}</h3>
+                            <p class="attendance-student-role">Student</p>
+                        </div>
+                    </div>
+                    
+                    <div class="attendance-form-group">
+                        <label class="attendance-form-label">
+                            <i class="fas fa-calendar-day"></i> Select Day
+                        </label>
+                        <select id="swal-day" class="attendance-select-custom">
+                            ${dayOptions}
+                        </select>
+                    </div>
+
+                    <div class="attendance-form-group">
+                        <label class="attendance-form-label">
+                            <i class="fas fa-check-circle"></i> Status
+                        </label>
+                        <div class="attendance-status-grid">
+                            <div class="attendance-status-btn present" data-status="present">
+                                <span class="attendance-status-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </span>
+                                <span class="attendance-status-label">Present</span>
+                            </div>
+                            <div class="attendance-status-btn absent" data-status="absent">
+                                <span class="attendance-status-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </span>
+                                <span class="attendance-status-label">Absent</span>
+                            </div>
+                            <div class="attendance-status-btn late" data-status="late">
+                                <span class="attendance-status-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                </span>
+                                <span class="attendance-status-label">Late</span>
+                            </div>
+                            <div class="attendance-status-btn leave" data-status="leave">
+                                <span class="attendance-status-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                </span>
+                                <span class="attendance-status-label">Leave</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            focusConfirm: false,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'Cancel',
+            cancelButtonColor: '#6c757d',
+            customClass: {
+                popup: 'attendance-swal-popup',
+                cancelButton: 'attendance-swal-cancel'
+            },
+            didOpen: () => {
+                const buttons = Swal.getHtmlContainer().querySelectorAll('.attendance-status-btn');
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const status = btn.getAttribute('data-status');
+                        const day = document.getElementById('swal-day').value;
+                        Swal.clickConfirm();
+                        Swal.close({ value: { day, status } });
+                    });
+                });
+            }
+        });
+
+        if (formValues && formValues.status) {
+            try {
+                const studentId = studentUser.userId;
+                const newAttendance = { ...attendance };
+                if (!newAttendance[studentId]) newAttendance[studentId] = {};
+                newAttendance[studentId][formValues.day] = formValues.status;
+
+                setAttendance(newAttendance);
+
+                await axios.put(`${API_BASE_URL}/api/classrooms/${classId}/attendance`, {
+                    attendance: newAttendance
+                }, {
+                    headers: { 'x-auth-token': user.token }
+                });
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Attendance Saved',
+                    text: `${studentUser.userName} marked as ${formValues.status} for ${formValues.day}`,
+                    timer: 2000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+
+            } catch (error) {
+                console.error('Error saving attendance:', error);
+                Swal.fire('Error', 'Failed to save attendance.', 'error');
+                fetchClassroomDetails();
+            }
+        }
     };
 
     const handleFunction3 = () => {
@@ -1146,6 +1310,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             setAssignedUsers(fetchedAssignedUsers);
             setStudentScores(fetchedScores);
             setChairGroups(fetchedGroups); // Set groups
+            setAttendance(response.data.attendance || {}); // ✨ Load attendance
+            setAttendanceDays(response.data.attendanceDays || 20); // ✨ Load attendance days (default to 20)
 
             // ✨ Initialize classroom events
             const fetchedEvents = response.data.classroomEvents || [];
@@ -1333,6 +1499,53 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             fetchClassroomDetails();
         } catch (e) {
             alert('Failed to leave the seat.');
+        }
+    };
+
+    const handleResetAllChairs = async () => {
+        if (!isCreator) return;
+
+        const result = await Swal.fire({
+            title: 'Reset All Chairs?',
+            text: "Are you sure you want to make all students leave their chairs? This cannot be undone.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, Reset All',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                // Optimistic update
+                const emptyAssignedUsers = {};
+                setAssignedUsers(emptyAssignedUsers);
+
+                // Save to DB
+                await axios.put(`${API_BASE_URL}/api/classrooms/${classId}/seating`, {
+                    assignedUsers: emptyAssignedUsers
+                }, {
+                    headers: { 'x-auth-token': user.token }
+                });
+
+                // Emit socket update
+                emitChairSeatingUpdate(null, emptyAssignedUsers, 'leave_all', 'Instructor');
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Chairs Reset',
+                    text: 'All students have been moved out of their chairs.',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            } catch (error) {
+                console.error('Error resetting chairs:', error);
+                Swal.fire('Error', 'Failed to reset chairs.', 'error');
+                fetchClassroomDetails(); // Rollback if error
+            }
         }
     };
 
@@ -1670,6 +1883,21 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
                                         console.log(`Rendering Chair ${id}: userScore=${userScore}, maxScore=${maxScore}`);
 
+                                        // ✨ Determine group color for this chair
+                                        let groupColor = null;
+                                        if (assignedUser) {
+                                            const activeGroupingEvent = classroomEvents?.find(e => e.type === 'grouping' && e.status === 'active');
+                                            if (activeGroupingEvent) {
+                                                const userResult = activeGroupingEvent.results?.find(r => r.userId === assignedUser.userId);
+                                                if (userResult) {
+                                                    const group = activeGroupingEvent.config?.groups?.find(g => (g.id || g.name) === userResult.text);
+                                                    if (group) {
+                                                        groupColor = group.color;
+                                                    }
+                                                }
+                                            }
+                                        }
+
                                         return (
                                             <Chair
                                                 key={`${id}-${userScore}`} // ✨ Removed Date.now() to prevent remounting on drag
@@ -1692,6 +1920,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                                 zoomScale={zoomLevel} // ✨ Pass zoom level for drag correction
                                                 isHandRaised={assignedUser && raisedHands.has(assignedUser.userId)} // ✨ Pass raised hand state
                                                 currentEmoji={assignedUser && activeEmojis[assignedUser.userId]?.emoji} // ✨ Pass current emoji
+                                                groupColor={groupColor}
                                             />
                                         );
                                     })}
@@ -1754,6 +1983,13 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             onClick: handleChat,
             isActive: isChatSidebarOpen
         },
+        ...(isCreator ? [{
+            id: 'grouping',
+            icon: <FaUsers />,
+            label: 'Create Groups',
+            onClick: () => setIsGroupModalOpen(true),
+            isActive: isGroupModalOpen
+        }] : []),
         {
             id: 'view',
             icon: <FaChalkboardTeacher />,
@@ -1864,7 +2100,13 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 isActive: false
             });
 
-
+            actionBarActions.push({
+                id: 'reset-all',
+                icon: <FaUsersSlash />, // Assuming FaUsersSlash is imported from 'react-icons/fa'
+                label: 'Reset All Chairs',
+                onClick: handleResetAllChairs,
+                isActive: false
+            });
         }
     }
 
@@ -1936,49 +2178,47 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                 {/* ✨ Styled View Toggle Switch */}
                                 <ViewToggle activeView={viewMode} onViewChange={setViewMode} />
 
-                                {viewMode === 'seating' && (
-                                    <div className="seating-controls">
-                                        {/* Zoom Controls */}
-                                        <div className="zoom-controls">
-                                            <button
-                                                className="zoom-btn zoom-out"
-                                                onClick={handleZoomOut}
-                                                disabled={zoomLevel <= minZoom}
-                                                title="Zoom Out"
-                                            >
-                                                -
-                                            </button>
-                                            <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
-                                            <button
-                                                className="zoom-btn zoom-in"
-                                                onClick={handleZoomIn}
-                                                disabled={zoomLevel >= maxZoom}
-                                                title="Zoom In"
-                                            >
-                                                +
-                                            </button>
-                                            <button
-                                                className="zoom-btn zoom-reset"
-                                                onClick={handleZoomReset}
-                                                title="Reset Zoom"
-                                            >
-                                                Reset
-                                            </button>
+                                <div className="seating-controls">
+                                    {/* Zoom Controls - use separate handlers per view */}
+                                    <div className="zoom-controls">
+                                        <button
+                                            className="zoom-btn zoom-out"
+                                            onClick={viewMode === 'seating' ? handleZoomOut : handleEventZoomOut}
+                                            disabled={viewMode === 'seating' ? zoomLevel <= minZoom : eventZoomLevel <= eventMinZoom}
+                                            title="Zoom Out"
+                                        >
+                                            -
+                                        </button>
+                                        <span className="zoom-level">{Math.round((viewMode === 'seating' ? zoomLevel : eventZoomLevel) * 100)}%</span>
+                                        <button
+                                            className="zoom-btn zoom-in"
+                                            onClick={viewMode === 'seating' ? handleZoomIn : handleEventZoomIn}
+                                            disabled={viewMode === 'seating' ? zoomLevel >= maxZoom : eventZoomLevel >= eventMaxZoom}
+                                            title="Zoom In"
+                                        >
+                                            +
+                                        </button>
+                                        <button
+                                            className="zoom-btn zoom-reset"
+                                            onClick={viewMode === 'seating' ? handleZoomReset : handleEventZoomReset}
+                                            title="Reset Zoom"
+                                        >
+                                            Reset
+                                        </button>
 
-                                            {/* View Toggle Button */}
-                                            {isCreator && (
-                                                <button
-                                                    className={`zoom-btn ${isTeacherView ? 'active' : ''}`}
-                                                    onClick={handleToggleView}
-                                                    title={isTeacherView ? "Switch to Back View" : "Switch to Teacher (Front) View"}
-                                                    style={{ marginLeft: '10px' }}
-                                                >
-                                                    <FaChalkboardTeacher size={16} />
-                                                </button>
-                                            )}
-                                        </div>
+                                        {/* View Toggle Button (seating only) */}
+                                        {viewMode === 'seating' && isCreator && (
+                                            <button
+                                                className={`zoom-btn ${isTeacherView ? 'active' : ''}`}
+                                                onClick={handleToggleView}
+                                                title={isTeacherView ? "Switch to Back View" : "Switch to Teacher (Front) View"}
+                                                style={{ marginLeft: '10px' }}
+                                            >
+                                                <FaChalkboardTeacher size={16} />
+                                            </button>
+                                        )}
                                     </div>
-                                )}
+                                </div>
                             </div>
 
                             {/* Render Content Based on View Mode */}
@@ -2010,14 +2250,15 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                     events={classroomEvents}
                                     onAddEvent={handleAddEvent}
                                     onTriggerEvent={handleTriggerEvent}
-                                    onDeleteEvent={handleDeleteEvent} // ✨ Pass delete handler
+                                    onDeleteEvent={handleDeleteEvent}
                                     onSubmitAnswer={handleSubmitAnswer}
                                     onEndEvent={handleEndAndScoreEvent}
                                     candidates={Object.values(assignedUsers).map(u => ({
                                         name: u.userName,
                                         photoSrc: getProfileImageSrc(u.photoURL, isGoogleUser(u))
                                     }))}
-                                    currentUser={user} // ✨ Pass current user for answer tracking
+                                    currentUser={user}
+                                    zoomScale={eventZoomLevel}
                                 />
                             )}
                         </div>
@@ -2082,6 +2323,119 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                                     marginRight: 'auto'
                                                 }}>
                                                     {msg.message}
+                                                </div>
+                                            );
+                                        }
+
+                                        // ✨ Check if this is a grouping card message
+                                        let groupingData = null;
+                                        try {
+                                            if (typeof msg.message === 'string' && msg.message.startsWith('{"type":"grouping"')) {
+                                                groupingData = JSON.parse(msg.message);
+                                            }
+                                        } catch (e) { /* not JSON */ }
+
+                                        if (groupingData) {
+                                            const groupEvent = classroomEvents.find(ev => ev.id === groupingData.eventId);
+                                            const hasJoined = groupEvent?.results?.some(r => r.userId === user.id);
+                                            return (
+                                                <div key={index} style={{ marginBottom: '12px', maxWidth: '85%', marginLeft: isMe ? 'auto' : '0', marginRight: isMe ? '0' : 'auto' }}>
+                                                    <div style={{
+                                                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                                                        borderRadius: '14px',
+                                                        overflow: 'hidden',
+                                                        boxShadow: '0 3px 12px rgba(16,185,129,0.25)'
+                                                    }}>
+                                                        <div style={{ padding: '14px 16px', color: 'white' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                                                <FaUsers />
+                                                                <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Student Groups</span>
+                                                            </div>
+                                                            <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.85 }}>Choose your group below</p>
+                                                        </div>
+                                                        <div style={{ background: 'white', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                            {groupingData.groups.map((group, gIdx) => {
+                                                                const members = groupEvent?.results?.filter(r => r.text === (group.id || group.name)) || [];
+                                                                const maxMembers = group.maxMembers || 99;
+                                                                const percentage = Math.min(100, Math.round((members.length / maxMembers) * 100));
+                                                                const isFull = members.length >= maxMembers;
+                                                                return (
+                                                                    <button
+                                                                        key={gIdx}
+                                                                        onClick={() => {
+                                                                            if (!isCreator && !hasJoined && !isFull && groupEvent) {
+                                                                                handleSubmitAnswer(groupEvent, group.id || group.name);
+                                                                            }
+                                                                        }}
+                                                                        disabled={isCreator || hasJoined || isFull}
+                                                                        style={{
+                                                                            display: 'flex',
+                                                                            flexDirection: 'column',
+                                                                            width: '100%',
+                                                                            padding: '10px 12px',
+                                                                            border: '1px solid #e5e7eb',
+                                                                            borderLeft: `4px solid ${group.color}`,
+                                                                            borderRadius: '8px',
+                                                                            background: isFull ? '#fef2f2' : hasJoined ? '#f0fdf4' : '#fff',
+                                                                            cursor: (isCreator || hasJoined || isFull) ? 'default' : 'pointer',
+                                                                            transition: 'all 0.2s',
+                                                                            textAlign: 'left',
+                                                                            opacity: (isCreator || hasJoined || isFull) ? 0.7 : 1,
+                                                                        }}
+                                                                    >
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                                                                            <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: group.color, flexShrink: 0 }} />
+                                                                            <span style={{ flex: 1, fontSize: '0.88rem', fontWeight: 500, color: '#1f2937' }}>{group.name}</span>
+                                                                            <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{members.length}/{maxMembers}</span>
+                                                                            {isFull && <span style={{ padding: '1px 5px', background: '#ef4444', color: '#fff', borderRadius: '3px', fontSize: '0.6rem', fontWeight: 700 }}>FULL</span>}
+                                                                        </div>
+                                                                        {/* Avatar stack */}
+                                                                        {members.length > 0 && (
+                                                                            <div style={{ display: 'flex', alignItems: 'center', marginTop: '6px' }}>
+                                                                                {members.slice(0, 5).map((m, mIdx) => (
+                                                                                    <img
+                                                                                        key={mIdx}
+                                                                                        src={getProfileImageSrc(m.photoURL)}
+                                                                                        alt={m.userName}
+                                                                                        style={{
+                                                                                            width: '22px', height: '22px', borderRadius: '50%', border: '2px solid #fff',
+                                                                                            objectFit: 'cover', marginLeft: mIdx === 0 ? 0 : '-6px',
+                                                                                            boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                                                                                        }}
+                                                                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.userName || '?')}&background=random&size=24`; }}
+                                                                                    />
+                                                                                ))}
+                                                                                {members.length > 5 && (
+                                                                                    <span style={{
+                                                                                        width: '22px', height: '22px', borderRadius: '50%', background: '#e5e7eb',
+                                                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                                        fontSize: '0.6rem', color: '#6b7280', fontWeight: 600, marginLeft: '-6px', border: '2px solid #fff'
+                                                                                    }}>+{members.length - 5}</span>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                        {/* Progress bar */}
+                                                                        <div style={{ width: '100%', height: '4px', background: '#e5e7eb', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
+                                                                            <div style={{
+                                                                                height: '100%', borderRadius: '2px',
+                                                                                width: `${percentage}%`,
+                                                                                background: isFull ? '#ef4444' : group.color,
+                                                                                transition: 'width 0.5s ease'
+                                                                            }} />
+                                                                        </div>
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                            {hasJoined && (
+                                                                <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#059669', fontWeight: 500, padding: '4px 0' }}>
+                                                                    ✅ You've joined a group
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ fontSize: '11px', color: '#999', marginTop: '3px', textAlign: isMe ? 'right' : 'left' }}>
+                                                        {msg.senderName} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
                                                 </div>
                                             );
                                         }
@@ -2179,11 +2533,11 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             />
             <ChairDropdown
                 isOpen={dropdownOpen}
-                onClose={() => setDropdownOpen(false)}
-                position={dropdownPosition}
-                onRateStudent={handleRateStudent}
-                onFunction2={handleFunction2}
-                onFunction3={handleFunction3}
+                    onClose={() => setDropdownOpen(false)}
+                    position={dropdownPosition}
+                    onRateStudent={handleRateStudent}
+                    onCheckAttendance={handleCheckAttendance}
+                    onFunction3={handleFunction3}
                 onFunction4={handleFunction4}
             />
             <StudentRatingModal
@@ -2192,6 +2546,14 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 onRate={handleApplyRating}
                 studentName={selectedStudentChair ? assignedUsers[selectedStudentChair]?.userName : ''}
                 ratePresets={ratePresets}
+            />
+            {/* ✨ Grouping Modal */}
+            <GroupingModal
+                isOpen={isGroupModalOpen}
+                onClose={() => setIsGroupModalOpen(false)}
+                onCreateGroups={handleCreateGroups}
+                activeGroupingEvent={classroomEvents?.find(e => e.type === 'grouping' && e.status === 'active')}
+                onCancelGrouping={(event) => handleEndAndScoreEvent(event)}
             />
         </>
     );

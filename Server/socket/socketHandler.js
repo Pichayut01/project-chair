@@ -7,6 +7,12 @@ module.exports = (io) => {
     io.on('connection', (socket) => {
         logger.success(`Client connected: ${socket.id}`);
 
+        // Join personal user room for global notifications
+        if (socket.handshake.auth && socket.handshake.auth.userId) {
+            socket.join(socket.handshake.auth.userId.toString());
+            logger.info(`Attached user ${socket.handshake.auth.userId} to personal notification room`);
+        }
+
         // Join classroom room
         socket.on('join-classroom', (data) => {
             const { classId, userId, userName } = data;
@@ -191,7 +197,7 @@ module.exports = (io) => {
 
             try {
                 // Save event to database
-                await Class.findByIdAndUpdate(
+                const updatedClassroom = await Class.findByIdAndUpdate(
                     classId,
                     {
                         $push: {
@@ -200,6 +206,21 @@ module.exports = (io) => {
                     },
                     { new: true }
                 );
+
+                // Notify all participants about the new event
+                const { createAndSendNotification } = require('../utils/notificationHelper');
+                if (updatedClassroom && updatedClassroom.participants) {
+                    for (const participantId of updatedClassroom.participants) {
+                        await createAndSendNotification(
+                            io,
+                            participantId,
+                            'New Activity',
+                            `A new ${event.title || event.type} has started in ${updatedClassroom.name}`,
+                            'event',
+                            classId
+                        );
+                    }
+                }
 
                 // Broadcast to all users in the classroom
                 io.to(classId).emit('classroom-event-added', event);
@@ -273,6 +294,83 @@ module.exports = (io) => {
                 logger.success(`Event ${eventId} archived and deleted from class ${classId}`);
             } catch (error) {
                 logger.error('Error deleting classroom event:', error);
+            }
+        });
+
+        // ✨ Handle removing student from group (active or archived)
+        socket.on('remove-student-from-group', async (data) => {
+            const { classId, eventId, studentId, source } = data;
+            try {
+                const updatePath = source === 'archived' ? 'eventHistory' : 'classroomEvents';
+
+                const cls = await Class.findById(classId);
+                if (!cls) return;
+
+                const eventList = cls[updatePath];
+                const eventIndex = eventList.findIndex(e => e.id === eventId || e._id?.toString() === eventId);
+
+                if (eventIndex !== -1) {
+                    const evt = eventList[eventIndex];
+                    if (Array.isArray(evt.results)) {
+                        evt.results = evt.results.filter(r => r.userId !== studentId);
+                        cls.markModified(updatePath);
+                        await cls.save();
+
+                        io.to(classId).emit('group-member-removed', { eventId, studentId, source });
+                        logger.success(`Student ${studentId} removed from group in event ${eventId}`);
+                    }
+                }
+            } catch (error) {
+                logger.error('Error removing student from group:', error);
+            }
+        });
+
+        // ✨ Handle moving student to another group (active or archived)
+        socket.on('move-student-group', async (data) => {
+            logger.socket('move-student-group', { eventId: data.eventId, userId: data.studentId, newGroup: data.newGroupId });
+            const { classId, eventId, studentId, newGroupId, newGroupName, source, userName, userPhoto } = data;
+
+            try {
+                const updatePath = source === 'archived' ? 'eventHistory' : 'classroomEvents';
+
+                const cls = await Class.findById(classId);
+                if (!cls) {
+                    logger.error(`Class not found for move-student-group: ${classId}`);
+                    return;
+                }
+
+                const eventList = cls[updatePath];
+                const eventIndex = eventList.findIndex(e => e.id === eventId || e._id?.toString() === eventId);
+
+                if (eventIndex !== -1) {
+                    const evt = eventList[eventIndex];
+                    if (!Array.isArray(evt.results)) {
+                        evt.results = [];
+                    }
+
+                    // Remove existing entry
+                    evt.results = evt.results.filter(r => r.userId !== studentId);
+
+                    // Add new entry
+                    evt.results.push({
+                        userId: studentId,
+                        userName: userName || 'Unknown',
+                        photoURL: userPhoto || null,
+                        text: newGroupId,
+                        option: newGroupName,
+                        timestamp: Date.now()
+                    });
+
+                    cls.markModified(updatePath);
+                    await cls.save();
+
+                    io.to(classId).emit('group-member-moved', { eventId, studentId, newGroupId, source });
+                    logger.success(`Student ${studentId} moved to group ${newGroupId} in event ${eventId}`);
+                } else {
+                    logger.error(`Event ${eventId} not found in ${updatePath} for class ${classId}`);
+                }
+            } catch (error) {
+                logger.error('Error moving student to group:', error);
             }
         });
 
@@ -396,6 +494,17 @@ module.exports = (io) => {
                 // If score updated, emit score-updated
                 if (scoreUpdateData) {
                     io.to(classId).emit('score-updated', scoreUpdateData);
+
+                    // ✨ Send notification
+                    const { createAndSendNotification } = require('../utils/notificationHelper');
+                    await createAndSendNotification(
+                        io,
+                        scoreUpdateData.studentId,
+                        'Score Update',
+                        `You earned ${scoreUpdateData.delta > 0 ? '+' : ''}${scoreUpdateData.delta} pts in "${updatedEvent.config.questionText || 'Event'}".`,
+                        'score',
+                        classId
+                    );
                 }
 
                 logger.success(`Answer added to event ${eventId}`);

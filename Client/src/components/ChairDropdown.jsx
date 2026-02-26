@@ -1,10 +1,10 @@
 // src/component/ChairDropdown.jsx
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FiStar, FiUser, FiSettings, FiMessageSquare } from 'react-icons/fi';
+import { FiStar, FiCheckSquare, FiSettings, FiMessageSquare } from 'react-icons/fi';
 import '../CSS/ChairDropdown.css';
 
-const ChairDropdown = ({ isOpen, onClose, position, onRateStudent, onFunction2, onFunction3, onFunction4 }) => {
+const ChairDropdown = ({ isOpen, onClose, position, onRateStudent, onCheckAttendance, onFunction3, onFunction4 }) => {
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -40,9 +40,9 @@ const ChairDropdown = ({ isOpen, onClose, position, onRateStudent, onFunction2, 
                 <FiStar size={16} />
                 <span>Rate Student</span>
             </div>
-            <div className="dropdown-item" onClick={onFunction2}>
-                <FiUser size={16} />
-                <span>Function 2</span>
+            <div className="dropdown-item" onClick={onCheckAttendance}>
+                <FiCheckSquare size={16} />
+                <span>Check Attendance</span>
             </div>
             <div className="dropdown-item" onClick={onFunction3}>
                 <FiSettings size={16} />

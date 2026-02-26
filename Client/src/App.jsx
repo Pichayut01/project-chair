@@ -47,6 +47,18 @@ function App() {
 
     const handleSignOut = async () => {
         try {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                // Call backend to trigger logout notification
+                try {
+                    await axios.post(`${backendUrl}/logout`, {}, {
+                        headers: { 'x-auth-token': token }
+                    });
+                } catch (err) {
+                    console.error("Failed to notify server of logout:", err);
+                }
+            }
+
             localStorage.removeItem('authToken');
             localStorage.removeItem('userProfile');
             localStorage.removeItem('userPhotoURL');

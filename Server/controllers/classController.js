@@ -72,6 +72,24 @@ exports.joinClassroom = async (req, res) => {
         await classToJoin.save();
         await User.findByIdAndUpdate(userId, { $push: { enrolledClasses: classToJoin._id } });
 
+        // Notify creator(s) that a new user joined
+        const { createAndSendNotification } = require('../utils/notificationHelper');
+        const userJoining = await User.findById(userId);
+        if (classToJoin.creator && classToJoin.creator.length > 0) {
+            for (const creatorId of classToJoin.creator) {
+                if (creatorId.toString() !== userId.toString()) {
+                    await createAndSendNotification(
+                        req.io,
+                        creatorId,
+                        'New Member',
+                        `${userJoining.displayName} joined your class "${classToJoin.name}"`,
+                        'class_join',
+                        classToJoin._id
+                    );
+                }
+            }
+        }
+
         res.status(200).json({ msg: 'Joined class successfully!', class: classToJoin });
     } catch (err) {
         console.error(err.message);
@@ -129,6 +147,8 @@ exports.updateSeating = async (req, res) => {
     const { classId } = req.params;
     const { seatingPositions, assignedUsers, studentScores, chairGroups } = req.body;
     try {
+        const originalClassroom = await Class.findById(classId);
+
         const updateObj = {};
         if (seatingPositions) updateObj.seatingPositions = seatingPositions;
         if (assignedUsers) updateObj.assignedUsers = assignedUsers;
@@ -138,6 +158,29 @@ exports.updateSeating = async (req, res) => {
         const classroom = await Class.findByIdAndUpdate(classId, updateObj, { new: true });
         if (!classroom) {
             return res.status(404).json({ msg: 'Classroom not found' });
+        }
+
+        // Send Notification for score changes
+        if (studentScores) {
+            const { createAndSendNotification } = require('../utils/notificationHelper');
+            for (const [studentId, categoriesObj] of Object.entries(studentScores)) {
+                // Determine if score actually changed or simply got assigned
+                for (const [category, newScore] of Object.entries(categoriesObj)) {
+                    const oldScore = originalClassroom.studentScores?.[studentId]?.[category] || 0;
+                    if (newScore !== oldScore) {
+                        const scoreDiff = newScore - oldScore;
+                        const actionText = scoreDiff > 0 ? 'awarded' : 'deducted';
+                        await createAndSendNotification(
+                            req.io,
+                            studentId,
+                            'Score Update',
+                            `You were ${actionText} ${Math.abs(scoreDiff)} pts in "${category}"`,
+                            'score',
+                            classId
+                        );
+                    }
+                }
+            }
         }
 
         res.json({
@@ -238,6 +281,17 @@ exports.kickUser = async (req, res) => {
 
         classroom.markModified('assignedUsers');
         await classroom.save();
+
+        const { createAndSendNotification } = require('../utils/notificationHelper');
+        await createAndSendNotification(
+            req.io,
+            userId,
+            'Removed from Class',
+            `You have been removed from the class "${classroom.name}" by the instructor.`,
+            'class_leave',
+            classId
+        );
+
         res.json({ msg: 'Kicked successfully', classroom });
     } catch (err) {
         res.status(500).json({ msg: 'Server error' });
@@ -262,6 +316,17 @@ exports.promoteUser = async (req, res) => {
         classroom.creator.push(userId);
         await classroom.save();
         await User.findByIdAndUpdate(userId, { $addToSet: { createdClasses: classId } });
+
+        const { createAndSendNotification } = require('../utils/notificationHelper');
+        await createAndSendNotification(
+            req.io,
+            userId,
+            'Promoted to Creator',
+            `You have been promoted to a Creator in the class "${classroom.name}".`,
+            'system',
+            classId
+        );
+
         res.json({ msg: 'Promoted successfully', classroom });
     } catch (err) {
         res.status(500).json({ msg: 'Server error' });
@@ -289,6 +354,16 @@ exports.demoteUser = async (req, res) => {
         await classroom.save();
 
         await User.findByIdAndUpdate(userId, { $pull: { createdClasses: classId } });
+
+        const { createAndSendNotification } = require('../utils/notificationHelper');
+        await createAndSendNotification(
+            req.io,
+            userId,
+            'Demoted from Creator',
+            `Your Creator role in the class "${classroom.name}" has been removed.`,
+            'system',
+            classId
+        );
 
         res.json({ msg: 'User demoted successfully', classroom });
     } catch (err) {
@@ -386,6 +461,38 @@ exports.getChatHistory = async (req, res) => {
         res.json({ chatMessages });
     } catch (err) {
         logger.error('Error fetching chat history:', err);
+        res.status(500).send('Server error');
+    }
+};
+
+exports.updateAttendance = async (req, res) => {
+    const { classId } = req.params;
+    const { attendance, attendanceDays } = req.body;
+    const userId = req.user.id;
+
+    console.log(`[DEBUG] updateAttendance hit for class ${classId} by user ${userId}`);
+    console.log(`[DEBUG] attendance data length: ${attendance ? Object.keys(attendance).length : 0}`);
+
+    try {
+        const classroom = await Class.findById(classId);
+        if (!classroom) return res.status(404).json({ msg: 'Classroom not found' });
+
+        if (!classroom.creator.map(id => id.toString()).includes(userId.toString())) {
+            return res.status(403).json({ msg: 'Authorization denied. Only creators can edit attendance.' });
+        }
+
+        if (attendance) {
+            classroom.attendance = attendance;
+            classroom.markModified('attendance');
+        }
+        if (typeof attendanceDays === 'number') {
+            classroom.attendanceDays = attendanceDays;
+        }
+
+        const updatedClassroom = await classroom.save();
+        res.json({ msg: 'Attendance updated successfully', classroom: updatedClassroom });
+    } catch (err) {
+        console.error('Error updating attendance:', err);
         res.status(500).send('Server error');
     }
 };

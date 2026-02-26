@@ -58,6 +58,12 @@ app.use(httpLogger);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 logger.debug('Static files serving enabled for /uploads');
 
+// Inject Socket.IO into req for use in API routes
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
+
 // Routes
 // ✨ DEBUG: Log all requests to check if /api/upload is hit
 app.use((req, res, next) => {
@@ -74,6 +80,7 @@ app.use('/api/classrooms', require('./routes/classrooms'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/presets', require('./routes/presets'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/notifications', require('./routes/notifications')); // ✨ Notifications Route
 app.use('/api/upload', require('./routes/upload')); // ✨ Generic Upload Route
 logger.success('All API routes registered successfully');
 

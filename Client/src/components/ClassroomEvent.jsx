@@ -8,7 +8,7 @@ import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, onDeleteEvent, onSubmitAnswer, onEndEvent, candidates = [], currentUser }) => {
+const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, onDeleteEvent, onSubmitAnswer, onEndEvent, candidates = [], currentUser, zoomScale = 1 }) => {
     const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
     const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [selectedConfigType, setSelectedConfigType] = useState(null);
@@ -54,7 +54,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
         }
     };
 
-    // ✨ Masonry Logic: Determine columns
+    // ✨ Column count (screen-based only — zoom wrapper handles visual scaling)
     const [numCols, setNumCols] = useState(3);
     useEffect(() => {
         const handleResize = () => {
@@ -68,7 +68,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // ✨ Prepare data for Maonsry
+    // ✨ Prepare data for grid
     const allItems = [];
     if (isCreator) {
         allItems.push({ type: 'add-card', id: 'add-event-btn' });
@@ -238,6 +238,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             case 'buzz': return <FaBullhorn style={style} />;
             case 'wordcloud': return <FaCloud style={style} />;
             case 'poll': return <FaPoll style={style} />;
+            case 'grouping': return <FaUsers style={style} />;
             default: return <FaClipboardList style={style} />;
         }
     };
@@ -263,57 +264,82 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                     )}
                 </div>
             ) : (
-                <div className="event-masonry-grid" style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', width: '100%' }}>
-                    {distributedColumns.map((colItems, colIndex) => (
-                        <div key={colIndex} className="masonry-column" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            {colItems.map((item) => {
-                                if (item.type === 'add-card') {
-                                    return (
-                                        <div key="add-event" className="add-event-card" onClick={handleAddEventClick} style={{ width: '100%' }}>
-                                            <div className="add-event-card-icon">
-                                                <FaPlus />
-                                            </div>
-                                            <span>Add Event</span>
+                <div className="event-masonry-grid" style={{ 
+                    columnWidth: `${Math.round(350 * zoomScale)}px`,
+                    columnGap: '16px',
+                    width: '100%',
+                }}>
+                    {allItems.map((item) => {
+                        if (item.type === 'add-card') {
+                            return (
+                                <div key="add-event" style={{ 
+                                    display: 'inline-block',
+                                    width: '100%',
+                                    breakInside: 'avoid',
+                                    WebkitColumnBreakInside: 'avoid',
+                                    marginBottom: '24px',
+                                    overflow: 'hidden',
+                                }}>
+                                    <div className="add-event-card" onClick={handleAddEventClick} style={{ 
+                                        width: '100%',
+                                        zoom: zoomScale,
+                                    }}>
+                                        <div className="add-event-card-icon">
+                                            <FaPlus />
                                         </div>
-                                    );
-                                }
-                                const event = item;
-                                return (
-                                    <div key={event.id} className="event-card" style={{ width: '100%' }}>
-                                        {!['random', 'wordcloud', 'question', 'poll', 'buzz'].includes(event.type) && (
-                                            <div className="event-card-header">
-                                                <h3>{getEventIcon(event.type)} {event.title}</h3>
-                                                {isCreator && onDeleteEvent && (
-                                                    <button
-                                                        className="delete-event-btn"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            onDeleteEvent(event);
-                                                        }}
-                                                        title="Delete Event"
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
-                                        <div className="event-card-body">
-                                            <EventCardContent
-                                                event={event}
-                                                isCreator={isCreator}
-                                                onTrigger={onTriggerEvent}
-                                                onSubmitAnswer={onSubmitAnswer}
-                                                onEndEvent={onEndEvent}
-                                                currentUser={currentUser}
-                                                candidates={candidates}
-                                                onDeleteEvent={onDeleteEvent}
-                                            />
-                                        </div>
+                                        <span>Add Event</span>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    ))}
+                                </div>
+                            );
+                        }
+                        const event = item;
+                        return (
+                            <div key={event.id} style={{ 
+                                display: 'inline-block',
+                                width: '100%',
+                                breakInside: 'avoid',
+                                WebkitColumnBreakInside: 'avoid',
+                                marginBottom: '24px',
+                                overflow: 'hidden',
+                            }}>
+                                <div className="event-card" style={{ 
+                                    width: '100%',
+                                    zoom: zoomScale,
+                                    marginBottom: 0,
+                                }}>
+                                    {!['random', 'wordcloud', 'question', 'poll', 'buzz', 'grouping'].includes(event.type) && (
+                                        <div className="event-card-header">
+                                            <h3>{getEventIcon(event.type)} {event.title}</h3>
+                                            {isCreator && onDeleteEvent && (
+                                                <button
+                                                    className="delete-event-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDeleteEvent(event);
+                                                    }}
+                                                    title="Delete Event"
+                                                >
+                                                    <FaTrash />
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                    <div className="event-card-body">
+                                        <EventCardContent
+                                            event={event}
+                                            isCreator={isCreator}
+                                            onTrigger={onTriggerEvent}
+                                            onSubmitAnswer={onSubmitAnswer}
+                                            onEndEvent={onEndEvent}
+                                            currentUser={currentUser}
+                                            candidates={candidates}
+                                            onDeleteEvent={onDeleteEvent}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 
@@ -1046,6 +1072,157 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                     <div className="ev-submitted-msg" style={{ background: '#fffbeb', borderColor: '#fde68a' }}>
                                         <span style={{ color: '#b45309' }}>Vote Submitted! 📊</span>
                                         <p style={{ color: '#92400e' }}>Waiting for results...</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ✨ Grouping Event Content */}
+            {event.type === 'grouping' && (
+                <div className="ev-card-new grouping-card-new">
+                    {/* Header */}
+                    <div className="ev-header-new" style={{ background: 'linear-gradient(to right, #10b981, #059669)' }}>
+                        <div className="ev-header-bg-icon">
+                            <FaUsers size={120} />
+                        </div>
+                        {isCreator && onDeleteEvent && (
+                            <button
+                                className="delete-event-btn"
+                                onClick={(e) => { e.stopPropagation(); onDeleteEvent(event); }}
+                                title="Delete Event"
+                                style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 20, color: 'white', background: 'rgba(0,0,0,0.1)' }}
+                            >
+                                <FaTrash />
+                            </button>
+                        )}
+                        <h2 className="ev-header-title">
+                            <FaUsers style={{ color: '#d1fae5' }} /> Student Groups
+                        </h2>
+                        <p className="ev-header-subtitle">Choose your group</p>
+                    </div>
+
+                    <div className="ev-body-new">
+                        {isCreator ? (
+                            /* Creator View: Group Results with avatars + progress */
+                            <div className="grouping-results">
+                                {event.config?.groups?.map((group, idx) => {
+                                    const members = event.results?.filter(r => r.text === (group.id || group.name)) || [];
+                                    const maxMembers = group.maxMembers || 99;
+                                    const percentage = Math.min(100, Math.round((members.length / maxMembers) * 100));
+                                    const isFull = members.length >= maxMembers;
+                                    return (
+                                        <div key={idx} className="grouping-result-item">
+                                            <div className="grouping-result-header">
+                                                <div className="grouping-color-dot" style={{ backgroundColor: group.color }} />
+                                                <span className="grouping-result-name">{group.name}</span>
+                                                <span className="grouping-result-count">
+                                                    {members.length}/{maxMembers}
+                                                    {isFull && <span className="grouping-full-badge">FULL</span>}
+                                                </span>
+                                            </div>
+                                            {/* Avatar stack */}
+                                            {members.length > 0 && (
+                                                <div className="grouping-avatar-stack">
+                                                    {members.slice(0, 8).map((m, mIdx) => (
+                                                        <img
+                                                            key={mIdx}
+                                                            src={getProfileImageSrc(m.photoURL)}
+                                                            alt={m.userName}
+                                                            className="grouping-avatar"
+                                                            title={m.userName}
+                                                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.userName || '?')}&background=random&size=32`; }}
+                                                        />
+                                                    ))}
+                                                    {members.length > 8 && (
+                                                        <span className="grouping-avatar-more">+{members.length - 8}</span>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {/* Progress bar */}
+                                            <div className="grouping-progress-bar">
+                                                <div
+                                                    className="grouping-progress-fill"
+                                                    style={{
+                                                        width: `${percentage}%`,
+                                                        backgroundColor: isFull ? '#ef4444' : group.color,
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                <div className="ev-poll-total">
+                                    Total: {event.results?.length || 0} joined {event.results?.length > 0 && <span className="ev-poll-live-badge">● LIVE</span>}
+                                </div>
+                            </div>
+                        ) : (
+                            /* Student View: Join Group with avatars + progress */
+                            <div className="grouping-voting">
+                                {!isSubmitted ? (
+                                    <div className="grouping-options">
+                                        {event.config?.groups?.map((group, idx) => {
+                                            const members = event.results?.filter(r => r.text === (group.id || group.name)) || [];
+                                            const maxMembers = group.maxMembers || 99;
+                                            const percentage = Math.min(100, Math.round((members.length / maxMembers) * 100));
+                                            const isFull = members.length >= maxMembers;
+                                            return (
+                                                <button
+                                                    key={idx}
+                                                    className={`grouping-vote-btn ${isFull ? 'grouping-btn-full' : ''}`}
+                                                    style={{
+                                                        borderLeft: `4px solid ${group.color}`,
+                                                        '--group-color': group.color,
+                                                    }}
+                                                    disabled={isFull}
+                                                    onClick={() => {
+                                                        if (onSubmitAnswer && !isFull) {
+                                                            onSubmitAnswer(event, group.id || group.name);
+                                                            setIsSubmitted(true);
+                                                        }
+                                                    }}
+                                                >
+                                                    <div className="grouping-btn-top">
+                                                        <div className="grouping-btn-color" style={{ backgroundColor: group.color }} />
+                                                        <span className="grouping-btn-name">{group.name}</span>
+                                                        <span className="grouping-btn-count">{members.length}/{maxMembers}</span>
+                                                    </div>
+                                                    {members.length > 0 && (
+                                                        <div className="grouping-avatar-stack" style={{ marginTop: '6px' }}>
+                                                            {members.slice(0, 5).map((m, mIdx) => (
+                                                                <img
+                                                                    key={mIdx}
+                                                                    src={getProfileImageSrc(m.photoURL)}
+                                                                    alt={m.userName}
+                                                                    className="grouping-avatar grouping-avatar-sm"
+                                                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.userName || '?')}&background=random&size=28`; }}
+                                                                />
+                                                            ))}
+                                                            {members.length > 5 && (
+                                                                <span className="grouping-avatar-more">+{members.length - 5}</span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    <div className="grouping-progress-bar" style={{ marginTop: '8px' }}>
+                                                        <div
+                                                            className="grouping-progress-fill"
+                                                            style={{
+                                                                width: `${percentage}%`,
+                                                                backgroundColor: isFull ? '#ef4444' : group.color,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    {isFull && <span className="grouping-full-text">Group Full</span>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="ev-submitted-msg" style={{ background: '#ecfdf5', borderColor: '#a7f3d0' }}>
+                                        <span style={{ color: '#065f46' }}>Group Joined! ✅</span>
+                                        <p style={{ color: '#047857' }}>You're in the group. Wait for the teacher to proceed.</p>
                                     </div>
                                 )}
                             </div>

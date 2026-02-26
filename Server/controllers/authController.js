@@ -113,6 +113,10 @@ exports.googleLoginVerify = async (req, res) => {
             },
         };
 
+        // Emit Login Notification
+        const { createAndSendNotification } = require('../utils/notificationHelper');
+        await createAndSendNotification(req.io, user.id, 'Login Successful', `Welcome back, ${user.displayName}!`, 'login');
+
         jwt.sign(
             payload,
             process.env.JWT_SECRET,
@@ -206,6 +210,10 @@ exports.register = async (req, res) => {
                 role: user.role
             },
         };
+
+        // Emit Welcome Notification
+        const { createAndSendNotification } = require('../utils/notificationHelper');
+        await createAndSendNotification(req.io, user.id, 'Welcome!', `Welcome to EChair, ${user.displayName}!`, 'system');
 
         jwt.sign(
             payload,
@@ -355,6 +363,10 @@ exports.login = async (req, res) => {
             },
         };
 
+        // Emit Login Notification
+        const { createAndSendNotification } = require('../utils/notificationHelper');
+        await createAndSendNotification(req.io, user.id, 'Login Successful', `Welcome back, ${user.displayName}!`, 'login');
+
         jwt.sign(
             payload,
             process.env.JWT_SECRET,
@@ -367,6 +379,21 @@ exports.login = async (req, res) => {
     } catch (err) {
         logger.error('Login error:', err.message, { stack: err.stack });
         res.status(500).json({ msg: 'Server error during login' });
+    }
+};
+
+exports.logout = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Emit Logout Notification
+        const { createAndSendNotification } = require('../utils/notificationHelper');
+        await createAndSendNotification(req.io, userId, 'Logged Out', `You have successfully logged out.`, 'system');
+
+        res.json({ msg: 'Logged out successfully' });
+    } catch (err) {
+        logger.error('Logout error:', err.message);
+        res.status(500).json({ msg: 'Server error during logout' });
     }
 };
 

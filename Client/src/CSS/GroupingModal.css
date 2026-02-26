@@ -1,0 +1,351 @@
+/* src/CSS/GroupingModal.css */
+
+.grouping-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: groupingFadeIn 0.2s ease;
+}
+
+@keyframes groupingFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes groupingSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.grouping-modal-content {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  animation: groupingSlideUp 0.3s ease;
+}
+
+/* Header */
+.grouping-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.grouping-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.grouping-modal-icon {
+  font-size: 1.3rem;
+  color: #10b981;
+}
+
+.grouping-modal-title h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.grouping-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grouping-modal-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Body */
+.grouping-modal-body {
+  padding: 20px 24px;
+}
+
+.grouping-modal-desc {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+/* Group rows */
+.grouping-groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  max-height: 340px; /* ~5 groups before scrolling */
+  overflow-y: auto;
+  padding-right: 8px; /* For scrollbar breathing room */
+}
+
+/* Custom scrollbar for group list */
+.grouping-groups-list::-webkit-scrollbar {
+  width: 6px;
+}
+.grouping-groups-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.grouping-groups-list::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+.grouping-groups-list::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.grouping-group-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.grouping-group-row:hover {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+}
+
+/* Color picker */
+.grouping-color-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.grouping-color-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.grouping-color-preview {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.grouping-color-wrapper:hover .grouping-color-preview {
+  transform: scale(1.1);
+}
+
+/* Name input */
+.grouping-name-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #1f2937;
+  background: #fff;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.grouping-name-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Max members input */
+.grouping-max-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.grouping-max-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.grouping-max-input {
+  width: 48px;
+  padding: 6px 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #1f2937;
+  background: #fff;
+  outline: none;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.grouping-max-input:focus {
+  border-color: #10b981;
+}
+
+/* Remove button */
+.grouping-remove-btn {
+  background: none;
+  border: none;
+  color: #d1d5db;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.grouping-remove-btn:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* Add group button */
+.grouping-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.grouping-add-btn:hover {
+  border-color: #10b981;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.04);
+}
+
+/* Footer */
+.grouping-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.grouping-cancel-btn {
+  padding: 10px 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.grouping-cancel-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.grouping-create-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.grouping-create-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.grouping-create-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .grouping-modal-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .grouping-modal-header {
+    padding: 16px 16px 12px;
+  }
+
+  .grouping-modal-body {
+    padding: 16px;
+  }
+
+  .grouping-modal-footer {
+    padding: 12px 16px 16px;
+  }
+
+  .grouping-group-row {
+    padding: 8px 10px;
+  }
+}

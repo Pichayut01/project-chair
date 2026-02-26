@@ -4,11 +4,12 @@ import React, { useState, useEffect, useRef } from "react";
 import "../CSS/Navbar.css";
 import icon from "../image/icon.ico";
 import { FiPlus, FiLogOut, FiArrowLeft, FiShare2, FiEdit2, FiSave, FiX, FiChevronDown, FiChevronRight, FiBell, FiMenu } from "react-icons/fi"; // ✨ เพิ่ม icon ใหม่
-import { FaCog, FaCrown } from 'react-icons/fa'; // ✨ เพิ่ม FaCrown icon
+import { FaCog, FaCrown, FaLayerGroup, FaStar, FaTrophy, FaHistory, FaInfoCircle, FaCalendarCheck } from 'react-icons/fa'; // ✨ เพิ่ม icons สำหรับ sidebar
 import { useNavigate, Link } from 'react-router-dom';
 import { getProfileImageSrc, getCurrentUserProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import io from 'socket.io-client';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -34,21 +35,69 @@ const Navbar = ({
     const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-    const [notifications, setNotifications] = useState([
-        { id: 1, message: 'This is a sample notification to test scrolling.', time: Date.now() - 100000 },
-        { id: 2, message: 'Another sample notification to make the list longer.', time: Date.now() - 200000 },
-        { id: 3, message: 'You have a new message from a student.', time: Date.now() - 300000 },
-        { id: 4, message: 'Classroom "Physics 101" has been updated.', time: Date.now() - 400000 },
-        { id: 5, message: 'A new student has joined your "Art History" class.', time: Date.now() - 500000 },
-        { id: 6, message: 'Reminder: Your subscription will renew soon.', time: Date.now() - 600000 },
-    ]);
+    const [notifications, setNotifications] = useState([]);
     const [hasUnread, setHasUnread] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const [isCreatedByMeExpanded, setIsCreatedByMeExpanded] = useState(true);
     const [isJoinedExpanded, setIsJoinedExpanded] = useState(true);
     const [isCreatorsExpanded, setIsCreatorsExpanded] = useState(true);
     const [isParticipantsExpanded, setIsParticipantsExpanded] = useState(true);
 
-    // Remove duplicate functions - using imported ones from profileImageHelper
+    // Fetch Notifications
+    const fetchNotifications = async () => {
+        if (!user) return;
+        try {
+            const token = localStorage.getItem('authToken');
+            const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
+                headers: { 'x-auth-token': token }
+            });
+            setNotifications(res.data);
+            const unread = res.data.filter(n => !n.isRead).length;
+            setUnreadCount(unread);
+            setHasUnread(unread > 0);
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (user) {
+            fetchNotifications();
+        } else {
+            setNotifications([]);
+            setUnreadCount(0);
+            setHasUnread(false);
+        }
+    }, [user]);
+
+    // Handle Mark as Read
+    const markAsRead = async (id) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            await axios.put(`${API_BASE_URL}/api/notifications/${id}/read`, {}, {
+                headers: { 'x-auth-token': token }
+            });
+            setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+            setUnreadCount(prev => Math.max(0, prev - 1));
+            setHasUnread(unreadCount - 1 > 0);
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+            await axios.put(`${API_BASE_URL}/api/notifications/read-all`, {}, {
+                headers: { 'x-auth-token': token }
+            });
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+            setUnreadCount(0);
+            setHasUnread(false);
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    };
 
     const handleSignInClick = () => {
         navigate('/login');
@@ -62,9 +111,6 @@ const Navbar = ({
     const toggleNotificationDropdown = () => {
         setIsNotificationOpen(!isNotificationOpen);
         setIsDropdownOpen(false); // ปิด dropdown โปรไฟล์เมื่อเปิดแจ้งเตือน
-        if (hasUnread) {
-            setHasUnread(false); // ✨ เมื่อเปิดดู ให้ถือว่าอ่านแล้ว
-        }
     };
 
     // ✨ Hook สำหรับตรวจจับการเปลี่ยนแปลงของ props
@@ -76,14 +122,30 @@ const Navbar = ({
         return ref.current;
     }
 
-    const addNotification = (message) => {
-        const newNotification = {
-            id: Date.now(),
-            message: message,
-            time: Date.now(), // ✨ เก็บเวลาเป็น timestamp
-        };
-        setNotifications(prev => [newNotification, ...prev]);
-        setHasUnread(true);
+    const addNotification = (notification) => {
+        // Here `notification` can be a string (legacy) or an object (new from socket)
+        if (typeof notification === 'string') {
+            // Internal legacy fallback (thou we should avoid)
+            const newNotification = {
+                _id: Date.now().toString(),
+                message: notification,
+                title: 'System',
+                createdAt: new Date(),
+                isRead: false
+            };
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            setHasUnread(true);
+        } else {
+            // It's a real notification object from DB via Socket
+            setNotifications(prev => {
+                // Prevent duplicate processing
+                if (prev.some(n => n._id === notification._id)) return prev;
+                return [notification, ...prev];
+            });
+            setUnreadCount(prev => prev + 1);
+            setHasUnread(true);
+        }
     };
 
     // ✨ ส่งฟังก์ชัน addNotification กลับไปให้ parent component
@@ -93,12 +155,36 @@ const Navbar = ({
         }
     }, [onAddNotification]);
 
+    // ✨ Global Socket Connection for Real-time Notifications
+    useEffect(() => {
+        if (user && user.id) {
+            const socket = io(API_BASE_URL, {
+                auth: { userId: user.id }
+            });
+
+            socket.on('connect', () => {
+                console.log('Global notification socket connected');
+            });
+
+            socket.on('new-notification', (notification) => {
+                console.log('Received global notification:', notification);
+                addNotification(notification);
+            });
+
+            return () => {
+                socket.disconnect();
+            };
+        }
+    }, [user]);
+
     const prevUser = usePrevious(user);
 
     useEffect(() => {
         // ✨ ตรวจสอบถ้าผู้ใช้เพิ่งล็อกอินเข้ามา
         if (!prevUser && user) {
-            addNotification(`Welcome back, ${user.displayName}!`);
+            // We removed local manual addNotification for login because the backend will now emit a socket event for it.
+            // But if sockets aren't hooked up at App level right away, we could just re-fetch to be safe.
+            fetchNotifications();
         }
     }, [user, prevUser]);
 
@@ -237,18 +323,38 @@ const Navbar = ({
                     {user && (
                         <div className="navbar__notification" onClick={toggleNotificationDropdown}>
                             <FiBell size={22} />
-                            {hasUnread && <span className="notification-badge"></span>}
+                            {hasUnread && <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
                             {isNotificationOpen && (
                                 <div className="notification-dropdown">
                                     <div className="notification-header">
                                         <h3>Notifications</h3>
+                                        {hasUnread && (
+                                            <button className="mark-all-read-btn" onClick={(e) => {
+                                                e.stopPropagation();
+                                                markAllAsRead();
+                                            }}>Mark all as read</button>
+                                        )}
                                     </div>
                                     <ul className="notification-list">
                                         {notifications.length > 0 ? (
                                             notifications.map(notif => (
-                                                <li key={notif.id} className="notification-item">
-                                                    <p>{notif.message}</p>
-                                                    <span className="notification-time">{new Date(notif.time).toLocaleString()}</span>
+                                                <li 
+                                                    key={notif._id || notif.id} 
+                                                    className={`notification-item ${notif.isRead ? '' : 'unread'}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (!notif.isRead) markAsRead(notif._id || notif.id);
+                                                    }}
+                                                >
+                                                    <div className="notification-content">
+                                                        <h4 className="notification-title">{notif.title}</h4>
+                                                        <p>{notif.message}</p>
+                                                    </div>
+                                                    <span className="notification-time">
+                                                        {new Date(notif.createdAt || notif.time).toLocaleString([], {
+                                                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                                        })}
+                                                    </span>
                                                 </li>
                                             ))
                                         ) : (
@@ -437,37 +543,55 @@ const Navbar = ({
                                 className={`sidebar-list-item ${classDetailActiveSection === '1' ? 'active' : ''}`}
                                 onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('1')}
                             >
-                                <span>Assign Rate</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaStar size={16} />
+                                    <span>Assign Rate</span>
+                                </div>
                             </li>
                             <li
                                 className={`sidebar-list-item ${classDetailActiveSection === 'scoreboard' ? 'active' : ''}`}
                                 onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('scoreboard')}
                             >
-                                <span>Scoreboard</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaTrophy size={16} />
+                                    <span>Scoreboard</span>
+                                </div>
                             </li>
                             <li
                                 className={`sidebar-list-item ${classDetailActiveSection === 'history' ? 'active' : ''}`}
                                 onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('history')}
                             >
-                                <span>Event History</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaHistory size={16} />
+                                    <span>Event History</span>
+                                </div>
                             </li>
                             <li
-                                className={`sidebar-list-item ${classDetailActiveSection === '4' ? 'active' : ''}`}
-                                onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('4')}
+                                className={`sidebar-list-item ${classDetailActiveSection === 'group-history' ? 'active' : ''}`}
+                                onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('group-history')}
                             >
-                                <span>4</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaLayerGroup size={16} />
+                                    <span>Group History</span>
+                                </div>
                             </li>
                             <li
                                 className={`sidebar-list-item ${classDetailActiveSection === '5' ? 'active' : ''}`}
                                 onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('5')}
                             >
-                                <span>5</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaCalendarCheck size={16} />
+                                    <span>Attendance</span>
+                                </div>
                             </li>
                             <li
                                 className={`sidebar-list-item ${classDetailActiveSection === '6' ? 'active' : ''}`}
                                 onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('6')}
                             >
-                                <span>6</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaInfoCircle size={16} />
+                                    <span>About</span>
+                                </div>
                             </li>
                         </>
                     ) : isEditClassroomPage ? (

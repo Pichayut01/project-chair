@@ -10,7 +10,9 @@ import Loader from '../components/Loader';
 import '../CSS/ClassDetailPage.css';
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
-import EventHistoryView from '../components/events/EventHistoryView'; // ✨ Import EventHistoryView
+import EventHistoryView from '../components/events/EventHistoryView';
+import GroupHistoryView from '../components/events/GroupHistoryView';
+import AttendanceTracker from '../components/AttendanceTracker'; // ✨ Import Attendance Tracker
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
@@ -44,6 +46,18 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
         if (!user || !user.token || !classId) return;
         fetchClassroomDetails();
     }, [classId, user, fetchClassroomDetails]);
+
+    // ✨ Block non-owners from accessing this page
+    useEffect(() => {
+        if (classroom && user) {
+            const isOwner = classroom.creator && classroom.creator.some(
+                c => c === user.id || c._id === user.id || c.toString() === user.id
+            );
+            if (!isOwner) {
+                navigate(`/classroom/${classId}`);
+            }
+        }
+    }, [classroom, user, classId, navigate]);
 
     const handleSectionChange = (section) => {
         setActiveSection(section);
@@ -102,32 +116,10 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
                     onUpdateScores={handleUpdateScores}
                     onRefresh={fetchClassroomDetails}
                 />;
-            case '4':
-                return (
-                    <div className="class-detail-content">
-                        <h2>Menu Item 4</h2>
-                        <p>This is the content for menu item 4. You can add any functionality here.</p>
-                        <div className="content-placeholder">
-                            <div className="placeholder-card">
-                                <h3>Feature 4</h3>
-                                <p>Description of feature 4 functionality.</p>
-                            </div>
-                        </div>
-                    </div>
-                );
+            case 'group-history':
+                return <GroupHistoryView classroom={classroom} user={user} onRefresh={fetchClassroomDetails} />;
             case '5':
-                return (
-                    <div className="class-detail-content">
-                        <h2>Menu Item 5</h2>
-                        <p>This is the content for menu item 5. You can add any functionality here.</p>
-                        <div className="content-placeholder">
-                            <div className="placeholder-card">
-                                <h3>Feature 5</h3>
-                                <p>Description of feature 5 functionality.</p>
-                            </div>
-                        </div>
-                    </div>
-                );
+                return <AttendanceTracker classroom={classroom} user={user} />;
             case '6':
                 return (
                     <div className="class-detail-content">

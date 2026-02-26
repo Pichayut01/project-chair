@@ -5,7 +5,7 @@ import io from 'socket.io-client';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage, onClassroomEventAdded, onClassroomEventTriggered, onClassroomEventDeleted, onRaiseHandUpdated, onEmojiSent, onUserJoined, onUserLeft, onClassroomUpdated) => { // ✨ Added onClassroomUpdated
+export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage, onClassroomEventAdded, onClassroomEventTriggered, onClassroomEventDeleted, onRaiseHandUpdated, onEmojiSent, onUserJoined, onUserLeft, onClassroomUpdated, onGroupMemberRemoved, onGroupMemberMoved) => { // ✨ Added group editors
     const socketRef = useRef(null);
 
     useEffect(() => {
@@ -64,6 +64,16 @@ export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMo
             if (onClassroomUpdated) onClassroomUpdated(data);
         });
 
+        // ✨ Listen for group edits
+        socketRef.current.on('group-member-removed', (data) => {
+            console.log('Socket received group member removed:', data);
+            if (onGroupMemberRemoved) onGroupMemberRemoved(data);
+        });
+        socketRef.current.on('group-member-moved', (data) => {
+            console.log('Socket received group member moved:', data);
+            if (onGroupMemberMoved) onGroupMemberMoved(data);
+        });
+
         // ✨ Listen for user joined (Shotgun approach)
         const handleUserJoinedEvent = (data) => {
             console.log('Socket received user join event:', data);
@@ -98,7 +108,7 @@ export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMo
         return () => {
             if (socketRef.current) socketRef.current.disconnect();
         };
-    }, [classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage, onClassroomEventAdded, onClassroomEventTriggered, onClassroomEventDeleted, onRaiseHandUpdated, onEmojiSent, onUserJoined, onUserLeft, onClassroomUpdated]);
+    }, [classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage, onClassroomEventAdded, onClassroomEventTriggered, onClassroomEventDeleted, onRaiseHandUpdated, onEmojiSent, onUserJoined, onUserLeft, onClassroomUpdated, onGroupMemberRemoved, onGroupMemberMoved]);
 
     // ... (emitters)
 
@@ -231,6 +241,23 @@ export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMo
         }
     };
 
+    // ✨ Added group editing emitters
+    const emitRemoveStudentFromGroup = (eventId, studentId, source) => {
+        if (socketRef.current && socketRef.current.connected) {
+            const data = { classId, eventId, studentId, source };
+            console.log('Emitting remove student from group:', data);
+            socketRef.current.emit('remove-student-from-group', data);
+        }
+    };
+
+    const emitMoveStudentGroup = (eventId, studentId, newGroupId, newGroupName, source, userName, userPhoto) => {
+        if (socketRef.current && socketRef.current.connected) {
+            const data = { classId, eventId, studentId, newGroupId, newGroupName, source, userName, userPhoto };
+            console.log('Emitting move student group:', data);
+            socketRef.current.emit('move-student-group', data);
+        }
+    };
+
 
     return {
         emitScoreUpdate,
@@ -244,6 +271,8 @@ export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMo
         emitDeleteClassroomEvent,
         emitSubmitEventAnswer,
         emitRaiseHand,
-        emitEmoji // ✨ Exported
+        emitEmoji, // ✨ Exported
+        emitRemoveStudentFromGroup,
+        emitMoveStudentGroup
     };
 };

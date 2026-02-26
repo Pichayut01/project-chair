@@ -26,6 +26,8 @@ const classSchema = new mongoose.Schema({
     rows: { type: Number, default: 0 },
     cols: { type: Number, default: 0 },
     chairGroups: { type: mongoose.Schema.Types.Mixed, default: [] },
+    attendance: { type: mongoose.Schema.Types.Mixed, default: {} },
+    attendanceDays: { type: Number, default: 20 },
     chatMessages: {
         type: [{
             senderId: { type: String, required: true },
