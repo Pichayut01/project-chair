@@ -23,25 +23,22 @@ const storage = multer.diskStorage({
     }
 });
 
-// File Filter (Images only)
+// Optional File Filter (Currently allowing all files)
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only images are allowed!'), false);
-    }
+    // We allow all files for Stream posts
+    cb(null, true);
 };
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
     fileFilter: fileFilter
 });
 
 // @route   POST /api/upload
-// @desc    Upload an image
+// @desc    Upload a file (image, document, etc.)
 // @access  Public (or Protected if needed, currently Public for ease)
-router.post('/', upload.single('image'), (req, res) => {
+router.post('/', upload.single('file'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ msg: 'No file uploaded' });
     }
@@ -53,7 +50,9 @@ router.post('/', upload.single('image'), (req, res) => {
     res.json({
         msg: 'File uploaded successfully',
         url: fileUrl,
-        filename: req.file.filename
+        filename: req.file.filename,
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype
     });
 });
 

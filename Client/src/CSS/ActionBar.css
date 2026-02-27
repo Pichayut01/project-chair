@@ -1,166 +1,179 @@
 /* src/CSS/ActionBar.css */
 
 .action-bar-container {
-    position: relative;
-    /* ✨ Part of the flow now */
-    bottom: auto;
-    /* Reset */
-    left: auto;
-    /* Reset */
-    transform: none;
-    margin-top: auto;
-    /* ✨ Push to bottom if space permits */
-    width: 100%;
-    /* ✨ Full width container */
-    display: flex;
-    /* ✨ Use flex to center the navbody */
-    justify-content: center;
-    /* ✨ Center the navbody */
-    z-index: 1000;
-    overflow: visible;
-    /* ✨ Ensure popovers can be seen */
+  position: relative;
+  /* ✨ Part of the flow now */
+  bottom: auto;
+  /* Reset */
+  left: auto;
+  /* Reset */
+  transform: none;
+  margin-top: auto;
+  /* ✨ Push to bottom if space permits */
+  width: 100%;
+  /* ✨ Full width container */
+  display: flex;
+  /* ✨ Use flex to center the navbody */
+  justify-content: center;
+  /* ✨ Center the navbody */
+  z-index: 1000;
+  overflow: visible;
+  /* ✨ Ensure popovers can be seen */
+  margin-left: 10px;
+  margin-right: auto;
+  margin-top: 10px;
 }
 
 #navbody {
-    width: 100%;
-    /* ✨ Expanded width to match container */
-    max-width: none;
-    /* Remove cap to align edges */
-    min-width: 300px;
-    min-width: 300px;
-    margin-bottom: 0;
-    /* ✨ Align flush to bottom */
-    height: 60px;
-    background-color: rgb(255, 255, 255);
-    border-radius: 8px;
-    /* ✨ Match other cards (was 20px) */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    /* ✨ Match other cards shadow */
-    align-items: center;
-    justify-content: center;
-    display: flex;
-    padding: 0 20px;
-    /* Add padding for breathing room */
+  margin-right: 10px;
+  width: 100%;
+  /* ✨ Expanded width to match container */
+  max-width: none;
+  /* Remove cap to align edges */
+  min-width: 300px;
+  min-width: 300px;
+  margin-bottom: 5px;
+  /* ✨ Align flush to bottom */
+  height: 60px;
+  background-color: rgb(255, 255, 255);
+  border-radius: 8px;
+  /* ✨ Match other cards (was 20px) */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  /* ✨ Match other cards shadow */
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  padding: 0 20px;
+
+  /* Add padding for breathing room */
 }
 
 .ul {
-    list-style: none;
-    width: 100%;
-    background-color: transparent;
-    display: flex;
-    justify-content: center;
-    /* ✨ Group icons in center */
-    align-items: center;
-    margin: 0;
-    padding: 0;
-    gap: 20px;
-    /* ✨ Comfortable spacing */
-    /* overflow-x: auto;  <-- REMOVED to allow popover visibility */
-    /* ✨ Allow horizontal scroll */
-    white-space: nowrap;
-    /* ✨ Prevent wrapping */
-    /* scrollbar-width: none; */
-    /* ✨ Hide scrollbar Firefox */
-    /* -ms-overflow-style: none; */
-    /* ✨ Hide scrollbar IE/Edge */
+  list-style: none;
+  width: 100%;
+  background-color: transparent;
+  display: flex;
+  justify-content: center;
+  /* ✨ Group icons in center */
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  gap: 20px;
+  /* ✨ Comfortable spacing */
+  /* overflow-x: auto;  <-- REMOVED to allow popover visibility */
+  /* ✨ Allow horizontal scroll */
+  white-space: nowrap;
+  /* ✨ Prevent wrapping */
+  /* scrollbar-width: none; */
+  /* ✨ Hide scrollbar Firefox */
+  /* -ms-overflow-style: none; */
+  /* ✨ Hide scrollbar IE/Edge */
 }
 
 .ul::-webkit-scrollbar {
-    display: none;
-    /* ✨ Hide scrollbar Chrome/Safari */
+  display: none;
+  /* ✨ Hide scrollbar Chrome/Safari */
 }
 
-
 .ul .li {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .radio {
-    display: none;
+  display: none;
 }
 
 .svg-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 50px;
-    /* Explicit size for touch targets */
-    height: 50px;
-    opacity: 80%;
-    cursor: pointer;
-    transition: 0.2s;
-    color: #555;
-    /* Default color */
-    border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  /* Explicit size for touch targets */
+  height: 50px;
+  opacity: 80%;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #555;
+  /* Default color */
+  border-radius: 50%;
 }
 
 .svg-container svg {
-    width: 24px;
-    height: 24px;
+  width: 24px;
+  height: 24px;
 }
 
 .svg-container:hover {
-    transition: 0.1s;
-    color: #4CAF50;
-    background-color: rgba(76, 175, 80, 0.1);
-    /* Subtle hover fill */
-    opacity: 100%;
-    transform: translateY(-2px);
-    /* Slight lift */
+  transition: 0.1s;
+  color: #4caf50;
+  background-color: rgba(76, 175, 80, 0.1);
+  /* Subtle hover fill */
+  opacity: 100%;
+  transform: translateY(-2px);
+  /* Slight lift */
 }
 
-.radio:checked+label .svg-container {
-    color: #4CAF50;
-    opacity: 100%;
-    transform: translateY(-2px);
+.radio:checked + label .svg-container {
+  color: #4caf50;
+  opacity: 100%;
+  transform: translateY(-2px);
 }
 
 /* ✨ Media Query for Mobile Devices */
 @media (max-width: 768px) {
-    .action-bar-container {
-        position: relative;
-        bottom: auto;
-        /* ✨ Remove fixed bottom */
-        width: 100%;
-        /* ✨ Full width */
-        margin-top: 5px;
-        /* ✨ Add space above */
-        z-index: 1;
-        /* ✨ Lower z-index since it's not fixed */
-    }
+  .action-bar-container {
+    position: relative;
+    bottom: auto;
+    /* ✨ Remove fixed bottom */
+    width: 100%;
+    /* ✨ Full width */
+    margin-top: 8px;
+    /* ✨ Add space above */
+    z-index: 1;
+    /* ✨ Lower z-index since it's not fixed */
+    margin-left: 10px;
+    margin-right: 10px;
+  }
 
-    #navbody {
-        padding: 5px 10px;
-        /* ✨ Tighten padding */
-        border-radius: 12px;
-        /* ✨ Slightly more rounded */
-        width: 100%;
-        /* ✨ Match seating arrangement width */
-        margin: 0;
-        /* ✨ Reset margin */
-        max-width: none;
-        /* ✨ Remove max-width limit */
-        height: auto;
-        /* ✨ Allow height to grow */
-        min-height: 60px;
-    }
+  #navbody {
+    padding: 5px 10px;
+    /* ✨ Tighten padding */
+    border-radius: 12px;
+    /* ✨ Slightly more rounded */
+    width: 100%;
+    /* ✨ Match seating arrangement width */
+    margin: 0;
+    /* ✨ Reset margin */
+    max-width: none;
+    /* ✨ Remove max-width limit */
+    height: auto;
+    /* ✨ Allow height to grow */
+    min-height: 60px;
+    margin-right: 10px;
+  }
 
-    .ul {
-        justify-content: center;
-        /* ✨ Center items */
-        padding: 5px;
-        /* ✨ Add internal padding */
-        overflow-x: visible;
-        /* ✨ Allow popovers */
-        flex-wrap: wrap;
-        /* ✨ Wrap items */
-        gap: 15px;
-    }
+  .ul {
+    justify-content: flex-start;
+    /* ✨ Center items */
+    padding: 5px;
+    /* ✨ Add internal padding */
+    overflow-x: auto;
+    /* ✨ Allow horizontal scroll */
+    flex-wrap: nowrap;
+    /* ✨ Keep in single line */
+    gap: 15px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
 
-    .ul .li {
-        flex-shrink: 0;
-        /* ✨ Prevent shrinking */
-    }
+  .ul::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ul .li {
+    flex-shrink: 0;
+    /* ✨ Prevent shrinking */
+  }
 }

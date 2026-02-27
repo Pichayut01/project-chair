@@ -82,6 +82,7 @@ app.use('/api/presets', require('./routes/presets'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/notifications', require('./routes/notifications')); // ✨ Notifications Route
 app.use('/api/upload', require('./routes/upload')); // ✨ Generic Upload Route
+app.use('/api/stream', require('./routes/stream')); // ✨ Stream Route
 logger.success('All API routes registered successfully');
 
 // Socket Handler

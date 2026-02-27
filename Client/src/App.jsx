@@ -22,6 +22,7 @@ const PrivateClassroomPage = lazy(() => import('./pages/PrivateClassroomPage'));
 const ClassroomErrorPage = lazy(() => import('./pages/ClassroomErrorPage')); // ✨ Add Classroom Error Page
 const Layout = lazy(() => import('./components/Layout')); // ✨ Add Layout component
 const EventPresentationPage = lazy(() => import('./pages/EventPresentationPage')); // ✨ Add Presentation Page
+const StreamPage = lazy(() => import('./pages/StreamPage')); // ✨ Add Stream Page
 
 const backendUrl = 'http://localhost:5000/api/auth';
 
@@ -267,6 +268,15 @@ function AppRoutes({ user, onLoginSuccess, handleSignOut, updateUserProfile, isS
                         handleSignOut={handleSignOutAndNavigate}
                     /> : <Navigate to="/login" />}
                 /> {/* ✨ Add Class Detail route */}
+                <Route
+                    path="/classroom/:classId/stream"
+                    element={user ? <StreamPage
+                        user={user}
+                        isSidebarOpen={isSidebarOpen}
+                        toggleSidebar={toggleSidebar}
+                        handleSignOut={handleSignOutAndNavigate}
+                    /> : <Navigate to="/login" />}
+                /> {/* ✨ Add Stream route */}
                 <Route
                     path="/classroom/:classroomId/private"
                     element={user ? <PrivateClassroomPage

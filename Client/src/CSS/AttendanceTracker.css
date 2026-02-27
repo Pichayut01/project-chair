@@ -221,8 +221,8 @@
 }
 
 .student-avatar {
-  width: 36px;
-  height: 36px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #fff;

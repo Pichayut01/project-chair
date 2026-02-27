@@ -25,6 +25,7 @@ import GroupOverlay from '../components/GroupOverlay';
 import ClassroomEvent from '../components/ClassroomEvent';
 import GroupingModal from '../components/GroupingModal';
 import ViewToggle from '../components/ViewToggle'; // ✨ Import ViewToggle
+import ClassChat from '../components/ClassChat'; // ✨ Import ClassChat
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 const PRESETS_API_URL = process.env.REACT_APP_PRESETS_API_URL || 'http://localhost:5001';
@@ -795,8 +796,12 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
     // Pan functionality handlers
     const handleMouseDown = useCallback((e) => {
-        // Only start panning if clicking on empty area (not on chairs)
-        if (e.target.classList.contains('seating-grid') || e.target.classList.contains('seating-container-wrapper')) {
+        // Find if we clicked inside the seating wrapper
+        const isInsideWrapper = e.target.closest('.seating-container-wrapper');
+        // Do not pan if clicking on a chair or the front board
+        const isClickingInteractiveElement = e.target.closest('.chair') || e.target.closest('.front-classroom-board') || e.target.closest('button');
+
+        if (isInsideWrapper && !isClickingInteractiveElement) {
             setIsPanning(true);
             setPanStart({ x: e.clientX, y: e.clientY });
 
@@ -936,7 +941,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
     };
 
-    const handleChairClick = (chairId, event) => {
+    const handleChairClick = async (chairId, event) => {
         // ✨ Grouping Mode Logic
         if (isGroupingMode && isEditing) {
             // Toggle selection
@@ -967,7 +972,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                     title: 'Group Created',
                     text: `Created group with ${newSelection.length} chairs`,
                     toast: true,
-                    position: 'top-end',
+            position: 'top-end',
                     showConfirmButton: false,
                     timer: 1500
                 });
@@ -977,12 +982,26 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
         // If creator clicks on a chair with a student (not in edit mode)
         if (isCreator && !isEditing && assignedUsers[chairId]) {
-            const rect = event.target.getBoundingClientRect();
+            // Check if we can get a standard bounding rect
+            let rect;
+            if (event && event.target && typeof event.target.getBoundingClientRect === 'function') {
+                rect = event.target.getBoundingClientRect();
+            } else {
+                rect = { left: window.innerWidth / 2, width: 0, bottom: window.innerHeight / 2 };
+            }
+            
             setDropdownPosition({
                 x: rect.left + rect.width / 2,
                 y: rect.bottom + 5
             });
             setSelectedStudentChair(chairId);
+            setDropdownOpen(true);
+            return;
+        }
+
+        // Teacher behavior - open modal for any chair
+        if (isTeacherView) {
+            setSelectedChairId(chairId);
             setDropdownOpen(true);
             return;
         }
@@ -996,7 +1015,13 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         const chairUser = assignedUsers[chairId];
 
         if (!currentSeatId && chairUser) {
-            alert('This seat is already taken.');
+            Swal.fire({
+                title: 'Seat Taken',
+                text: 'This seat is already taken by another student.',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+                confirmButtonText: 'OK'
+            });
             return;
         }
         if (!currentSeatId && !chairUser) {
@@ -1007,14 +1032,29 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         if (currentSeatId) {
             if (currentSeatId === chairId) return;
             if (!chairUser) {
-                if (window.confirm('Do you want to move to this seat?')) {
+                const result = await Swal.fire({
+                    title: 'Move Seat?',
+                    text: 'Do you want to move to this new seat?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#7ec282',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, move!'
+                });
+                if (result.isConfirmed) {
                     setSelectedChairId(chairId);
                     setModalOpen(true);
                 }
                 return;
             }
             if (chairUser) {
-                alert('Cannot move to this seat, it is already taken.');
+                Swal.fire({
+                    title: 'Cannot Move',
+                    text: 'This seat is already taken. Please choose an empty seat.',
+                    icon: 'error',
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'OK'
+                });
                 return;
             }
         }
@@ -1112,9 +1152,17 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         if (!studentUser) return;
 
         const currentDays = attendanceDays || 20;
-        const days = Array.from({ length: currentDays }, (_, i) => i + 1);
-        const dayOptions = days.map(day => `<option value="${day}">Day ${day}</option>`).join('');
         const photoSrc = getProfileImageSrc(studentUser.photoURL);
+
+        let defaultDay = 1;
+        const pId = studentUser.userId; 
+        const matchedParticipant = classroom?.participants?.find(p => (p._id || p.id)?.toString() === pId?.toString());
+        const studentIdToSearch = matchedParticipant ? (matchedParticipant._id || matchedParticipant.id) : pId;
+        const studentAtt = attendance[studentIdToSearch];
+        if (studentAtt) {
+             const markedDays = Object.keys(studentAtt).map(Number).filter(d => !isNaN(d)).sort((a,b)=>b-a);
+             if (markedDays.length > 0) defaultDay = markedDays[0];
+        }
 
         const { value: formValues } = await Swal.fire({
             title: 'Attendance Check',
@@ -1132,9 +1180,18 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                         <label class="attendance-form-label">
                             <i class="fas fa-calendar-day"></i> Select Day
                         </label>
-                        <select id="swal-day" class="attendance-select-custom">
-                            ${dayOptions}
-                        </select>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 20px; background: #fff; border: 2px solid #eef0f2; border-radius: 12px; padding: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                            <button type="button" onclick="document.getElementById('swal-day').stepDown()" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid #eef0f2; background: #f8f9fa; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; transition: all 0.2s;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </button>
+                            <div style="display: flex; flex-direction: column; align-items: center;">
+                                <span style="font-size: 0.75rem; color: #888; font-weight: 700; text-transform: uppercase;">Day</span>
+                                <input type="number" id="swal-day" value="${defaultDay}" min="1" max="${currentDays}" class="attendance-day-input" style="width: 60px; border: none; background: transparent; font-size: 1.5rem; font-weight: 800; color: #333; text-align: center; outline: none; margin-top: -2px; padding: 0;" />
+                            </div>
+                            <button type="button" onclick="document.getElementById('swal-day').stepUp()" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid #eef0f2; background: #f8f9fa; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; transition: all 0.2s;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="attendance-form-group">
@@ -1179,14 +1236,25 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 popup: 'attendance-swal-popup',
                 cancelButton: 'attendance-swal-cancel'
             },
+            preConfirm: () => {
+                const popup = Swal.getPopup();
+                const status = popup.getAttribute('data-selected-status');
+                const day = popup.getAttribute('data-selected-day');
+                if (!status) {
+                    Swal.showValidationMessage('Please select a status');
+                    return false;
+                }
+                return { status, day };
+            },
             didOpen: () => {
                 const buttons = Swal.getHtmlContainer().querySelectorAll('.attendance-status-btn');
                 buttons.forEach(btn => {
                     btn.addEventListener('click', () => {
                         const status = btn.getAttribute('data-status');
                         const day = document.getElementById('swal-day').value;
+                        Swal.getPopup().setAttribute('data-selected-status', status);
+                        Swal.getPopup().setAttribute('data-selected-day', day);
                         Swal.clickConfirm();
-                        Swal.close({ value: { day, status } });
                     });
                 });
             }
@@ -1194,10 +1262,21 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
         if (formValues && formValues.status) {
             try {
-                const studentId = studentUser.userId;
+                // Normalize student id to match Attendance page expectations (use participant _id)
+                let studentId = studentUser.userId;
+                const participantsList = classroom?.participants || [];
+                const matchedParticipant = participantsList.find(p => {
+                    const pid = p?._id || p?.id;
+                    return pid?.toString?.() === studentUser.userId?.toString?.();
+                });
+                if (matchedParticipant && matchedParticipant._id) {
+                    studentId = matchedParticipant._id.toString?.() || matchedParticipant._id;
+                }
+
                 const newAttendance = { ...attendance };
                 if (!newAttendance[studentId]) newAttendance[studentId] = {};
-                newAttendance[studentId][formValues.day] = formValues.status;
+                const dayKey = String(formValues.day);
+                newAttendance[studentId][dayKey] = formValues.status;
 
                 setAttendance(newAttendance);
 
@@ -1225,16 +1304,404 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
     };
 
-    const handleFunction3 = () => {
+    const handleFunction3 = async () => {
         setDropdownOpen(false);
-        // Implement function 3 logic here
-        console.log('Function 3 clicked for chair:', selectedStudentChair);
+        
+        if (!selectedStudentChair || !isCreator) {
+            return;
+        }
+
+        const studentInChair = assignedUsers[selectedStudentChair];
+        if (!studentInChair) {
+            Swal.fire({
+                icon: 'info',
+                title: 'No Student',
+                text: 'There is no student in this chair.',
+                timer: 2000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+            return;
+        }
+
+        // Confirm removal
+        const result = await Swal.fire({
+            title: 'Remove Student?',
+            html: `Are you sure you want to remove <b>${studentInChair.userName}</b> from this chair?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, remove',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        // Remove student from chair
+        const newAssignedUsers = { ...assignedUsers };
+        delete newAssignedUsers[selectedStudentChair];
+        setAssignedUsers(newAssignedUsers);
+
+        // Emit real-time chair seating update
+        emitChairSeatingUpdate(selectedStudentChair, newAssignedUsers, 'leave', studentInChair.userName);
+
+        // Show success message
+        Swal.fire({
+            icon: 'success',
+            title: 'Student Removed',
+            text: `${studentInChair.userName} has been removed from the chair.`,
+            timer: 2000,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true,
+            background: '#f0fdf4',
+            color: '#166534'
+        });
+
+        // Save to database
+        try {
+            await axios.put(`${API_BASE_URL}/api/classrooms/${classId}/seating`, {
+                assignedUsers: newAssignedUsers
+            }, {
+                headers: { 'x-auth-token': user.token }
+            });
+        } catch (error) {
+            console.error('Error removing student from chair:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to remove student. Please try again.',
+                timer: 2000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+        }
+    };
+
+    // Function to check if a student is in an active group
+    const isStudentInGroup = (studentUserId) => {
+        const activeGroupingEvent = classroomEvents?.find(e => e.type === 'grouping' && e.status === 'active');
+        if (!activeGroupingEvent) return false;
+        
+        return activeGroupingEvent.results?.some(r => r.userId === studentUserId);
+    };
+
+    // Function to get all students in the same group as a specific student
+    const getGroupMembers = (studentUserId) => {
+        const activeGroupingEvent = classroomEvents?.find(e => e.type === 'grouping' && e.status === 'active');
+        if (!activeGroupingEvent) return [];
+        
+        const studentResult = activeGroupingEvent.results?.find(r => r.userId === studentUserId);
+        if (!studentResult) return [];
+        
+        const groupName = studentResult.text;
+        return activeGroupingEvent.results?.filter(r => r.text === groupName) || [];
     };
 
     const handleFunction4 = () => {
         setDropdownOpen(false);
-        // Implement function 4 logic here
-        console.log('Function 4 clicked for chair:', selectedStudentChair);
+        
+        if (!selectedStudentChair || !isCreator) {
+            return;
+        }
+
+        const studentUser = assignedUsers[selectedStudentChair];
+        if (!studentUser) {
+            Swal.fire({
+                icon: 'info',
+                title: 'No Student',
+                text: 'There is no student in this chair.',
+                timer: 2000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+            return;
+        }
+
+        // Check if student is in a group
+        if (!isStudentInGroup(studentUser.userId)) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Not in Group',
+                text: 'This student is not currently in any group.',
+                timer: 2000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+            return;
+        }
+
+        // Get group members
+        const groupMembers = getGroupMembers(studentUser.userId);
+        if (groupMembers.length === 0) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Group Not Found',
+                text: 'Could not find group information for this student.',
+                timer: 2000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+            return;
+        }
+
+        // Show rating modal with group context
+        Swal.fire({
+            title: 'Rate Group',
+            html: `
+                <div style="text-align: left; margin: 20px 0;">
+                    <p><strong>Student:</strong> ${studentUser.userName}</p>
+                    <p><strong>Group Members:</strong> ${groupMembers.length} student(s)</p>
+                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <p style="margin: 0; font-size: 0.9em; color: #666;">
+                            This rating will be applied to all ${groupMembers.length} members of this group.
+                        </p>
+                    </div>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Continue',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show rating presets modal
+                showGroupRatingModal(groupMembers);
+            }
+        });
+    };
+
+    const showGroupRatingModal = (groupMembers) => {
+        // Create a custom modal for group rating
+        const modalContainer = document.createElement('div');
+        modalContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
+
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        `;
+
+        const positivePresets = ratePresets.filter(preset =>
+            preset.type === 'positive' || preset.scoreType === 'add'
+        );
+        const negativePresets = ratePresets.filter(preset =>
+            preset.type === 'negative' || preset.scoreType === 'subtract'
+        );
+
+        modalContent.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h2 style="margin: 0; color: #1f2937;">Rate Group</h2>
+                    <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 0.9em;">
+                        ${groupMembers.length} student(s) in this group
+                    </p>
+                </div>
+                <button id="close-modal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">×</button>
+            </div>
+            
+            ${ratePresets.length === 0 ? `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                    <p style="color: #6b7280; margin: 0;">No rating presets found</p>
+                    <p style="color: #9ca3af; font-size: 0.9em; margin: 8px 0 0 0;">Create presets in the settings first</p>
+                </div>
+            ` : `
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    ${positivePresets.length > 0 ? `
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
+                                <span style="font-weight: 600; color: #1f2937;">Positive</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                ${positivePresets.map(preset => `
+                                    <button class="rating-btn positive" data-preset='${JSON.stringify(preset)}' style="
+                                        background: #f0fdf4;
+                                        border: 2px solid #10b981;
+                                        border-radius: 8px;
+                                        padding: 12px;
+                                        cursor: pointer;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 10px;
+                                        transition: all 0.2s;
+                                    ">
+                                        <span style="font-size: 20px;">${preset.emoji}</span>
+                                        <div style="flex: 1; text-align: left;">
+                                            <div style="font-weight: 600; color: #1f2937; font-size: 0.9em;">${preset.name}</div>
+                                            <div style="color: #10b981; font-size: 0.8em;">+${preset.scoreValue}</div>
+                                        </div>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${negativePresets.length > 0 ? `
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                <span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+                                <span style="font-weight: 600; color: #1f2937;">Needs Improvement</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                ${negativePresets.map(preset => `
+                                    <button class="rating-btn negative" data-preset='${JSON.stringify(preset)}' style="
+                                        background: #fef2f2;
+                                        border: 2px solid #ef4444;
+                                        border-radius: 8px;
+                                        padding: 12px;
+                                        cursor: pointer;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 10px;
+                                        transition: all 0.2s;
+                                    ">
+                                        <span style="font-size: 20px;">${preset.emoji}</span>
+                                        <div style="flex: 1; text-align: left;">
+                                            <div style="font-weight: 600; color: #1f2937; font-size: 0.9em;">${preset.name}</div>
+                                            <div style="color: #ef4444; font-size: 0.8em;">-${preset.scoreValue}</div>
+                                        </div>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `}
+        `;
+
+        modalContainer.appendChild(modalContent);
+        document.body.appendChild(modalContainer);
+
+        // Add event listeners
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.body.removeChild(modalContainer);
+        });
+
+        modalContainer.addEventListener('click', (e) => {
+            if (e.target === modalContainer) {
+                document.body.removeChild(modalContainer);
+            }
+        });
+
+        // Add hover effects
+        modalContent.querySelectorAll('.rating-btn').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                if (btn.classList.contains('positive')) {
+                    btn.style.background = '#dcfce7';
+                } else {
+                    btn.style.background = '#fee2e2';
+                }
+            });
+            btn.addEventListener('mouseleave', () => {
+                if (btn.classList.contains('positive')) {
+                    btn.style.background = '#f0fdf4';
+                } else {
+                    btn.style.background = '#fef2f2';
+                }
+            });
+            btn.addEventListener('click', () => {
+                const preset = JSON.parse(btn.getAttribute('data-preset'));
+                document.body.removeChild(modalContainer);
+                applyGroupRating(preset, groupMembers);
+            });
+        });
+    };
+
+    const applyGroupRating = async (preset, groupMembers) => {
+        try {
+            const category = `${preset.name} (Group)`;
+            let updatedStudentScores = { ...studentScores };
+
+            // Apply rating to all group members
+            for (const member of groupMembers) {
+                const currentScores = updatedStudentScores[member.userId] || {};
+                const currentCategoryScore = currentScores[category] || 0;
+                const scoreChange = preset.scoreType === 'subtract' ? -preset.scoreValue : preset.scoreValue;
+                
+                updatedStudentScores[member.userId] = {
+                    ...currentScores,
+                    [category]: currentCategoryScore + scoreChange
+                };
+            }
+
+            // Save to database
+            await axios.put(`${API_BASE_URL}/api/classrooms/${classId}/seating`, {
+                studentScores: updatedStudentScores
+            }, {
+                headers: { 'x-auth-token': user.token }
+            });
+
+            setStudentScores(updatedStudentScores);
+
+            // Emit real-time score updates for each member
+            groupMembers.forEach(member => {
+                const memberName = assignedUsers[Object.keys(assignedUsers).find(
+                    key => assignedUsers[key].userId === member.userId
+                )]?.userName || member.userName;
+                
+                emitScoreUpdate(member.userId, updatedStudentScores[member.userId], category, memberName);
+            });
+
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: '🏆 Group Rated!',
+                html: `
+                    <div style="text-align: left;">
+                        <p><strong>${preset.name}</strong> applied to <strong>${groupMembers.length}</strong> student(s)</p>
+                        <p style="margin: 8px 0 0 0; font-size: 0.9em; color: #666;">
+                            Each ${preset.scoreType === 'subtract' ? 'lost' : 'gained'} <strong>${preset.scoreValue}</strong> points
+                        </p>
+                    </div>
+                `,
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true,
+                background: '#f0fdf4',
+                color: '#166534'
+            });
+
+        } catch (error) {
+            console.error('Error applying group rating:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to apply group rating. Please try again.',
+                timer: 2000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+        }
     };
 
     const handleApplyRating = async (preset) => {
@@ -1754,7 +2221,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         const containerSize = calculateContainerSize();
 
         return (
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 <AnimatePresence>
                     {isViewChanging && (
                         <motion.div
@@ -1782,13 +2249,13 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                     onMouseDown={handleMouseDown}
                     style={{
                         width: '100%',
+                        flex: 1,
+                        height: '100%',
                         overflowX: 'auto',
                         overflowY: 'auto',
-                        maxHeight: '70vh',
                         borderRadius: '12px',
                         backgroundColor: '#f8fafc',
-                        backgroundColor: '#f8fafc',
-                        padding: '0px',
+                        padding: '8px',
                         cursor: isPanning ? 'grabbing' : 'grab',
                         display: 'flex', // Enable Flexbox for margin: auto centering
                         // Remove alignItems/justifyContent to let margin: auto handle safe centering
@@ -2225,24 +2692,6 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                             {viewMode === 'seating' ? (
                                 <>
                                     {renderSeatingChart()}
-                                    {/* ✨ Show Events below Seating Chart */}
-                                    <div style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
-                                        <h3 style={{ fontSize: '1.1rem', color: '#4b5563', marginBottom: '15px' }}>Classroom Events</h3>
-                                        <ClassroomEvent
-                                            isCreator={isCreator}
-                                            events={classroomEvents}
-                                            onAddEvent={handleAddEvent}
-                                            onTriggerEvent={handleTriggerEvent}
-                                            onDeleteEvent={handleDeleteEvent}
-                                            onSubmitAnswer={handleSubmitAnswer}
-                                            onEndEvent={handleEndAndScoreEvent}
-                                            candidates={Object.values(assignedUsers).map(u => ({
-                                                name: u.userName,
-                                                photoSrc: getProfileImageSrc(u.photoURL, isGoogleUser(u))
-                                            }))}
-                                            currentUser={user}
-                                        />
-                                    </div>
                                 </>
                             ) : (
                                 <ClassroomEvent
@@ -2268,259 +2717,19 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                     </div>
 
                     {/* ✨ Chat Split Card (Side-by-Side) */}
-                    <div className={`chat-split-card ${isChatSidebarOpen ? 'open' : ''}`}>
-                        <div className="edit-sidebar-header" style={{
-                            padding: '15px 20px',
-                            background: '#f8f9fa',
-                            borderBottom: '1px solid #eee',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                        }}>
-                            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Class Chat</h3>
-                            <button
-                                className="close-edit-sidebar"
-                                onClick={() => setIsChatSidebarOpen(false)}
-                                title="Close Chat"
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                            >
-                                <FaTimes size={18} color="#666" />
-                            </button>
-                        </div>
-
-                        <div className="edit-sidebar-content" style={{ padding: '0', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                            <div
-                                ref={chatContainerRef}
-                                style={{ flex: 1, overflowY: 'auto', padding: '15px' }}
-                            >
-                                <div style={{ textAlign: 'center', color: '#888', fontSize: '0.85rem', marginBottom: '15px' }}>
-                                    {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                </div>
-
-                                {chatMessages.length === 0 ? (
-                                    <div style={{ textAlign: 'center', color: '#aaa', marginTop: '20px', fontStyle: 'italic' }}>
-                                        No messages yet. Start the conversation!
-                                    </div>
-                                ) : (
-                                    chatMessages.map((msg, index) => {
-                                        const isMe = msg.senderId === user.id;
-                                        const isSystem = msg.senderId === 'system' || msg.isSystem;
-
-                                        if (isSystem) {
-                                            return (
-                                                <div key={index} style={{
-                                                    textAlign: 'center',
-                                                    margin: '15px 0',
-                                                    color: '#666',
-                                                    fontSize: '0.85rem',
-                                                    background: '#f8f9fa',
-                                                    padding: '8px 15px',
-                                                    borderRadius: '20px',
-                                                    border: '1px solid #eee',
-                                                    alignSelf: 'center',
-                                                    width: 'fit-content',
-                                                    marginLeft: 'auto',
-                                                    marginRight: 'auto'
-                                                }}>
-                                                    {msg.message}
-                                                </div>
-                                            );
-                                        }
-
-                                        // ✨ Check if this is a grouping card message
-                                        let groupingData = null;
-                                        try {
-                                            if (typeof msg.message === 'string' && msg.message.startsWith('{"type":"grouping"')) {
-                                                groupingData = JSON.parse(msg.message);
-                                            }
-                                        } catch (e) { /* not JSON */ }
-
-                                        if (groupingData) {
-                                            const groupEvent = classroomEvents.find(ev => ev.id === groupingData.eventId);
-                                            const hasJoined = groupEvent?.results?.some(r => r.userId === user.id);
-                                            return (
-                                                <div key={index} style={{ marginBottom: '12px', maxWidth: '85%', marginLeft: isMe ? 'auto' : '0', marginRight: isMe ? '0' : 'auto' }}>
-                                                    <div style={{
-                                                        background: 'linear-gradient(135deg, #10b981, #059669)',
-                                                        borderRadius: '14px',
-                                                        overflow: 'hidden',
-                                                        boxShadow: '0 3px 12px rgba(16,185,129,0.25)'
-                                                    }}>
-                                                        <div style={{ padding: '14px 16px', color: 'white' }}>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                                                <FaUsers />
-                                                                <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Student Groups</span>
-                                                            </div>
-                                                            <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.85 }}>Choose your group below</p>
-                                                        </div>
-                                                        <div style={{ background: 'white', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                            {groupingData.groups.map((group, gIdx) => {
-                                                                const members = groupEvent?.results?.filter(r => r.text === (group.id || group.name)) || [];
-                                                                const maxMembers = group.maxMembers || 99;
-                                                                const percentage = Math.min(100, Math.round((members.length / maxMembers) * 100));
-                                                                const isFull = members.length >= maxMembers;
-                                                                return (
-                                                                    <button
-                                                                        key={gIdx}
-                                                                        onClick={() => {
-                                                                            if (!isCreator && !hasJoined && !isFull && groupEvent) {
-                                                                                handleSubmitAnswer(groupEvent, group.id || group.name);
-                                                                            }
-                                                                        }}
-                                                                        disabled={isCreator || hasJoined || isFull}
-                                                                        style={{
-                                                                            display: 'flex',
-                                                                            flexDirection: 'column',
-                                                                            width: '100%',
-                                                                            padding: '10px 12px',
-                                                                            border: '1px solid #e5e7eb',
-                                                                            borderLeft: `4px solid ${group.color}`,
-                                                                            borderRadius: '8px',
-                                                                            background: isFull ? '#fef2f2' : hasJoined ? '#f0fdf4' : '#fff',
-                                                                            cursor: (isCreator || hasJoined || isFull) ? 'default' : 'pointer',
-                                                                            transition: 'all 0.2s',
-                                                                            textAlign: 'left',
-                                                                            opacity: (isCreator || hasJoined || isFull) ? 0.7 : 1,
-                                                                        }}
-                                                                    >
-                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                                                                            <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: group.color, flexShrink: 0 }} />
-                                                                            <span style={{ flex: 1, fontSize: '0.88rem', fontWeight: 500, color: '#1f2937' }}>{group.name}</span>
-                                                                            <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{members.length}/{maxMembers}</span>
-                                                                            {isFull && <span style={{ padding: '1px 5px', background: '#ef4444', color: '#fff', borderRadius: '3px', fontSize: '0.6rem', fontWeight: 700 }}>FULL</span>}
-                                                                        </div>
-                                                                        {/* Avatar stack */}
-                                                                        {members.length > 0 && (
-                                                                            <div style={{ display: 'flex', alignItems: 'center', marginTop: '6px' }}>
-                                                                                {members.slice(0, 5).map((m, mIdx) => (
-                                                                                    <img
-                                                                                        key={mIdx}
-                                                                                        src={getProfileImageSrc(m.photoURL)}
-                                                                                        alt={m.userName}
-                                                                                        style={{
-                                                                                            width: '22px', height: '22px', borderRadius: '50%', border: '2px solid #fff',
-                                                                                            objectFit: 'cover', marginLeft: mIdx === 0 ? 0 : '-6px',
-                                                                                            boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                                                                                        }}
-                                                                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.userName || '?')}&background=random&size=24`; }}
-                                                                                    />
-                                                                                ))}
-                                                                                {members.length > 5 && (
-                                                                                    <span style={{
-                                                                                        width: '22px', height: '22px', borderRadius: '50%', background: '#e5e7eb',
-                                                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                                        fontSize: '0.6rem', color: '#6b7280', fontWeight: 600, marginLeft: '-6px', border: '2px solid #fff'
-                                                                                    }}>+{members.length - 5}</span>
-                                                                                )}
-                                                                            </div>
-                                                                        )}
-                                                                        {/* Progress bar */}
-                                                                        <div style={{ width: '100%', height: '4px', background: '#e5e7eb', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
-                                                                            <div style={{
-                                                                                height: '100%', borderRadius: '2px',
-                                                                                width: `${percentage}%`,
-                                                                                background: isFull ? '#ef4444' : group.color,
-                                                                                transition: 'width 0.5s ease'
-                                                                            }} />
-                                                                        </div>
-                                                                    </button>
-                                                                );
-                                                            })}
-                                                            {hasJoined && (
-                                                                <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#059669', fontWeight: 500, padding: '4px 0' }}>
-                                                                    ✅ You've joined a group
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div style={{ fontSize: '11px', color: '#999', marginTop: '3px', textAlign: isMe ? 'right' : 'left' }}>
-                                                        {msg.senderName} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </div>
-                                                </div>
-                                            );
-                                        }
-
-                                        return (
-                                            <div key={index} style={{
-                                                marginBottom: '10px',
-                                                display: 'flex',
-                                                gap: '10px',
-                                                flexDirection: isMe ? 'row-reverse' : 'row'
-                                            }}>
-                                                <img
-                                                    src={getProfileImageSrc(msg.senderPhoto, false)}
-                                                    alt={msg.senderName}
-                                                    onError={handleImageError}
-                                                    style={{ width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0, objectFit: 'cover' }}
-                                                />
-                                                <div style={{ alignItems: isMe ? 'flex-end' : 'flex-start', display: 'flex', flexDirection: 'column', maxWidth: '70%' }}>
-                                                    <div style={{
-                                                        background: isMe ? '#e3f2fd' : '#f1f1f1',
-                                                        padding: '8px 12px',
-                                                        borderRadius: isMe ? '12px 12px 0 12px' : '12px 12px 12px 0',
-                                                        wordBreak: 'break-word'
-                                                    }}>
-                                                        {msg.message}
-                                                    </div>
-                                                    <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                                                        {isMe ? 'Me' : msg.senderName} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-
-                            </div>
-
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    if (newMessage.trim()) {
-                                        emitChatMessage(newMessage.trim());
-                                        setNewMessage('');
-                                    }
-                                }}
-                                style={{
-                                    padding: '15px',
-                                    borderTop: '1px solid #eee',
-                                    display: 'flex',
-                                    gap: '10px',
-                                    background: '#fff'
-                                }}>
-                                <input
-                                    type="text"
-                                    placeholder="Type a message..."
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                    style={{
-                                        flex: 1,
-                                        padding: '10px 15px',
-                                        borderRadius: '20px',
-                                        border: '1px solid #ddd',
-                                        fontSize: '14px',
-                                        outline: 'none',
-                                        transition: 'border-color 0.2s'
-                                    }}
-                                    onFocus={(e) => e.target.style.borderColor = '#4CAF50'}
-                                    onBlur={(e) => e.target.style.borderColor = '#ddd'}
-                                />
-                                <button type="submit" style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: '50%',
-                                    background: '#4CAF50',
-                                    color: 'white',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-                                }}>
-                                    <FaChevronRight size={18} />
-                                </button>
-                            </form>
+                    <div className={`chat-split-card ${isChatSidebarOpen ? 'open' : ''}`} style={{ padding: 0 }}>
+                        <div className="edit-sidebar-content" style={{ padding: '0', display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+                            <ClassChat 
+                                classId={classId} 
+                                user={user} 
+                                isCreator={isCreator} 
+                                chatMessages={chatMessages}
+                                classroomEvents={classroomEvents}
+                                emitChatMessage={emitChatMessage}
+                                onSubmitAnswer={handleSubmitAnswer}
+                                isSidebarMode={true}
+                                onClose={() => setIsChatSidebarOpen(false)}
+                            />
                         </div>
                     </div>
                 </div>
@@ -2539,6 +2748,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                     onCheckAttendance={handleCheckAttendance}
                     onFunction3={handleFunction3}
                 onFunction4={handleFunction4}
+                showGroupRating={selectedStudentChair && assignedUsers[selectedStudentChair] && isStudentInGroup(assignedUsers[selectedStudentChair].userId)}
             />
             <StudentRatingModal
                 isOpen={ratingModalOpen}

@@ -13,6 +13,7 @@ import '../CSS/Main.css';
 import EventHistoryView from '../components/events/EventHistoryView';
 import GroupHistoryView from '../components/events/GroupHistoryView';
 import AttendanceTracker from '../components/AttendanceTracker'; // ✨ Import Attendance Tracker
+import Summary from '../components/Summary'; // ✨ Import Summary
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
@@ -22,7 +23,7 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
     const [classroom, setClassroom] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeSection, setActiveSection] = useState('1');
+    const [activeSection, setActiveSection] = useState('summary');
 
     const fetchClassroomDetails = useCallback(async () => {
         try {
@@ -92,6 +93,8 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
 
     const renderContent = () => {
         switch (activeSection) {
+            case 'summary':
+                return <Summary classId={classId} user={user} />;
             case '1':
                 return <AssignRate classId={classId} user={user} />;
             case 'scoreboard':

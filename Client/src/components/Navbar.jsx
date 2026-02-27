@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../CSS/Navbar.css";
 import icon from "../image/icon.ico";
-import { FiPlus, FiLogOut, FiArrowLeft, FiShare2, FiEdit2, FiSave, FiX, FiChevronDown, FiChevronRight, FiBell, FiMenu } from "react-icons/fi"; // ✨ เพิ่ม icon ใหม่
+import { FiPlus, FiLogOut, FiArrowLeft, FiShare2, FiEdit2, FiSave, FiX, FiChevronDown, FiChevronRight, FiBell, FiMenu, FiBook } from "react-icons/fi"; // ✨ เพิ่ม icon ใหม่
 import { FaCog, FaCrown, FaLayerGroup, FaStar, FaTrophy, FaHistory, FaInfoCircle, FaCalendarCheck } from 'react-icons/fa'; // ✨ เพิ่ม icons สำหรับ sidebar
 import { useNavigate, Link } from 'react-router-dom';
 import { getProfileImageSrc, getCurrentUserProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
@@ -27,6 +27,7 @@ const Navbar = ({
     isLoginPage = false, // เพิ่ม props สำหรับ Login page
     isAppSettingPage, appActiveSection, onAppSectionChange, // เพิ่ม props สำหรับ AppSettings page
     isClassDetailPage, classDetailActiveSection, onClassDetailSectionChange, // เพิ่ม props สำหรับ ClassDetail page
+    isStreamPage, streamActiveSection, onStreamSectionChange, // ✨ เพิ่ม props สำหรับ Stream page
 
     onAddNotification, // ✨ Prop สำหรับรับฟังก์ชันเพิ่มการแจ้งเตือน
     children // ✨ Allow custom children content
@@ -540,6 +541,15 @@ const Navbar = ({
                                 display: "block"
                             }} />
                             <li
+                                className={`sidebar-list-item ${classDetailActiveSection === 'summary' ? 'active' : ''}`}
+                                onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('summary')}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaInfoCircle size={16} />
+                                    <span>Summary</span>
+                                </div>
+                            </li>
+                            <li
                                 className={`sidebar-list-item ${classDetailActiveSection === '1' ? 'active' : ''}`}
                                 onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('1')}
                             >
@@ -594,6 +604,39 @@ const Navbar = ({
                                 </div>
                             </li>
                         </>
+                    ) : isStreamPage ? (
+                        <>
+                            <li className="sidebar-list-item sidebar-back-button" onClick={onClassroomBackClick || handleBackClick}>
+                                <FiArrowLeft size={18} />
+                                <span>Back to Classroom</span>
+                            </li>
+                            <hr className="divider" style={{
+                                margin: "8px 0",
+                                border: "none",
+                                height: "1px",
+                                backgroundColor: "#e2e8f0",
+                                width: "100%",
+                                display: "block"
+                            }} />
+                            <li
+                                className={`sidebar-list-item ${streamActiveSection === 'stream' ? 'active' : ''}`}
+                                onClick={() => onStreamSectionChange && onStreamSectionChange('stream')}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FiBook size={16} />
+                                    <span>Stream</span>
+                                </div>
+                            </li>
+                            <li
+                                className={`sidebar-list-item ${streamActiveSection === 'classwork' ? 'active' : ''}`}
+                                onClick={() => onStreamSectionChange && onStreamSectionChange('classwork')}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaLayerGroup size={16} />
+                                    <span>Classwork</span>
+                                </div>
+                            </li>
+                        </>
                     ) : isEditClassroomPage ? (
                         <>
                             <li className="sidebar-list-item sidebar-back-button" onClick={onBackClick}>
@@ -640,6 +683,11 @@ const Navbar = ({
                                     <span>Share Class</span>
                                 </li>
                             )}
+                            {/* ✨ เพิ่ม Stream button */}
+                            <li className="sidebar-list-item sidebar-stream" onClick={() => navigate(`/classroom/${classroom?._id}/stream`)}>
+                                <FiBook size={18} />
+                                <span>Stream</span>
+                            </li>
                             {/* ✨ เพิ่ม Class Detail button สำหรับ creator เท่านั้น */}
                             {isCreator && (
                                 <li className="sidebar-list-item sidebar-class-detail" onClick={() => navigate(`/classroom/${classroom?._id}/detail`)}>

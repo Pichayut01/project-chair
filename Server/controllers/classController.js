@@ -490,6 +490,12 @@ exports.updateAttendance = async (req, res) => {
         }
 
         const updatedClassroom = await classroom.save();
+
+        // Emit real-time update to all clients in the classroom room
+        if (req.io) {
+            req.io.to(classId).emit('classroom-updated', updatedClassroom);
+        }
+
         res.json({ msg: 'Attendance updated successfully', classroom: updatedClassroom });
     } catch (err) {
         console.error('Error updating attendance:', err);

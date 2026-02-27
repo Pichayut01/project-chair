@@ -22,8 +22,6 @@ body {
   /* ขยายไปจนถึงด้านล่างของหน้าจอ */
   background-color: #e8f2e9;
   border-top-left-radius: 15px;
-  padding: 20px;
-  padding-bottom: 20px;
   transition: left 0.3s ease;
   overflow: hidden;
   /* Changed from overflow-y: auto - NO SCROLLBAR */
@@ -342,6 +340,7 @@ body {
     max-width: 100vw;
     overflow-x: hidden;
     box-sizing: border-box;
+    padding: 3px;
   }
 }
 

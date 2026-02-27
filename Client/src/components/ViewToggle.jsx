@@ -33,14 +33,14 @@ const ViewToggle = ({ activeView, onViewChange }) => {
 
 const StyledWrapper = styled.div`
   .container {
-    margin-right: 15px; /* Add margin to separate from other controls */
+    margin-right: 0px; /* Add margin to separate from other controls */
   }
 
   .tabs {
     display: flex;
     position: relative;
     background-color: #fff;
-    padding: 0.5rem; /* Reduced padding slightly */
+    padding: 0rem; /* Reduced padding slightly */
     border-radius: 99px;
   }
 
@@ -93,6 +93,11 @@ const StyledWrapper = styled.div`
   @media (max-width: 700px) {
     .tabs {
       transform: scale(0.9); /* Slightly smaller on mobile but not too small */
+  
+    }
+    .container {
+      transform: scale(0.9); /* Slightly smaller on mobile but not too small */
+  
     }
   }`;
 

@@ -21,6 +21,8 @@
 }
 
 .classroom-header {
+  margin: 10px;
+  margin-bottom: 0px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -264,7 +266,7 @@
   background: #fff;
   border-radius: 8px;
   /* ✨ Match Seating Card */
-  border: none;
+  border: 1px solid #e9ecef;
   /* ✨ Visual consistency */
   /* ✨ Use uniform shadow instead of border for cleaner alignment */
   border-radius: 8px;
@@ -288,16 +290,15 @@
   /* Spacing from right edge */
   height: 100%;
   /* ✨ Fill full height */
-
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  /* Soft shadow for depth */
 }
 
 .chat-split-card.open {
-  width: 340px;
+  width: 320px;
   /* Expanded width */
   opacity: 1;
   margin-left: 10px;
+  margin-right: 10px;
+  border: 1px solid #ffffff;
 }
 
 .edit-sidebar-overlay {
@@ -913,14 +914,13 @@
   overflow: hidden;
   position: relative;
   flex: 1;
-  gap: 15px;
   /* Space between chart and action bar */
 }
 
 /* ✨ New Inner Card for the White Background part */
 .seating-area-card {
   background-color: #ffffff;
-  padding: 15px;
+  padding: 8px;
   border-radius: 8px;
   flex: 1;
   /* Grow to fill space above Action Bar */
@@ -928,12 +928,14 @@
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 /* Grid that holds all the chairs */
 .chairs-grid {
   position: relative;
-  min-height: 600px;
+  min-height: 400px;
   /* Set a minimum height */
   border: 1px dashed #d1d1d1;
   border-radius: 6px;
@@ -1003,8 +1005,9 @@
 
   /* Make seating container take more vertical space on mobile */
   .seating-container-wrapper {
-    max-height: 75vh !important;
-    height: calc(100vh - 250px) !important;
+    max-height: none !important;
+    height: auto !important;
+    flex: 1;
   }
 
   /* Increase seating grid size for better visibility */
@@ -1036,10 +1039,14 @@
   }
 
   .seating-chart-section {
-    padding: 15px;
-    /* Reduce padding on mobile */
+    padding: 0px;
+    /* Align perfectly with header on mobile */
     min-width: 100%;
     /* Allow full width on mobile */
+  }
+
+  .stream-chat-column {
+    display: none !important;
   }
 
   .edit-action-btn,
@@ -1074,7 +1081,7 @@
 /* --- Responsive Design for Tablet Devices --- */
 @media (min-width: 769px) and (max-width: 1024px) {
   .seating-chart-section {
-    padding: 15px;
+    padding: 0px;
   }
 
   .classroom-header {
@@ -1193,12 +1200,10 @@
 .seating-container-wrapper {
   border-radius: 12px;
   background: white;
-  padding: 20px;
+  padding: 8px;
   width: 100%;
-  height: calc(100vh - 400px);
-  /* เพิ่มพื้นที่สำหรับ banner */
-  max-height: 50vh;
-  /* ลดความสูงสูงสุดเพื่อให้มีพื้นที่สำหรับ banner */
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   transition:
     height 0.3s ease,
@@ -1209,10 +1214,7 @@
 .classroom-header.collapsed
   ~ .classroom-layout-container
   .seating-container-wrapper {
-  height: calc(100vh - 315px);
-  /* เพิ่มพื้นที่เว้นเพื่อป้องกัน scroll */
-  max-height: 70vh;
-  /* ลดความสูงสูงสุดเพื่อป้องกัน scroll */
+  flex: 1;
 }
 
 /* Custom scrollbar for seating container */
@@ -1243,7 +1245,7 @@
   transform: translateX(-50%);
   background: rgba(255, 255, 255, 0.9);
   color: #333;
-  border: 2px solid #ddd;
+  border: 2px solid #ececec;
   padding: 8px 12px;
   border-radius: 20px;
   cursor: pointer;
@@ -1253,7 +1255,6 @@
   justify-content: center;
   transition: all 0.3s ease;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
 }
 
@@ -1510,17 +1511,17 @@
   /* Adjust seating header for mobile */
   .seating-header {
     margin-bottom: 10px;
-    padding: 0 5px;
-    justify-content: center;
+    padding: 0 0px;
+    padding-left: 10px;
+    justify-content: space-between;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 0px;
   }
 
   /* Adjust seating controls layout for mobile */
   .seating-controls {
     flex-direction: column;
     gap: 8px;
-    width: 100%;
     align-items: center;
   }
 
@@ -1736,4 +1737,15 @@
 }
 .attendance-status-btn.leave {
   color: #17a2b8 !important;
+}
+
+/* Hide number input spinners inside sweetalert */
+.attendance-day-input::-webkit-inner-spin-button,
+.attendance-day-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.attendance-day-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
 }
