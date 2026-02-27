@@ -8,6 +8,7 @@ import Loader from '../components/Loader';
 import CreatePostBox from '../components/CreatePostBox'; 
 import StreamPost from '../components/StreamPost'; 
 import ClassChat from '../components/ClassChat'; // ✨ Import ClassChat
+import ClassworkSection from '../components/ClassworkSection'; // ✨ Import ClassworkSection
 import { FaChevronUp, FaChevronDown, FaEdit } from 'react-icons/fa'; 
 import { useSocket } from '../hooks/useSocket'; // ✨ Import useSocket
 import '../CSS/ClassDetailPage.css';
@@ -282,14 +283,12 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
                 );
             case 'classwork':
                 return (
-                    <div className="class-detail-content">
-                        <h2>Classwork</h2>
-                        <div className="content-placeholder">
-                            <div className="placeholder-card">
-                                <h3>Classwork</h3>
-                                <p>Assignments and materials will appear here...</p>
-                            </div>
-                        </div>
+                    <div className="class-detail-content" style={{ padding: 0 }}>
+                        <ClassworkSection 
+                            classId={classId} 
+                            user={user} 
+                            isCreator={isCreator} 
+                        />
                     </div>
                 );
             default:
