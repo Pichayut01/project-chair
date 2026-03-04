@@ -14,7 +14,7 @@
 }
 
 .assignment-detail-header h2 {
-  color: #1a73e8;
+  color: #0aa158;
   margin: 0 0 10px 0;
   font-size: 1.8rem;
 }
@@ -110,12 +110,12 @@
   color: #c5221f;
 }
 .status-badge.graded {
-  background-color: #e8f0fe;
+  background-color: #e8f2e9;
   color: #1967d2;
 }
 
 .attachment-link a {
-  color: #1a73e8;
+  color: #0aa158;
   text-decoration: none;
   font-size: 0.9rem;
   display: inline-block;
@@ -143,7 +143,7 @@
 
 .grade-btn {
   background-color: #fff;
-  color: #1a73e8;
+  color: #0aa158;
   border: 1px solid #dadce0;
   border-radius: 4px;
   padding: 6px 16px;
@@ -170,7 +170,7 @@
 }
 
 .save-grade-btn {
-  background-color: #1a73e8;
+  background-color: #0aa158;
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -218,7 +218,7 @@
 }
 
 .status-text.assigned {
-  color: #1a73e8;
+  color: #0aa158;
 }
 
 .status-text.submitted {
@@ -230,7 +230,7 @@
 }
 
 .status-text.graded {
-  color: #1a73e8;
+  color: #0aa158;
 }
 
 .score-display {
@@ -256,7 +256,7 @@
 
 .turn-in-btn {
   width: 100%;
-  background-color: #1a73e8;
+  background-color: #0aa158;
   color: white;
   border: none;
   border-radius: 4px;
@@ -267,7 +267,7 @@
 }
 
 .turn-in-btn:hover:not(:disabled) {
-  background-color: #1557b0;
+  background-color: #088a4b;
 }
 
 .turn-in-btn:disabled {

@@ -1,20 +1,21 @@
 // src/pages/StreamPage.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Loader from '../components/Loader';
 import CreatePostBox from '../components/CreatePostBox'; 
 import StreamPost from '../components/StreamPost'; 
-import ClassChat from '../components/ClassChat'; // ✨ Import ClassChat
-import ClassworkSection from '../components/ClassworkSection'; // ✨ Import ClassworkSection
-import { FaChevronUp, FaChevronDown, FaEdit } from 'react-icons/fa'; 
-import { useSocket } from '../hooks/useSocket'; // ✨ Import useSocket
+import ClassChat from '../components/ClassChat';
+import ClassworkSection from '../components/ClassworkSection';
+import CalendarSection from '../components/CalendarSection';
+import { useSocket } from '../hooks/useSocket';
 import '../CSS/ClassDetailPage.css';
 import '../CSS/ClassroomPage.css'; 
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
+import '../CSS/StreamPage.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
@@ -24,7 +25,8 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     const [classroom, setClassroom] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeSection, setActiveSection] = useState('stream');
+    const location = useLocation();
+    const [activeSection, setActiveSection] = useState(location.state?.activeTab || 'stream');
     const [posts, setPosts] = useState([]); 
     const [isBannerCollapsed, setIsBannerCollapsed] = useState(false); // ✨ State for banner collapse
 
@@ -169,61 +171,63 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
         switch (activeSection) {
             case 'stream':
                 return (
-                    <div className="stream-page-layout-container" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
-                        {/* Stream Header Banner (Matching ClassroomPage style) */}
-                        <div 
-                            className={`classroom-header ${isBannerCollapsed ? 'collapsed' : ''}`}
-                            style={{
-                                borderLeftColor: classroom?.color || '#1a73e8',
-                                backgroundImage: classroom?.bannerUrl ? `url(${API_BASE_URL}${classroom.bannerUrl})` : 'none',
-                                position: 'relative',
-                                marginBottom: '24px',
-                                marginLeft: '0px',
-                                marginRight: '0px'
-                            }}
-                        >
-                            <div className="classroom-header-overlay"></div>
-                            <div className="classroom-header-content">
-                                <h1>{classroom?.name}</h1>
-                                <p>{classroom?.subname}</p>
-                                {classroom?.classCode && (
-                                    <div style={{ marginTop: '8px', fontSize: '0.9rem', opacity: 0.9 }}>
-                                        Class Code: <strong>{classroom.classCode}</strong>
-                                    </div>
-                                )}
-                            </div>
-
-                            <button
-                                className="banner-collapse-btn"
-                                onClick={() => setIsBannerCollapsed(!isBannerCollapsed)}
-                                title={isBannerCollapsed ? "Expand banner" : "Collapse banner"}
+                    <div className="stream-page-container">
+                        {/* Hero Banner */}
+                        {!isBannerCollapsed && (
+                            <div 
+                                className="sp-hero-banner"
+                                style={{
+                                    backgroundImage: classroom?.bannerUrl ? `url(${API_BASE_URL}${classroom.bannerUrl})` : undefined,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    borderLeft: `6px solid ${classroom?.color || '#1a73e8'}`
+                                }}
                             >
-                                {isBannerCollapsed ? <FaChevronDown /> : <FaChevronUp />}
-                            </button>
-                        </div>
+                                <div className="sp-hero-overlay" />
+                                <div className="sp-hero-content">
+                                    <h1 className="sp-hero-title">{classroom?.name}</h1>
+                                    {classroom?.subname && <p className="sp-hero-subtitle">{classroom.subname}</p>}
+                                    {classroom?.classCode && (
+                                        <span className="sp-hero-code">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                                            {classroom.classCode}
+                                        </span>
+                                    )}
+                                </div>
+                                <button className="sp-hero-collapse-btn" onClick={() => setIsBannerCollapsed(true)} title="Collapse banner">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                                </button>
+                            </div>
+                        )}
+                        {isBannerCollapsed && (
+                            <div className="sp-show-banner-wrap">
+                                <button 
+                                    className="sp-show-banner-btn"
+                                    onClick={() => setIsBannerCollapsed(false)}
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                    Show banner
+                                </button>
+                            </div>
+                        )}
 
-                        {/* Stream Content Area (Two Columns) */}
-                        <div style={{ 
-                            display: 'flex', 
-                            gap: '10px', 
-                            padding: '0px', // Match banner horizontal padding
-                            flexWrap: 'wrap', // Stack on small screens
-                            alignItems: 'flex-start'
-                        }}>
-                            {/* Left Column: Posts (65%) */}
-                            <div style={{ flex: '7.5', minWidth: '320px' }}>
+                        {/* Two Column Layout */}
+                        <div className="sp-two-col">
+                            {/* Feed */}
+                            <div className="sp-feed-col">
                                 {isCreator && (
                                     <CreatePostBox classId={classId} user={user} onPostCreated={handlePostCreated} />
                                 )}
-                                
                                 <div className="stream-feed">
                                     {posts.length === 0 ? (
-                                        <div style={{ 
-                                            textAlign: 'center', padding: '60px 20px', backgroundColor: '#fff', 
-                                            borderRadius: '12px', border: '1px solid #dadce0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                                        }}>
-                                            <h3 style={{ color: '#202124', fontWeight: '500', fontSize: '1.25rem' }}>No posts yet</h3>
-                                            <p style={{ color: '#5f6368', marginTop: '8px' }}>Announcements and materials will appear here.</p>
+                                        <div className="sp-empty-state">
+                                            <div className="sp-empty-icon">
+                                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                                </svg>
+                                            </div>
+                                            <h3>No posts yet</h3>
+                                            <p>Announcements, assignments, and materials posted by your teacher will appear here.</p>
                                         </div>
                                     ) : (
                                         posts.map(post => (
@@ -242,15 +246,9 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
                                 </div>
                             </div>
 
-                            {/* Right Column: Chat (35%) */}
-                            <div className="stream-chat-column" style={{ flex: '2.5', minWidth: '300px', position: 'sticky', top: '15px' }}>
-                                <div style={{ 
-                                    background: '#fff', 
-                                    borderRadius: '12px', 
-                                    border: '1px solid #dadce0', 
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-                                    overflow: 'hidden' 
-                                }}>
+                            {/* Sidebar */}
+                            <div className="sp-sidebar-col">
+                                <div className="sp-sidebar-card">
                                     <ClassChat 
                                         classId={classId} 
                                         user={user} 
@@ -261,21 +259,11 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
                                         onSubmitAnswer={(event, answer) => emitSubmitEventAnswer(event.id, answer)}
                                     />
                                 </div>
-                                
-                                {/* Info Box */}
-                                <div style={{ 
-                                    marginTop: '24px', 
-                                    padding: '20px', 
-                                    backgroundColor: '#fff', 
-                                    borderRadius: '12px', 
-                                    border: '1px solid #dadce0',
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-                                    fontSize: '0.95rem',
-                                    color: '#5f6368',
-                                    lineHeight: '1.5'
-                                }}>
-                                    <h4 style={{ margin: '0 0 10px 0', color: '#3c4043', fontSize: '1.1rem' }}>About Stream</h4>
-                                    <p style={{ margin: 0 }}>This is where you can see announcements, assignments, and communicate with your class in real-time.</p>
+                                <div className="sp-sidebar-card sp-about-card">
+                                    <h4 className="sp-about-title">About This Class</h4>
+                                    <p className="sp-about-text">
+                                        Announcements, assignments, and class materials shared by your teacher appear in the stream.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -283,20 +271,23 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
                 );
             case 'classwork':
                 return (
-                    <div className="class-detail-content" style={{ padding: 0 }}>
-                        <ClassworkSection 
-                            classId={classId} 
-                            user={user} 
-                            isCreator={isCreator} 
-                        />
-                    </div>
+                    <ClassworkSection 
+                        classId={classId} 
+                        user={user} 
+                        isCreator={isCreator} 
+                    />
+                );
+            case 'calendar':
+                return (
+                    <CalendarSection
+                        classId={classId}
+                        user={user}
+                        isCreator={isCreator}
+                        classroom={classroom}
+                    />
                 );
             default:
-                return (
-                    <div className="class-detail-content">
-                        <h2>Stream</h2>
-                    </div>
-                );
+                return null;
         }
     };
 

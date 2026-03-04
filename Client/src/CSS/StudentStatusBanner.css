@@ -1,0 +1,147 @@
+/* ═══ Student Status Banner ═══ */
+/* ═══ Student Status Banner ═══ */
+.student-status-banner {
+  margin: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
+  animation: bannerSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes bannerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.status-banner-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0px;
+  flex-wrap: wrap;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.status-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.status-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.status-value {
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 0.9rem;
+}
+
+.status-performance {
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  padding-left: 16px;
+}
+
+.status-perf-text {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* ─── Separator dots between items ─── */
+.status-item + .status-item::before {
+  content: "·";
+  color: #d1d5db;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+.status-performance::before {
+  content: "" !important;
+  margin-right: 0 !important;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .student-status-banner {
+    margin: 0;
+  }
+
+  .status-banner-inner {
+    gap: 8px;
+    padding: 6px 10px;
+  }
+
+  .status-item {
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+
+  .status-label {
+    display: none; /* Hide labels entirely on mobile, only show icon + value */
+  }
+
+  .status-item + .status-item::before {
+    content: "|";
+    font-size: 0.8rem;
+    color: #e5e7eb;
+    margin-right: 4px;
+  }
+
+  .status-performance {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  .status-perf-text {
+    font-size: 0.75rem; /* slightly smaller text for performance label */
+  }
+}
+
+@media (max-width: 480px) {
+  .student-status-banner {
+    border-radius: 8px; /* Slightly less rounded for clean look or maybe 20px for pill */
+  }
+
+  .status-banner-inner {
+    gap: 6px;
+    padding: 4px 8px;
+  }
+
+  .status-item {
+    font-size: 0.75rem;
+    gap: 3px;
+  }
+
+  .status-label {
+    display: none;
+  }
+
+  .status-item + .status-item::before {
+    content: ""; /* remove dot on very small screens, just gap */
+    margin-right: 0;
+  }
+
+  .status-icon {
+    font-size: 0.85rem;
+  }
+
+  .status-perf-text {
+    font-size: 0.7rem;
+  }
+}

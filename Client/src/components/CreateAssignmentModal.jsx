@@ -1,150 +1,332 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
+import BeautifulDateTimePicker from './BeautifulDateTimePicker';
 import '../CSS/CreateAssignmentModal.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCreated }) => {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [dueDate, setDueDate] = useState('');
-    const [points, setPoints] = useState(100);
-    const [allowLateSubmission, setAllowLateSubmission] = useState(false);
-    const [showScoreToStudents, setShowScoreToStudents] = useState(true);
+/* ─── SVG Icons ─── */
+const SvgLink = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </svg>
+);
+const SvgUpload = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+    </svg>
+);
+const SvgImage = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+    </svg>
+);
+const SvgFile = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/>
+    </svg>
+);
+const SvgX = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+);
+
+const isImageMimetype = (mimetype) => mimetype && mimetype.startsWith('image/');
+const isImageUrl = (url) => /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i.test(url);
+
+const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCreated, assignment }) => {
+    const [title, setTitle] = useState(assignment?.title || '');
+    const [description, setDescription] = useState(assignment?.description || '');
+    const [dueDate, setDueDate] = useState(
+        assignment?.dueDate ? new Date(assignment.dueDate).toISOString().slice(0, 16) : ''
+    );
+    const [points, setPoints] = useState(assignment?.points || 10);
+    const [allowLateSubmission, setAllowLateSubmission] = useState(assignment?.allowLateSubmission || false);
+    const [showScoreToStudents, setShowScoreToStudents] = useState(assignment?.showScoreToStudents ?? true);
+    const [attachments, setAttachments] = useState(assignment?.attachments || []);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Attachment UI states
+    const [showLinkInput, setShowLinkInput] = useState(false);
+    const [linkUrl, setLinkUrl] = useState('');
+    const [linkName, setLinkName] = useState('');
+    const [uploadingFile, setUploadingFile] = useState(false);
+
+    // Update state when assignment prop changes
+    React.useEffect(() => {
+        if (assignment) {
+            setTitle(assignment.title || '');
+            setDescription(assignment.description || '');
+            setDueDate(assignment.dueDate ? new Date(assignment.dueDate).toISOString().slice(0, 16) : '');
+            setPoints(assignment.points || 10);
+            setAllowLateSubmission(assignment.allowLateSubmission || false);
+            setShowScoreToStudents(assignment.showScoreToStudents ?? true);
+            setAttachments(assignment.attachments || []);
+        } else {
+            setTitle('');
+            setDescription('');
+            setDueDate('');
+            setPoints(10);
+            setAllowLateSubmission(false);
+            setShowScoreToStudents(true);
+            setAttachments([]);
+        }
+        setShowLinkInput(false);
+        setLinkUrl('');
+        setLinkName('');
+    }, [assignment, isOpen]);
+
+    const handleAddLink = () => {
+        if (!linkUrl.trim()) return;
+        const name = linkName.trim() || linkUrl.trim();
+        const type = isImageUrl(linkUrl.trim()) ? 'image' : 'link';
+        setAttachments(prev => [...prev, { type, url: linkUrl.trim(), filename: name, mimetype: type === 'image' ? 'image/url' : 'text/url' }]);
+        setLinkUrl('');
+        setLinkName('');
+        setShowLinkInput(false);
+    };
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            setUploadingFile(true);
+            setError(null);
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data', 'x-auth-token': user.token }
+            });
+            const type = isImageMimetype(res.data.mimetype) ? 'image' : 'file';
+            setAttachments(prev => [...prev, {
+                type,
+                url: res.data.url,
+                filename: res.data.originalname,
+                mimetype: res.data.mimetype
+            }]);
+        } catch (err) {
+            console.error('Error uploading file:', err);
+            setError('Failed to upload file.');
+        } finally {
+            setUploadingFile(false);
+            e.target.value = '';
+        }
+    };
+
+    const handleRemoveAttachment = (index) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (!title.trim()) {
-            setError('Title is required');
-            return;
-        }
-
+        if (!title.trim()) { setError('Title is required'); return; }
         setLoading(true);
         setError(null);
-
         try {
-            const res = await axios.post(`${API_BASE_URL}/api/classwork/${classId}`, {
-                title,
-                description,
+            const payload = {
+                title, description,
                 dueDate: dueDate || null,
                 points,
                 allowLateSubmission,
-                showScoreToStudents
-            }, {
-                headers: { 'x-auth-token': user.token }
-            });
+                showScoreToStudents,
+                attachments
+            };
 
+            let res;
+            if (assignment) {
+                res = await axios.put(`${API_BASE_URL}/api/classwork/${classId}/${assignment._id}`, payload, {
+                    headers: { 'x-auth-token': user.token }
+                });
+            } else {
+                res = await axios.post(`${API_BASE_URL}/api/classwork/${classId}`, payload, {
+                    headers: { 'x-auth-token': user.token }
+                });
+            }
+            
             onAssignmentCreated(res.data);
             handleClose();
         } catch (err) {
-            console.error('Error creating assignment:', err);
-            setError(err.response?.data?.msg || 'Failed to create assignment');
+            setError(err.response?.data?.msg || `Failed to ${assignment ? 'update' : 'create'} assignment`);
             setLoading(false);
         }
     };
 
     const handleClose = () => {
-        setTitle('');
-        setDescription('');
-        setDueDate('');
-        setPoints(100);
-        setAllowLateSubmission(false);
-        setShowScoreToStudents(true);
-        setError(null);
-        setLoading(false);
+        if (!assignment) {
+            setTitle(''); setDescription(''); setDueDate('');
+            setPoints(10); setAllowLateSubmission(false); setShowScoreToStudents(true);
+            setAttachments([]);
+        }
+        setError(null); setLoading(false);
+        setShowLinkInput(false); setLinkUrl(''); setLinkName('');
         onClose();
     };
 
     if (!isOpen) return null;
 
-    return (
-        <div className="modal-overlay">
-            <div className="modal-content create-assignment-modal">
-                <h2>Create Assignment</h2>
+    return createPortal(
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && handleClose()}>
+            <div className="create-assignment-modal">
+                <h2>{assignment ? 'Edit Assignment' : 'Create Assignment'}</h2>
                 {error && <div className="error-message">{error}</div>}
-                
+
                 <form onSubmit={handleSubmit} className="assignment-form">
+                    {/* Title */}
                     <div className="form-group">
                         <label>Title (required)</label>
-                        <input 
-                            type="text" 
-                            name="title"
-                            value={title} 
-                            onChange={(e) => setTitle(e.target.value)} 
-                            placeholder="Assignment title"
-                            required 
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={e => setTitle(e.target.value)}
+                            placeholder="e.g. Chapter 3 Reading Report"
+                            required
+                            autoFocus
                         />
                     </div>
-                    
+
+                    {/* Instructions */}
                     <div className="form-group">
                         <label>Instructions (optional)</label>
-                        <textarea 
-                            name="description"
-                            value={description} 
-                            onChange={(e) => setDescription(e.target.value)} 
-                            placeholder="Instructions"
+                        <textarea
+                            value={description}
+                            onChange={e => setDescription(e.target.value)}
+                            placeholder="Describe the task, rubric, or any resources..."
                             rows="4"
                         />
                     </div>
-                    
+
+                    {/* ═══ Attachments Section ═══ */}
+                    <div className="cam-attachments-section">
+                        <label className="cam-attachments-label">Attachments</label>
+
+                        {/* Attachment buttons */}
+                        <div className="cam-attach-buttons">
+                            <button type="button" className="cam-attach-btn" onClick={() => setShowLinkInput(!showLinkInput)}>
+                                <SvgLink /> Add Link
+                            </button>
+                            <label className={`cam-attach-btn ${uploadingFile ? 'cam-attach-btn--disabled' : ''}`}>
+                                <SvgUpload /> {uploadingFile ? 'Uploading...' : 'Upload File'}
+                                <input type="file" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploadingFile} />
+                            </label>
+                        </div>
+
+                        {/* Link input popover */}
+                        {showLinkInput && (
+                            <div className="cam-link-input-area">
+                                <input
+                                    type="url"
+                                    placeholder="Paste a URL..."
+                                    value={linkUrl}
+                                    onChange={e => setLinkUrl(e.target.value)}
+                                    className="cam-link-url-input"
+                                    autoFocus
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Display name (optional)"
+                                    value={linkName}
+                                    onChange={e => setLinkName(e.target.value)}
+                                    className="cam-link-name-input"
+                                />
+                                <div className="cam-link-actions">
+                                    <button type="button" className="cam-link-add-btn" onClick={handleAddLink} disabled={!linkUrl.trim()}>
+                                        Add
+                                    </button>
+                                    <button type="button" className="cam-link-cancel-btn" onClick={() => { setShowLinkInput(false); setLinkUrl(''); setLinkName(''); }}>
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Attachment list */}
+                        {attachments.length > 0 && (
+                            <div className="cam-attachment-list">
+                                {attachments.map((att, i) => (
+                                    <div key={i} className={`cam-attachment-item cam-attachment-item--${att.type}`}>
+                                        {att.type === 'image' ? (
+                                            <div className="cam-attachment-thumb">
+                                                <img 
+                                                    src={att.url.startsWith('http') ? att.url : `${API_BASE_URL}${att.url}`} 
+                                                    alt={att.filename} 
+                                                    onError={e => { e.target.style.display = 'none'; }}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="cam-attachment-icon">
+                                                {att.type === 'link' ? <SvgLink /> : <SvgFile />}
+                                            </div>
+                                        )}
+                                        <span className="cam-attachment-name" title={att.filename}>{att.filename}</span>
+                                        <button type="button" className="cam-attachment-remove" onClick={() => handleRemoveAttachment(i)} title="Remove">
+                                            <SvgX />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Due date + points */}
                     <div className="form-row">
                         <div className="form-group half">
-                            <label>Due</label>
-                            <input 
-                                type="datetime-local" 
-                                name="dueDate"
-                                value={dueDate} 
-                                onChange={(e) => setDueDate(e.target.value)} 
+                            <label>Due date</label>
+                            <BeautifulDateTimePicker 
+                                value={dueDate}
+                                onChange={setDueDate}
+                                placeholder="When is it due?"
                             />
                         </div>
                         <div className="form-group half">
                             <label>Points</label>
-                            <input 
-                                type="number" 
-                                name="points"
-                                value={points} 
-                                onChange={(e) => setPoints(Number(e.target.value))} 
+                            <input
+                                type="number"
+                                value={points}
+                                onChange={e => setPoints(Number(e.target.value))}
                                 min="0"
+                                max="1000"
                             />
                         </div>
                     </div>
 
-                    <div className="form-group checkbox-group">
-                        <label className="checkbox-label">
-                            <input 
-                                type="checkbox" 
-                                checked={allowLateSubmission} 
-                                onChange={(e) => setAllowLateSubmission(e.target.checked)} 
+                    {/* Toggle tiles */}
+                    <div className="toggle-tiles">
+                        <label className="toggle-tile">
+                            <input
+                                type="checkbox"
+                                checked={allowLateSubmission}
+                                onChange={e => setAllowLateSubmission(e.target.checked)}
                             />
-                            Allow late submissions
+                            <span className="toggle-switch" />
+                            <span className="toggle-tile-text">Allow late submissions</span>
+                        </label>
+                        <label className="toggle-tile">
+                            <input
+                                type="checkbox"
+                                checked={showScoreToStudents}
+                                onChange={e => setShowScoreToStudents(e.target.checked)}
+                            />
+                            <span className="toggle-switch" />
+                            <span className="toggle-tile-text">Show score to students after grading</span>
                         </label>
                     </div>
 
-                    <div className="form-group checkbox-group">
-                        <label className="checkbox-label">
-                            <input 
-                                type="checkbox" 
-                                checked={showScoreToStudents} 
-                                onChange={(e) => setShowScoreToStudents(e.target.checked)} 
-                            />
-                            Show score to students after grading
-                        </label>
-                    </div>
-
+                    {/* Actions */}
                     <div className="modal-actions">
                         <button type="button" className="cancel-btn" onClick={handleClose} disabled={loading}>
                             Cancel
                         </button>
                         <button type="submit" className="primary-btn" disabled={loading}>
-                            {loading ? 'Assigning...' : 'Assign'}
+                            {loading ? (assignment ? 'Updating...' : 'Assigning...') : (assignment ? 'Save Changes' : 'Assign →')}
                         </button>
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

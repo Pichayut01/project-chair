@@ -5,6 +5,20 @@ const streamPostSchema = new mongoose.Schema({
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
     content: { type: String, default: '' },
+    type: {
+        type: String,
+        enum: ['announcement', 'assignment'],
+        default: 'announcement'
+    },
+    assignmentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Assignment',
+        default: null
+    },
+    assignmentMeta: {
+        points: Number,
+        dueDate: Date
+    },
     attachments: [{
         type: { type: String, enum: ['link', 'file', 'image'], required: true },
         url: { type: String, required: true },

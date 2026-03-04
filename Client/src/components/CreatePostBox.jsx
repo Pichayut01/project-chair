@@ -2,11 +2,43 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
-import { FaPaperclip, FaLink, FaPaperPlane, FaTimes } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
+// SVG Icons (inline to avoid dependency on react-icons for consistency)
+const LinkIcon = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </svg>
+);
+
+const PaperclipIcon = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+    </svg>
+);
+
+const SendIcon = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+    </svg>
+);
+
+const CloseIcon = () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+);
+
+const FileDocIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+        <polyline points="13 2 13 9 20 9"/>
+    </svg>
+);
 
 const CreatePostBox = ({ classId, user, onPostCreated }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -29,7 +61,6 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Optional: validate size on client side
         if (file.size > 20 * 1024 * 1024) {
              Swal.fire('File too large', 'Please select a file smaller than 20MB', 'error');
              return;
@@ -40,7 +71,6 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
 
         setUploadingFile(true);
         try {
-             // Reusing the general upload endpoint
              const response = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
                  headers: {
                      'Content-Type': 'multipart/form-data',
@@ -59,7 +89,6 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
              Swal.fire('Upload Failed', 'There was an error uploading your file.', 'error');
         } finally {
              setUploadingFile(false);
-             // clear the input
              e.target.value = null;
         }
     };
@@ -87,7 +116,6 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
 
             onPostCreated(response.data);
             
-            // Reset form
             setTitle('');
             setContent('');
             setAttachments([]);
@@ -101,119 +129,67 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
         }
     };
 
+    const handleCancel = () => {
+        setIsExpanded(false);
+        setTitle('');
+        setContent('');
+        setAttachments([]);
+        setShowLinkInput(false);
+        setLinkInput('');
+    };
+
     return (
-        <div className="create-post-box" style={{
-            backgroundColor: '#fff',
-            borderRadius: '12px',
-            border: '1px solid #dadce0',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-            padding: '24px',
-            marginBottom: '24px'
-        }}>
+        <div className={`cpb-container ${isExpanded ? 'cpb-container--expanded' : ''}`}>
             {!isExpanded ? (
-                <div 
-                    className="create-post-placeholder" 
-                    onClick={() => setIsExpanded(true)}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '16px',
-                        cursor: 'pointer',
-                    }}
-                >
+                <div className="cpb-placeholder" onClick={() => setIsExpanded(true)}>
                     <img 
+                        className="cpb-avatar"
                         src={getProfileImageSrc(user?.photoURL, user ? isGoogleUser(user) : false)} 
                         alt="Profile" 
-                        style={{ 
-                            width: '40px', 
-                            height: '40px', 
-                            borderRadius: '50%', 
-                            objectFit: 'cover',
-                            border: '1px solid #dadce0'
-                        }}
-                        onError={(e) => { e.target.src = 'https://via.placeholder.com/40'; }}
+                        onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Me'; }}
                     />
-                    <div style={{
-                        flex: 1,
-                        backgroundColor: '#fff',
-                        border: '1px solid #dadce0',
-                        borderRadius: '24px',
-                        padding: '12px 20px',
-                        color: '#5f6368',
-                        fontSize: '14px',
-                        transition: 'background-color 0.2s, box-shadow 0.2s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-start',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.02) inset'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f8f9fa';
-                        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05) inset';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#fff';
-                        e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.02) inset';
-                    }}
-                    >
+                    <div className="cpb-placeholder-text">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
                         Announce something to your class
                     </div>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '16px' }}>
+                <form onSubmit={handleSubmit} className="cpb-form">
+                    <div className="cpb-form-fields">
                         <input
+                            className="cpb-title-input"
                             type="text"
                             placeholder="Post Title (Required)"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                fontSize: '16px',
-                                border: 'none',
-                                borderBottom: '2px solid #007bff',
-                                outline: 'none',
-                                marginBottom: '12px',
-                                fontWeight: '500'
-                            }}
                             autoFocus
                         />
                         <textarea
+                            className="cpb-content-input"
                             placeholder="Announce something to your class..."
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             rows={4}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                fontSize: '15px',
-                                border: '1px solid #e0e0e0',
-                                borderRadius: '4px',
-                                outline: 'none',
-                                resize: 'vertical'
-                            }}
                         />
                     </div>
 
                     {/* Attachments List */}
                     {attachments.length > 0 && (
-                        <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div className="cpb-attachments">
                             {attachments.map((att, i) => (
-                                <div key={i} style={{
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                    padding: '8px 12px', backgroundColor: '#f8f9fa', border: '1px solid #dadce0', borderRadius: '4px'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                                        {att.type === 'link' ? <FaLink color="#5f6368" /> : <FaPaperclip color="#5f6368" />}
-                                        <a href={att.url} target="_blank" rel="noopener noreferrer" style={{
-                                            color: '#1a73e8', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                                        }}>{att.name || att.url}</a>
+                                <div key={i} className="cpb-attachment-item">
+                                    <div className="cpb-attachment-info">
+                                        <span className="cpb-attachment-icon">
+                                            {att.type === 'link' ? <LinkIcon /> : <FileDocIcon />}
+                                        </span>
+                                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="cpb-attachment-name">
+                                            {att.name || att.url}
+                                        </a>
                                     </div>
-                                    <button type="button" onClick={() => handleRemoveAttachment(i)} style={{
-                                        background: 'none', border: 'none', color: '#5f6368', cursor: 'pointer', padding: '4px'
-                                    }}>
-                                        <FaTimes />
+                                    <button type="button" className="cpb-attachment-remove" onClick={() => handleRemoveAttachment(i)}>
+                                        <CloseIcon />
                                     </button>
                                 </div>
                             ))}
@@ -222,41 +198,31 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
 
                     {/* Link Input area */}
                     {showLinkInput && (
-                        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                        <div className="cpb-link-input-row">
                             <input
+                                className="cpb-link-input"
                                 type="url"
                                 placeholder="Paste link here..."
                                 value={linkInput}
                                 onChange={(e) => setLinkInput(e.target.value)}
-                                style={{ flex: 1, padding: '8px 12px', border: '1px solid #dadce0', borderRadius: '4px' }}
+                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddLink())}
+                                autoFocus
                             />
-                            <button type="button" onClick={handleAddLink} style={{
-                                padding: '8px 16px', backgroundColor: '#f1f3f4', border: 'none', borderRadius: '4px', cursor: 'pointer'
-                            }}>Add Link</button>
-                            <button type="button" onClick={() => setShowLinkInput(false)} style={{
-                                padding: '8px 16px', background: 'none', border: 'none', cursor: 'pointer', color: '#5f6368'
-                            }}>Cancel</button>
+                            <button type="button" className="cpb-link-add-btn" onClick={handleAddLink}>Add</button>
+                            <button type="button" className="cpb-link-cancel-btn" onClick={() => setShowLinkInput(false)}>
+                                <CloseIcon />
+                            </button>
                         </div>
                     )}
 
                     {/* Action Bar */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <button type="button" 
-                                onClick={() => setShowLinkInput(true)}
-                                style={{
-                                display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px',
-                                backgroundColor: 'transparent', border: '1px solid #dadce0', borderRadius: '24px', cursor: 'pointer', color: '#5f6368', fontWeight: '500'
-                            }}>
-                                <FaLink /> Add Link
+                    <div className="cpb-actions">
+                        <div className="cpb-actions-left">
+                            <button type="button" className="cpb-action-btn" onClick={() => setShowLinkInput(true)}>
+                                <LinkIcon /> Link
                             </button>
-                            <label style={{
-                                display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px',
-                                backgroundColor: 'transparent', border: '1px solid #dadce0', borderRadius: '24px', 
-                                cursor: uploadingFile ? 'not-allowed' : 'pointer', color: '#5f6368', fontWeight: '500',
-                                opacity: uploadingFile ? 0.6 : 1
-                            }}>
-                                <FaPaperclip /> {uploadingFile ? 'Uploading...' : 'Add File'}
+                            <label className={`cpb-action-btn ${uploadingFile ? 'cpb-action-btn--disabled' : ''}`}>
+                                <PaperclipIcon /> {uploadingFile ? 'Uploading...' : 'File'}
                                 <input 
                                     type="file" 
                                     onChange={handleFileUpload} 
@@ -265,23 +231,12 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
                                 />
                             </label>
                         </div>
-
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button type="button" onClick={() => {
-                                setIsExpanded(false);
-                                setTitle('');
-                                setContent('');
-                                setAttachments([]);
-                            }} style={{
-                                padding: '8px 16px', background: 'none', border: 'none', color: '#5f6368', fontWeight: '500', cursor: 'pointer'
-                            }}>
+                        <div className="cpb-actions-right">
+                            <button type="button" className="cpb-cancel-btn" onClick={handleCancel}>
                                 Cancel
                             </button>
-                            <button type="submit" disabled={loading} style={{
-                                padding: '8px 24px', backgroundColor: '#1a73e8', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: '500', cursor: loading ? 'not-allowed' : 'pointer',
-                                display: 'flex', alignItems: 'center', gap: '8px'
-                            }}>
-                                {loading ? 'Posting...' : <><FaPaperPlane /> Post</>}
+                            <button type="submit" className={`cpb-submit-btn ${loading ? 'cpb-submit-btn--loading' : ''}`} disabled={loading}>
+                                <SendIcon /> {loading ? 'Posting...' : 'Post'}
                             </button>
                         </div>
                     </div>

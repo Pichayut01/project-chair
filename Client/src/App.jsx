@@ -23,6 +23,7 @@ const ClassroomErrorPage = lazy(() => import('./pages/ClassroomErrorPage')); // 
 const Layout = lazy(() => import('./components/Layout')); // ✨ Add Layout component
 const EventPresentationPage = lazy(() => import('./pages/EventPresentationPage')); // ✨ Add Presentation Page
 const StreamPage = lazy(() => import('./pages/StreamPage')); // ✨ Add Stream Page
+const AssignmentDetailPage = lazy(() => import('./pages/AssignmentDetailPage')); // ✨ Add Assignment Detail Page
 
 const backendUrl = 'http://localhost:5000/api/auth';
 
@@ -277,6 +278,16 @@ function AppRoutes({ user, onLoginSuccess, handleSignOut, updateUserProfile, isS
                         handleSignOut={handleSignOutAndNavigate}
                     /> : <Navigate to="/login" />}
                 /> {/* ✨ Add Stream route */}
+                {/* Add a new route for the assignment detail page */}
+                <Route
+                    path="/classroom/:classId/classwork/:assignmentId"
+                    element={user ? <AssignmentDetailPage
+                        user={user}
+                        isSidebarOpen={isSidebarOpen}
+                        toggleSidebar={toggleSidebar}
+                        handleSignOut={handleSignOutAndNavigate}
+                    /> : <Navigate to="/login" />}
+                /> {/* ✨ Add Assignment Detail route */}
                 <Route
                     path="/classroom/:classroomId/private"
                     element={user ? <PrivateClassroomPage

@@ -1,4 +1,4 @@
-// src/components/Summary.jsx
+// src/components/Summary.jsx — Unified Summary + Scoreboard with Bento Grid
 
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
@@ -30,16 +30,67 @@ ChartJS.register(
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-const Summary = ({ classId, user }) => {
+/* ───────── SVG Icon Components ───────── */
+const SvgTrophy = () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+);
+const SvgCrown = () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2v2h14v-2H5z"/></svg>
+);
+const SvgMedal = () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></svg>
+);
+const SvgUsers = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+);
+const SvgTrendUp = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+);
+const SvgStar = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+);
+const SvgBarChart = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+);
+const SvgBellCurve = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20c1-6 4-14 10-14s9 8 10 14"/></svg>
+);
+const SvgTarget = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+);
+const SvgEdit = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+);
+const SvgAward = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+);
+
+
+const Summary = ({ classId, user, classroom, onUpdateScores }) => {
     const [summaryData, setSummaryData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedStudentId, setSelectedStudentId] = useState('overview'); // 'overview' or student ID
+    const [selectedStudentId, setSelectedStudentId] = useState('overview');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+    // ─── Student Status Toggle ───
+    const [showStudentStatus, setShowStudentStatus] = useState(classroom?.showStudentStatus || false);
+    const isCreator = classroom?.creator?.some(c => {
+        const cId = c._id || c.id || c.toString();
+        return cId === (user?.id || user?._id);
+    });
+
+    // ─── Scoreboard State ───
+    const [scoreCategories, setScoreCategories] = useState([]);
+    const [scoresTable, setScoresTable] = useState([]);
+    const [editingCell, setEditingCell] = useState({ studentId: null, category: null });
+    const [tempScore, setTempScore] = useState('');
+    const [scoreStats, setScoreStats] = useState(null);
+
+    // ─── Click-outside to close dropdown ───
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (isDropdownOpen && !event.target.closest('.fs-custom-select-container')) {
+            if (isDropdownOpen && !event.target.closest('.bento-select-container')) {
                 setIsDropdownOpen(false);
             }
         };
@@ -47,91 +98,122 @@ const Summary = ({ classId, user }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isDropdownOpen]);
 
+    // ─── Fetch & Process Summary Data ───
     const fetchSummaryData = async () => {
         try {
             const response = await axios.get(`${API_BASE_URL}/api/classrooms/${classId}`, {
                 headers: { 'x-auth-token': user.token }
             });
-
-            // Process data for comprehensive summary
-            const classroom = response.data;
-            const processedData = processClassroomData(classroom);
+            const classroomData = response.data;
+            const processedData = processClassroomData(classroomData);
             setSummaryData(processedData);
+            processScoreboardData(classroomData);
             setLoading(false);
         } catch (err) {
             setError('Failed to load summary data');
             setLoading(false);
-            console.error('Error fetching summary data:', err);
         }
     };
 
-    const processClassroomData = (classroom) => {
-        const students = classroom.participants || [];
-        const studentScores = classroom.studentScores || {};
-        const events = classroom.events || [];
+    // ─── Process Scoreboard Data from classroom prop or fetched data ───
+    const processScoreboardData = (classroomData) => {
+        const data = classroomData || classroom;
+        if (!data || !data.participants) return;
 
-        // Enhanced student data processing
+        const creatorIds = (data.creator || []).map(c => c._id || c);
+        const studentScores = data.studentScores || {};
+        const students = data.participants.filter(p => !creatorIds.includes(p._id));
+
+        const allCategories = new Set();
+        Object.values(studentScores).forEach(scoreRecord => {
+            Object.keys(scoreRecord).forEach(category => allCategories.add(category));
+        });
+        const categories = Array.from(allCategories).sort();
+        setScoreCategories(categories);
+
+        const scoresData = students.map(student => {
+            const studentScoreRecord = studentScores[student._id] || {};
+            let totalScore = 0;
+            const categorizedScores = {};
+            categories.forEach(category => {
+                const score = studentScoreRecord[category] || 0;
+                categorizedScores[category] = score;
+                totalScore += score;
+            });
+            return { student, totalScore, categorizedScores };
+        });
+        setScoresTable(scoresData);
+    };
+
+    // ─── Compute score stats ───
+    useEffect(() => {
+        if (scoresTable.length > 0) {
+            const totalStudents = scoresTable.length;
+            const overallTotalScores = scoresTable.map(s => s.totalScore);
+            const overallAverage = overallTotalScores.reduce((sum, score) => sum + score, 0) / totalStudents;
+            const highestScore = Math.max(...overallTotalScores);
+            const lowestScore = Math.min(...overallTotalScores);
+
+            const categoryAverages = {};
+            scoreCategories.forEach(category => {
+                const categoryScores = scoresTable.map(s => s.categorizedScores[category] || 0);
+                const sum = categoryScores.reduce((s, score) => s + score, 0);
+                categoryAverages[category] = sum / totalStudents;
+            });
+
+            setScoreStats({ totalStudents, overallAverage: overallAverage.toFixed(2), highestScore, lowestScore, categoryAverages });
+        } else {
+            setScoreStats(null);
+        }
+    }, [scoresTable, scoreCategories]);
+
+    // ─── Re-process scoreboard when classroom prop changes ───
+    useEffect(() => {
+        if (classroom) {
+            processScoreboardData(classroom);
+        }
+    }, [classroom]);
+
+    const processClassroomData = (classroomData) => {
+        const students = classroomData.participants || [];
+        const studentScores = classroomData.studentScores || {};
+        const events = classroomData.events || [];
+
         const studentData = students.map(student => {
             const scores = studentScores[student._id] || studentScores[student.id] || {};
             const scoreValues = Object.values(scores).filter(score => score !== null && score !== undefined && typeof score === 'number');
-
-            // Calculate comprehensive metrics
             const totalScore = scoreValues.reduce((sum, score) => sum + score, 0);
             const avgScore = scoreValues.length > 0 ? totalScore / scoreValues.length : 0;
             const highestScore = scoreValues.length > 0 ? Math.max(...scoreValues) : 0;
             const lowestScore = scoreValues.length > 0 ? Math.min(...scoreValues) : 0;
-
-            // Performance consistency (standard deviation of individual scores)
-            const scoreVariance = scoreValues.length > 1 ?
-                scoreValues.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / (scoreValues.length - 1) : 0;
+            const scoreVariance = scoreValues.length > 1 ? scoreValues.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / (scoreValues.length - 1) : 0;
             const consistency = scoreValues.length > 1 ? Math.sqrt(scoreVariance) : 0;
 
-            // Improved attendance calculation (based on actual events)
-            const attendedEvents = events.filter(event =>
-                event.attendees && event.attendees.includes(student._id || student.id)
-            ).length;
+            const attendedEvents = events.filter(event => event.attendees && event.attendees.includes(student._id || student.id)).length;
             const totalEvents = events.length;
             const attendanceRate = totalEvents > 0 ? attendedEvents / totalEvents : 0;
-
-            // Comprehensive score calculation (Adjusted formula)
-            // Using totalScore directly is better for ranking than average score if events vary. 
-            // Here, we'll continue using combinedScore logic for grading
-            const performanceScore = avgScore * 0.5; // 50% average rating
-            const attendanceScore = attendanceRate * 30; // 30% attendance
-            const consistencyScore = consistency > 0 ? Math.max(0, 10 - consistency) * 2 : 20; // 20% consistency
-            const combinedScore = (totalScore > 0 ? totalScore : 0); // Using raw total score heavily heavily requested usually
 
             return {
                 id: student._id || student.id,
                 name: student.displayName || 'Unknown',
                 photoURL: student.photoURL,
                 user: student,
-                avgScore: avgScore,
-                totalScore: totalScore,
-                highestScore: highestScore,
-                lowestScore: lowestScore,
-                consistency: consistency,
-                attendanceRate: attendanceRate,
-                attendedEvents: attendedEvents,
-                totalEvents: totalEvents,
-                combinedScore: totalScore, // Treat total score as combined for standard bell curve
+                avgScore, totalScore, highestScore, lowestScore, consistency,
+                attendanceRate, attendedEvents, totalEvents,
+                combinedScore: totalScore,
                 group: student.group || 'A',
-                grade: calculateGrade(totalScore), // Assuming a scale? Need to be careful. Will standardize below
+                grade: calculateGrade(totalScore),
                 performanceLevel: getPerformanceLevel(totalScore)
             };
         });
 
-        // Better grading using relative grading (Bell curve based)
         const scores = studentData.map(s => s.combinedScore);
         const mean = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
         const stdDev = scores.length > 1 ? Math.sqrt(scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length) : 0;
 
-        // Re-process properties that depend on class distribution
         studentData.forEach(student => {
             const zScore = stdDev > 0 ? (student.combinedScore - mean) / stdDev : 0;
             student.zScore = zScore;
-            
-            // Standardize grade based on typical bell curve 
             if (zScore >= 1.5) student.grade = 'A+';
             else if (zScore >= 1) student.grade = 'A';
             else if (zScore >= 0.5) student.grade = 'B+';
@@ -140,22 +222,17 @@ const Summary = ({ classId, user }) => {
             else if (zScore >= -1) student.grade = 'C';
             else if (zScore >= -1.5) student.grade = 'D';
             else student.grade = 'F';
-
-            // Percentile estimation (approximation)
-            const percentile = calculatePercentile(student.combinedScore, scores);
-            student.percentile = percentile;
+            student.percentile = calculatePercentile(student.combinedScore, scores);
         });
 
-        // Sort descending
         studentData.sort((a, b) => b.combinedScore - a.combinedScore);
 
         return {
             totalStudents: students.length,
             totalEvents: events.length,
-            studentData: studentData,
+            studentData,
             statistics: {
-                mean: mean,
-                stdDev: stdDev,
+                mean, stdDev,
                 median: calculateMedian(scores),
                 min: scores.length > 0 ? Math.min(...scores) : 0,
                 max: scores.length > 0 ? Math.max(...scores) : 0,
@@ -174,429 +251,478 @@ const Summary = ({ classId, user }) => {
         const equal = allScores.filter(s => s === score).length;
         return ((below + (0.5 * equal)) / allScores.length) * 100;
     };
-
-    const calculateGrade = (score) => {
-        if (score >= 85) return 'A';
-        if (score >= 75) return 'B';
-        if (score >= 65) return 'C';
-        if (score >= 55) return 'D';
-        return 'F';
-    };
-
-    const getPerformanceLevel = (score) => {
-        if (score >= 85) return 'Excellent';
-        if (score >= 70) return 'Good';
-        if (score >= 55) return 'Average';
-        if (score >= 40) return 'Below Average';
-        return 'Needs Improvement';
-    };
-
-    const calculateMedian = (scores) => {
-        if (scores.length === 0) return 0;
-        const sorted = [...scores].sort((a, b) => a - b);
-        const mid = Math.floor(sorted.length / 2);
-        return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-    };
-
-    const calculateQuartile = (scores, quartile) => {
-        if (scores.length === 0) return 0;
-        const sorted = [...scores].sort((a, b) => a - b);
-        const pos = (sorted.length - 1) * quartile;
-        const base = Math.floor(pos);
-        const rest = pos - base;
-        if (sorted[base + 1] !== undefined) {
-            return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
-        } else {
-            return sorted[base];
-        }
-    };
+    const calculateGrade = (score) => { if (score >= 85) return 'A'; if (score >= 75) return 'B'; if (score >= 65) return 'C'; if (score >= 55) return 'D'; return 'F'; };
+    const getPerformanceLevel = (score) => { if (score >= 85) return 'Excellent'; if (score >= 70) return 'Good'; if (score >= 55) return 'Average'; if (score >= 40) return 'Below Average'; return 'Needs Improvement'; };
+    const calculateMedian = (scores) => { if (scores.length === 0) return 0; const sorted = [...scores].sort((a, b) => a - b); const mid = Math.floor(sorted.length / 2); return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2; };
+    const calculateQuartile = (scores, quartile) => { if (scores.length === 0) return 0; const sorted = [...scores].sort((a, b) => a - b); const pos = (sorted.length - 1) * quartile; const base = Math.floor(pos); const rest = pos - base; if (sorted[base + 1] !== undefined) return sorted[base] + rest * (sorted[base + 1] - sorted[base]); return sorted[base]; };
 
     useEffect(() => {
-        if (user && user.token && classId) {
-            fetchSummaryData();
-        }
+        if (user && user.token && classId) fetchSummaryData();
     }, [classId, user]);
 
+    // ─── Sync showStudentStatus from classroom prop ───
+    useEffect(() => {
+        if (classroom) {
+            setShowStudentStatus(classroom.showStudentStatus || false);
+        }
+    }, [classroom]);
 
-    // Bell Curve Data Generator
+    // ─── Toggle Student Status Handler ───
+    const handleToggleStudentStatus = async () => {
+        const newValue = !showStudentStatus;
+        setShowStudentStatus(newValue);
+        try {
+            await axios.put(`${API_BASE_URL}/api/classrooms/${classId}/settings`, {
+                showStudentStatus: newValue
+            }, {
+                headers: { 'x-auth-token': user.token }
+            });
+        } catch (err) {
+            console.error('Failed to update student status setting:', err);
+            setShowStudentStatus(!newValue); // Revert on error
+        }
+    };
+
+    // ─── Score Editing Handlers ───
+    const handleCellClick = (studentId, category, currentScore) => {
+        setEditingCell({ studentId, category });
+        setTempScore(currentScore.toString());
+    };
+    const handleScoreChange = (e) => setTempScore(e.target.value);
+    const handleSaveScore = () => {
+        const { studentId, category } = editingCell;
+        if (!studentId || !category) return;
+        const newScoreValue = parseFloat(tempScore);
+        if (isNaN(newScoreValue)) { setEditingCell({ studentId: null, category: null }); setTempScore(''); return; }
+        setScoresTable(prev => prev.map(s => {
+            if (s.student._id === studentId) {
+                const updatedCategorizedScores = { ...s.categorizedScores, [category]: newScoreValue };
+                const updatedTotalScore = Object.values(updatedCategorizedScores).reduce((sum, score) => sum + score, 0);
+                return { ...s, categorizedScores: updatedCategorizedScores, totalScore: updatedTotalScore };
+            }
+            return s;
+        }));
+        if (onUpdateScores) onUpdateScores(studentId, category, newScoreValue);
+        setEditingCell({ studentId: null, category: null });
+        setTempScore('');
+    };
+    const handleKeyDown = (e) => { if (e.key === 'Enter') e.target.blur(); };
+
+    // ─── Bell Curve Chart Data ───
     const chartData = useMemo(() => {
         if (!summaryData || summaryData.studentData.length === 0) return null;
-
         const mean = summaryData.statistics.mean;
-        const stdDev = summaryData.statistics.stdDev > 0 ? summaryData.statistics.stdDev : 1; // Prevent division by zero
-        
+        const stdDev = summaryData.statistics.stdDev > 0 ? summaryData.statistics.stdDev : 1;
         let minScore = Math.floor(mean - 3 * stdDev);
         let maxScore = Math.ceil(mean + 3 * stdDev);
         if (minScore < 0) minScore = 0;
-
-        // Ensure we cover the max actual score
         const actualMax = summaryData.statistics.max;
         if (actualMax > maxScore) maxScore = Math.ceil(actualMax + stdDev);
-
         const labels = [];
         const dataPDF = [];
         const step = Math.max(0.1, (maxScore - minScore) / 50);
-
         for (let x = minScore; x <= maxScore; x += step) {
             labels.push(x.toFixed(1));
-            // Normal distribution formula
             const exponent = Math.exp(-Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2)));
             const pdf = (1 / (stdDev * Math.sqrt(2 * Math.PI))) * exponent;
             dataPDF.push(pdf);
         }
-
-        // Selected Student Highlight
-        const datasets = [
-            {
-                label: 'Class Distribution',
-                data: dataPDF,
-                borderColor: '#2980b9',
-                backgroundColor: 'rgba(41, 128, 185, 0.2)',
-                borderWidth: 2,
-                fill: true,
-                pointRadius: 0,
-                tension: 0.4,
-            }
-        ];
-
+        const datasets = [{
+            label: 'Class Distribution',
+            data: dataPDF,
+            borderColor: 'rgba(99, 102, 241, 1)',
+            backgroundColor: 'rgba(99, 102, 241, 0.15)',
+            borderWidth: 2.5, fill: true, pointRadius: 0, tension: 0.4,
+        }];
         if (selectedStudentId !== 'overview') {
             const student = summaryData.studentData.find(s => s.id === selectedStudentId);
             if (student) {
-                // Find nearest label index to student score
-                let closestIndex = 0;
-                let minDiff = Infinity;
-                labels.forEach((label, idx) => {
-                    const diff = Math.abs(parseFloat(label) - student.combinedScore);
-                    if (diff < minDiff) {
-                        minDiff = diff;
-                        closestIndex = idx;
-                    }
-                });
-
+                let closestIndex = 0; let minDiff = Infinity;
+                labels.forEach((label, idx) => { const diff = Math.abs(parseFloat(label) - student.combinedScore); if (diff < minDiff) { minDiff = diff; closestIndex = idx; } });
                 const studentDataPoints = Array(labels.length).fill(null);
-                studentDataPoints[closestIndex] = dataPDF[closestIndex]; // Put point on curve
-
+                studentDataPoints[closestIndex] = dataPDF[closestIndex];
                 datasets.push({
                     label: `${student.name} (${student.combinedScore.toFixed(1)} pts)`,
                     data: studentDataPoints,
-                    borderColor: '#e74c3c',
-                    backgroundColor: '#e74c3c',
-                    pointBackgroundColor: '#e74c3c',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8,
-                    showLine: false, // Only show the point
+                    borderColor: '#f43f5e', backgroundColor: '#f43f5e',
+                    pointBackgroundColor: '#f43f5e', pointBorderColor: '#ffffff',
+                    pointBorderWidth: 3, pointRadius: 7, pointHoverRadius: 9, showLine: false,
                 });
             }
         }
-
-        return {
-            labels,
-            datasets
-        };
-
+        return { labels, datasets };
     }, [summaryData, selectedStudentId]);
 
     const chartOptions = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
-            legend: {
-                position: 'top',
-                labels: {
-                    font: {
-                        family: "'Inter', sans-serif",
-                        size: 13
-                    }
-                }
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        if (context.dataset.label.includes('Distribution')) {
-                            return 'Probability Density';
-                        }
-                        return context.dataset.label;
-                    }
-                }
-            }
+            legend: { position: 'top', labels: { font: { family: "'Inter', sans-serif", size: 12 }, usePointStyle: true, padding: 16 } },
+            tooltip: { callbacks: { label: (ctx) => ctx.dataset.label.includes('Distribution') ? 'Probability Density' : ctx.dataset.label } }
         },
         scales: {
-            x: {
-                title: {
-                    display: true,
-                    text: 'Total Score',
-                    font: {
-                        size: 14,
-                        family: "'Inter', sans-serif",
-                        weight: '600'
-                    }
-                },
-                grid: {
-                    display: false
-                }
-            },
-            y: {
-                display: false, // Hide Y axis as probability density isn't very intuitive for users
-                beginAtZero: true
-            }
+            x: { title: { display: true, text: 'Total Score', font: { size: 13, family: "'Inter', sans-serif", weight: '600' } }, grid: { display: false } },
+            y: { display: false, beginAtZero: true }
         }
     };
 
-
+    // ─── Loading / Error States ───
     if (loading) {
         return (
-            <div className="formal-summary-container">
-                <div className="loading-spinner"></div>
-                <div className="loading-text">Loading comprehensive analysis...</div>
+            <div className="bento-summary-container">
+                <div className="bento-loading">
+                    <div className="bento-loading-spinner"></div>
+                    <p>Loading comprehensive analysis...</p>
+                </div>
             </div>
         );
     }
-
     if (error) {
         return (
-            <div className="formal-summary-container">
-                <div className="error-box">{error}</div>
+            <div className="bento-summary-container">
+                <div className="bento-error">{error}</div>
             </div>
         );
     }
 
-    const selectedStudent = selectedStudentId !== 'overview' 
-        ? summaryData.studentData.find(s => s.id === selectedStudentId) 
-        : null;
+    const selectedStudent = selectedStudentId !== 'overview' ? summaryData?.studentData.find(s => s.id === selectedStudentId) : null;
+    const studentRank = selectedStudent ? summaryData.studentData.findIndex(s => s.id === selectedStudent.id) + 1 : null;
+    const topStudents = scoresTable.length > 0 ? [...scoresTable].sort((a, b) => b.totalScore - a.totalScore).slice(0, 3) : [];
 
-    const studentRank = selectedStudent 
-        ? summaryData.studentData.findIndex(s => s.id === selectedStudent.id) + 1 
-        : null;
-
+    // ─── RENDER ───
     return (
-        <div className="formal-summary-container">
-            <div className="fs-header">
-                <div className="fs-header-text">
-                    <h2>Formal Performance Report</h2>
-                    <p>Comprehensive statistical analysis of student performance</p>
-                </div>
-                
-                <div className="fs-selector-wrapper">
-                    <label className="fs-label">SELECT STUDENT:</label>
-                    <div className="fs-custom-select-container">
-                        <div 
-                            className={`fs-custom-select-display ${isDropdownOpen ? 'active' : ''}`}
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        >
-                            {selectedStudentId === 'overview' ? (
-                                <div className="fs-custom-display-content">
-                                    <span>--- Class Overview ---</span>
-                                </div>
-                            ) : (
-                                (() => {
-                                    const selected = summaryData?.studentData.find(s => s.id === selectedStudentId);
-                                    if (!selected) return <span>--- Class Overview ---</span>;
-                                    return (
-                                        <div className="fs-custom-display-content">
-                                            <img 
-                                                src={getProfileImageSrc(selected.photoURL, isGoogleUser(selected.user))} 
-                                                alt={selected.name}
-                                                onError={handleImageError}
-                                                className="fs-dropdown-avatar"
-                                            />
-                                            <span>{selected.name}</span>
-                                        </div>
-                                    );
-                                })()
-                            )}
-                        </div>
-                        {isDropdownOpen && (
-                            <div className="fs-custom-select-dropdown">
-                                <div 
-                                    className={`fs-custom-option ${selectedStudentId === 'overview' ? 'selected' : ''}`}
-                                    onClick={() => { setSelectedStudentId('overview'); setIsDropdownOpen(false); }}
-                                >
-                                    <div className="fs-custom-option-content overview">
-                                        <span>--- Class Overview ---</span>
-                                    </div>
-                                </div>
-                                {summaryData && summaryData.studentData.map(student => (
-                                    <div 
-                                        key={student.id} 
-                                        className={`fs-custom-option ${selectedStudentId === student.id ? 'selected' : ''}`}
-                                        onClick={() => { setSelectedStudentId(student.id); setIsDropdownOpen(false); }}
-                                    >
-                                        <div className="fs-custom-option-content">
-                                            <img 
-                                                src={getProfileImageSrc(student.photoURL, isGoogleUser(student.user))} 
-                                                alt={student.name}
-                                                onError={handleImageError}
-                                                className="fs-dropdown-avatar"
-                                            />
-                                            <span>{student.name}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+        <div className="bento-summary-container">
+            {/* ═══ Header ═══ */}
+            <div className="bento-header">
+                <div className="bento-header-left">
+                    <div className="bento-header-icon"><SvgAward /></div>
+                    <div>
+                        <h1>Class Summary</h1>
+                        <p>Comprehensive performance analytics &amp; scoreboard</p>
                     </div>
                 </div>
+                <div className="bento-select-container">
+                    <div className={`bento-select-display ${isDropdownOpen ? 'open' : ''}`} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                        {selectedStudentId === 'overview' ? (
+                            <span className="bento-select-text">📊 Class Overview</span>
+                        ) : (() => {
+                            const s = summaryData?.studentData.find(st => st.id === selectedStudentId);
+                            return s ? (
+                                <div className="bento-select-student">
+                                    <img src={getProfileImageSrc(s.photoURL, isGoogleUser(s.user))} alt={s.name} onError={handleImageError} />
+                                    <span>{s.name}</span>
+                                </div>
+                            ) : <span>Select...</span>;
+                        })()}
+                        <svg className="bento-select-arrow" width="12" height="12" viewBox="0 0 12 12"><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    </div>
+                    {isDropdownOpen && (
+                        <div className="bento-select-dropdown">
+                            <div className={`bento-select-option ${selectedStudentId === 'overview' ? 'active' : ''}`} onClick={() => { setSelectedStudentId('overview'); setIsDropdownOpen(false); }}>
+                                <span>📊 Class Overview</span>
+                            </div>
+                            {summaryData?.studentData.map(student => (
+                                <div key={student.id} className={`bento-select-option ${selectedStudentId === student.id ? 'active' : ''}`} onClick={() => { setSelectedStudentId(student.id); setIsDropdownOpen(false); }}>
+                                    <img src={getProfileImageSrc(student.photoURL, isGoogleUser(student.user))} alt={student.name} onError={handleImageError} />
+                                    <span>{student.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                {isCreator && (
+                    <div className="bento-status-toggle">
+                        <label className="status-toggle-label">
+                            <span className="status-toggle-text">Show Student Status</span>
+                            <div className={`status-toggle-switch ${showStudentStatus ? 'active' : ''}`} onClick={handleToggleStudentStatus}>
+                                <div className="status-toggle-knob"></div>
+                            </div>
+                        </label>
+                    </div>
+                )}
             </div>
 
             {summaryData && (
-                <div className="fs-content">
+                <div className={`bento-grid ${selectedStudentId !== 'overview' ? 'student-view' : ''}`}>
 
-                    {/* Left Column: Stats & Profile */}
-                    <div className="fs-left-column">
-                        
-                        {/* Selected Student View */}
-                        {selectedStudent ? (
-                            <div className="fs-card profile-card">
-                                <div className="student-profile-header">
-                                    <img 
-                                        src={getProfileImageSrc(selectedStudent.photoURL, isGoogleUser(selectedStudent.user))} 
-                                        alt={selectedStudent.name}
-                                        onError={handleImageError}
-                                        className="student-avatar"
-                                    />
-                                    <div className="student-identifiers">
-                                        <h3>{selectedStudent.name}</h3>
-                                        <span className="student-group-badge">Group {selectedStudent.group}</span>
-                                    </div>
-                                </div>
-                                
-                                <div className="student-metrics-grid">
-                                    <div className="s-metric">
-                                        <label>Rank</label>
-                                        <div className="val highlight">#{studentRank} <span className="sub">/ {summaryData.totalStudents}</span></div>
-                                    </div>
-                                    <div className="s-metric">
-                                        <label>Total Score</label>
-                                        <div className="val">{selectedStudent.combinedScore.toFixed(1)}</div>
-                                    </div>
-                                    <div className="s-metric">
-                                        <label>Percentile</label>
-                                        <div className="val">{selectedStudent.percentile.toFixed(1)}%</div>
-                                    </div>
-                                    <div className="s-metric">
-                                        <label>Relative Grade</label>
-                                        <div className={`val grade-text grade-${selectedStudent.grade.substring(0, 1).toLowerCase()}`}>{selectedStudent.grade}</div>
-                                    </div>
-                                    <div className="s-metric">
-                                        <label>Z-Score</label>
-                                        <div className="val">{selectedStudent.zScore > 0 ? '+' : ''}{selectedStudent.zScore.toFixed(2)}</div>
-                                    </div>
-                                    <div className="s-metric">
-                                        <label>Attendance</label>
-                                        <div className="val">{(selectedStudent.attendanceRate * 100).toFixed(0)}%</div>
-                                    </div>
-                                </div>
-
-                                <div className="student-analysis-text">
-                                    <h4>Performance Analysis</h4>
-                                    <p>
-                                        {selectedStudent.name} is performing in the <strong>Top {100 - Math.round(selectedStudent.percentile)}%</strong> of the class. 
-                                        With a total score of <strong>{selectedStudent.combinedScore.toFixed(1)}</strong>, they are 
-                                        {Math.abs(selectedStudent.zScore).toFixed(2)} standard deviations {selectedStudent.zScore >= 0 ? 'above' : 'below'} the class average.
-                                        Their attendance rate is <strong>{(selectedStudent.attendanceRate * 100).toFixed(0)}%</strong>.
-                                    </p>
-                                </div>
+                    {/* ═══ Tile 1: Top Performers Podium ═══ */}
+                    {selectedStudentId === 'overview' && topStudents.length > 0 && (
+                        <div className="bento-tile bento-podium" style={{ '--delay': '0' }}>
+                            <div className="bento-tile-header">
+                                <SvgTrophy />
+                                <h3>Top Performers</h3>
                             </div>
-                        ) : (
-                            /* Class Overview Profile Placeholder */
-                            <div className="fs-card overview-card">
-                                <h3>Class Statistics Overview</h3>
-                                <div className="overview-stats-grid">
-                                    <div className="s-metric">
-                                        <label>Total Students</label>
-                                        <div className="val">{summaryData.totalStudents}</div>
+                            <div className="podium-wrap">
+                                {/* 2nd */}
+                                {topStudents[1] && (
+                                    <div className="podium-col second">
+                                        <div className="podium-medal silver"><SvgMedal /></div>
+                                        <img src={getProfileImageSrc(topStudents[1].student.photoURL, isGoogleUser(topStudents[1].student))} alt={topStudents[1].student.displayName} className="podium-img" />
+                                        <div className="podium-bar">
+                                            <span className="podium-rank-num">2nd</span>
+                                        </div>
+                                        <p className="podium-name">{topStudents[1].student.displayName}</p>
+                                        <span className="podium-pts">{topStudents[1].totalScore} pts</span>
                                     </div>
-                                    <div className="s-metric">
-                                        <label>Class Average (μ)</label>
-                                        <div className="val highlight">{summaryData.statistics.mean.toFixed(2)}</div>
+                                )}
+                                {/* 1st */}
+                                {topStudents[0] && (
+                                    <div className="podium-col first">
+                                        <div className="podium-medal gold"><SvgCrown /></div>
+                                        <img src={getProfileImageSrc(topStudents[0].student.photoURL, isGoogleUser(topStudents[0].student))} alt={topStudents[0].student.displayName} className="podium-img first-img" />
+                                        <div className="podium-bar first-bar">
+                                            <span className="podium-rank-num">1st</span>
+                                        </div>
+                                        <p className="podium-name">{topStudents[0].student.displayName}</p>
+                                        <span className="podium-pts">{topStudents[0].totalScore} pts</span>
                                     </div>
-                                    <div className="s-metric">
-                                        <label>Median Score</label>
-                                        <div className="val">{summaryData.statistics.median.toFixed(2)}</div>
+                                )}
+                                {/* 3rd */}
+                                {topStudents[2] && (
+                                    <div className="podium-col third">
+                                        <div className="podium-medal bronze"><SvgMedal /></div>
+                                        <img src={getProfileImageSrc(topStudents[2].student.photoURL, isGoogleUser(topStudents[2].student))} alt={topStudents[2].student.displayName} className="podium-img" />
+                                        <div className="podium-bar">
+                                            <span className="podium-rank-num">3rd</span>
+                                        </div>
+                                        <p className="podium-name">{topStudents[2].student.displayName}</p>
+                                        <span className="podium-pts">{topStudents[2].totalScore} pts</span>
                                     </div>
-                                    <div className="s-metric">
-                                        <label>Standard Dev (σ)</label>
-                                        <div className="val">{summaryData.statistics.stdDev.toFixed(2)}</div>
-                                    </div>
-                                    <div className="s-metric">
-                                        <label>Highest Score</label>
-                                        <div className="val">{summaryData.statistics.max.toFixed(2)}</div>
-                                    </div>
-                                    <div className="s-metric">
-                                        <label>Avg Attendance</label>
-                                        <div className="val">{(summaryData.classMetrics.avgAttendance * 100).toFixed(1)}%</div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                    </div>
-
-                    {/* Right Column: Bell Curve Chart */}
-                    <div className="fs-right-column">
-                        <div className="fs-card chart-card">
-                            <h3>Normal Distribution (Bell Curve)</h3>
-                            <div className="chart-wrapper">
-                                {chartData ? (
-                                    <Line data={chartData} options={chartOptions} />
-                                ) : (
-                                    <div className="no-data">Insufficient data to generate curve</div>
                                 )}
                             </div>
-                            <div className="chart-explanation">
+                        </div>
+                    )}
+
+                    {/* ═══ Tile: Student Profile (when selected) ═══ */}
+                    {selectedStudent && (
+                        <div className="bento-tile bento-profile" style={{ '--delay': '0' }}>
+                            <div className="bento-tile-header">
+                                <SvgTarget />
+                                <h3>Student Profile</h3>
+                            </div>
+                            <div className="profile-top">
+                                <img src={getProfileImageSrc(selectedStudent.photoURL, isGoogleUser(selectedStudent.user))} alt={selectedStudent.name} onError={handleImageError} className="profile-avatar" />
+                                <div className="profile-info">
+                                    <h4>{selectedStudent.name}</h4>
+                                    <span className="profile-group-badge">Group {selectedStudent.group}</span>
+                                </div>
+                            </div>
+                            <div className="profile-metrics">
+                                <div className="pm-item accent">
+                                    <label>Rank</label>
+                                    <span className="pm-val">#{studentRank} <small>/ {summaryData.totalStudents}</small></span>
+                                </div>
+                                <div className="pm-item">
+                                    <label>Total Score</label>
+                                    <span className="pm-val">{selectedStudent.combinedScore.toFixed(1)}</span>
+                                </div>
+                                <div className="pm-item">
+                                    <label>Percentile</label>
+                                    <span className="pm-val">{selectedStudent.percentile.toFixed(1)}%</span>
+                                </div>
+                                <div className="pm-item">
+                                    <label>Grade</label>
+                                    <span className={`pm-val pm-grade pm-grade-${selectedStudent.grade.substring(0, 1).toLowerCase()}`}>{selectedStudent.grade}</span>
+                                </div>
+                                <div className="pm-item">
+                                    <label>Z-Score</label>
+                                    <span className="pm-val">{selectedStudent.zScore > 0 ? '+' : ''}{selectedStudent.zScore.toFixed(2)}</span>
+                                </div>
+                                <div className="pm-item">
+                                    <label>Attendance</label>
+                                    <span className="pm-val">{(selectedStudent.attendanceRate * 100).toFixed(0)}%</span>
+                                </div>
+                            </div>
+                            <div className="profile-analysis">
+                                <h5>📝 Performance Analysis</h5>
                                 <p>
-                                    This chart represents the probability distribution of scores across the class. 
-                                    The curve peaks at the class average ({summaryData.statistics.mean.toFixed(1)}). 
-                                    {selectedStudent && <span className="student-highlight-text"> The red dot indicates {selectedStudent.name}'s position relative to the rest of the class.</span>}
+                                    {selectedStudent.name} is performing in the <strong>Top {Math.max(1, 100 - Math.round(selectedStudent.percentile))}%</strong> of the class.
+                                    With a total score of <strong>{selectedStudent.combinedScore.toFixed(1)}</strong>, they are {Math.abs(selectedStudent.zScore).toFixed(2)} standard deviations {selectedStudent.zScore >= 0 ? 'above' : 'below'} the class average.
+                                    Their attendance rate is <strong>{(selectedStudent.attendanceRate * 100).toFixed(0)}%</strong>.
                                 </p>
                             </div>
                         </div>
+                    )}
+
+                    {/* ═══ Tile 2: Stats Cards ═══ */}
+                    {selectedStudentId === 'overview' && (
+                        <div className="bento-tile bento-stats-grid" style={{ '--delay': '1' }}>
+                            <div className="bento-tile-header">
+                                <SvgBarChart />
+                                <h3>Class Statistics</h3>
+                            </div>
+                            <div className="stats-mini-grid">
+                                <div className="stat-mini students">
+                                    <div className="stat-mini-icon"><SvgUsers /></div>
+                                    <div><h4>Total Students</h4><p>{summaryData.totalStudents}</p></div>
+                                </div>
+                                <div className="stat-mini average">
+                                    <div className="stat-mini-icon"><SvgTrendUp /></div>
+                                    <div><h4>Class Average (μ)</h4><p>{summaryData.statistics.mean.toFixed(2)}</p></div>
+                                </div>
+                                <div className="stat-mini highest">
+                                    <div className="stat-mini-icon"><SvgStar /></div>
+                                    <div><h4>Highest Score</h4><p>{summaryData.statistics.max.toFixed(2)}</p></div>
+                                </div>
+                                <div className="stat-mini lowest">
+                                    <div className="stat-mini-icon"><SvgBarChart /></div>
+                                    <div><h4>Lowest Score</h4><p>{summaryData.statistics.min.toFixed(2)}</p></div>
+                                </div>
+                                <div className="stat-mini median">
+                                    <div className="stat-mini-icon"><SvgTarget /></div>
+                                    <div><h4>Median</h4><p>{summaryData.statistics.median.toFixed(2)}</p></div>
+                                </div>
+                                <div className="stat-mini stddev">
+                                    <div className="stat-mini-icon"><SvgBellCurve /></div>
+                                    <div><h4>Std Dev (σ)</h4><p>{summaryData.statistics.stdDev.toFixed(2)}</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ═══ Tile 3: Bell Curve ═══ */}
+                    <div className="bento-tile bento-chart" style={{ '--delay': '2' }}>
+                        <div className="bento-tile-header">
+                            <SvgBellCurve />
+                            <h3>Normal Distribution (Bell Curve)</h3>
+                        </div>
+                        <div className="bento-chart-wrap">
+                            {chartData ? (
+                                <Line data={chartData} options={chartOptions} />
+                            ) : (
+                                <div className="bento-no-data">Insufficient data to generate curve</div>
+                            )}
+                        </div>
+                        <div className="bento-chart-note">
+                            <p>
+                                Distribution peaks at the class average ({summaryData.statistics.mean.toFixed(1)}).
+                                {selectedStudent && <span className="bento-highlight-dot"> The red dot indicates {selectedStudent.name}'s position.</span>}
+                            </p>
+                        </div>
                     </div>
-                </div>
-            )}
-            
-            {/* Detailed Table underneath */}
-            {summaryData && selectedStudentId === 'overview' && (
-                <div className="fs-card table-card">
-                    <h3>Full Class Rankings</h3>
-                    <div className="fs-table-wrapper">
-                        <table className="fs-table">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Student Name</th>
-                                    <th>Group</th>
-                                    <th>Total Score</th>
-                                    <th>Z-Score</th>
-                                    <th>Percentile</th>
-                                    <th>Est. Grade</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {summaryData.studentData.map((student, idx) => (
-                                    <tr key={student.id}>
-                                        <td><strong>#{idx + 1}</strong></td>
-                                        <td>
-                                            <div className="td-profile">
-                                                <img 
-                                                    src={getProfileImageSrc(student.photoURL, isGoogleUser(student.user))} 
-                                                    alt={student.name}
-                                                    onError={handleImageError}
-                                                />
-                                                {student.name}
+
+                    {/* ═══ Tile 4: Category Breakdown ═══ */}
+                    {scoreStats && Object.keys(scoreStats.categoryAverages).length > 0 && (
+                        <div className="bento-tile bento-categories" style={{ '--delay': '3' }}>
+                            <div className="bento-tile-header">
+                                <SvgBarChart />
+                                <h3>Category Breakdown</h3>
+                            </div>
+                            <div className="category-bars">
+                                {Object.entries(scoreStats.categoryAverages).map(([category, average]) => {
+                                    const absAverage = Math.abs(average);
+                                    const maxAbsAverage = Math.max(...Object.values(scoreStats.categoryAverages).map(Math.abs), 1);
+                                    const widthPercentage = (absAverage / maxAbsAverage) * 100;
+                                    const isNegative = average < 0;
+                                    return (
+                                        <div className="cat-bar-item" key={category}>
+                                            <div className="cat-bar-label">
+                                                <span>{category}</span>
+                                                <span className={`cat-bar-val ${isNegative ? 'neg' : 'pos'}`}>{average.toFixed(1)}</span>
                                             </div>
-                                        </td>
-                                        <td>{student.group}</td>
-                                        <td><strong>{student.combinedScore.toFixed(1)}</strong></td>
-                                        <td>{student.zScore > 0 ? '+' : ''}{student.zScore.toFixed(2)}</td>
-                                        <td>{student.percentile.toFixed(1)}%</td>
-                                        <td><span className={`fs-grade fs-grade-${student.grade.substring(0, 1).toLowerCase()}`}>{student.grade}</span></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                            <div className="cat-bar-track">
+                                                <div className={`cat-bar-fill ${isNegative ? 'neg' : 'pos'}`} style={{ width: `${widthPercentage}%` }}></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ═══ Tile 5: Editable Score Table ═══ */}
+                    {scoresTable.length > 0 && (
+                        <div className="bento-tile bento-score-table" style={{ '--delay': '4' }}>
+                            <div className="bento-tile-header">
+                                <SvgEdit />
+                                <h3>Detailed Scores</h3>
+                                <span className="bento-tile-badge">Click to edit</span>
+                            </div>
+                            <div className="bento-table-scroll">
+                                <table className="bento-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Student</th>
+                                            {scoreCategories.map(cat => <th key={cat}>{cat}</th>)}
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {[...scoresTable].sort((a, b) => b.totalScore - a.totalScore).map((score, index) => (
+                                            <tr key={score.student._id} className={index < 3 ? `top-rank-row rank-${index + 1}` : ''}>
+                                                <td>
+                                                    <span className={`bento-rank-badge ${index < 3 ? `rank-${index + 1}` : ''}`}>{index + 1}</span>
+                                                </td>
+                                                <td>
+                                                    <div className="bento-student-cell">
+                                                        <img src={getProfileImageSrc(score.student.photoURL, isGoogleUser(score.student))} alt={score.student.displayName} />
+                                                        <span>{score.student.displayName}</span>
+                                                        {index === 0 && <span className="bento-crown-inline"><SvgCrown /></span>}
+                                                    </div>
+                                                </td>
+                                                {scoreCategories.map(category => (
+                                                    <td key={category} onClick={() => handleCellClick(score.student._id, category, score.categorizedScores[category] || 0)} className="bento-score-cell">
+                                                        {editingCell.studentId === score.student._id && editingCell.category === category ? (
+                                                            <input type="number" value={tempScore} onChange={handleScoreChange} onBlur={handleSaveScore} onKeyDown={handleKeyDown} autoFocus className="bento-score-input" />
+                                                        ) : (
+                                                            <span className={`bento-score-val ${(score.categorizedScores[category] || 0) > 0 ? 'positive' : (score.categorizedScores[category] || 0) < 0 ? 'negative' : 'zero'}`}>
+                                                                {score.categorizedScores[category] || 0}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                ))}
+                                                <td className="bento-total-cell">{score.totalScore}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ═══ Tile 6: Full Class Rankings ═══ */}
+                    {selectedStudentId === 'overview' && (
+                        <div className="bento-tile bento-rankings" style={{ '--delay': '5' }}>
+                            <div className="bento-tile-header">
+                                <SvgAward />
+                                <h3>Class Rankings</h3>
+                            </div>
+                            <div className="bento-table-scroll">
+                                <table className="bento-table bento-ranking-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Student</th>
+                                            <th>Group</th>
+                                            <th>Total Score</th>
+                                            <th>Z-Score</th>
+                                            <th>Percentile</th>
+                                            <th>Grade</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {summaryData.studentData.map((student, idx) => (
+                                            <tr key={student.id}>
+                                                <td><span className={`bento-rank-badge ${idx < 3 ? `rank-${idx + 1}` : ''}`}>{idx + 1}</span></td>
+                                                <td>
+                                                    <div className="bento-student-cell">
+                                                        <img src={getProfileImageSrc(student.photoURL, isGoogleUser(student.user))} alt={student.name} onError={handleImageError} />
+                                                        <span>{student.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td>{student.group}</td>
+                                                <td><strong>{student.combinedScore.toFixed(1)}</strong></td>
+                                                <td>{student.zScore > 0 ? '+' : ''}{student.zScore.toFixed(2)}</td>
+                                                <td>{student.percentile.toFixed(1)}%</td>
+                                                <td><span className={`bento-grade bento-grade-${student.grade.substring(0, 1).toLowerCase()}`}>{student.grade}</span></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

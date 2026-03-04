@@ -124,7 +124,13 @@ const AttendanceTracker = ({ classroom, user }) => {
 
     if (!classroom) return <div>Loading...</div>;
 
-    const participants = classroom.participants || [];
+    const participants = (classroom.participants || []).filter(p => {
+        const pId = p._id || p.id || p.toString();
+        return !classroom.creator?.some(c => {
+            const cId = c._id || c.id || c.toString();
+            return cId === pId;
+        });
+    });
     const daysArray = Array.from({ length: attendanceDays }, (_, i) => i + 1);
 
     // --- Summary Calculations ---

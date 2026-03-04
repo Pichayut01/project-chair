@@ -31,6 +31,12 @@ const assignmentSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    attachments: [{
+        type: { type: String, enum: ['file', 'link', 'image'], default: 'file' },
+        url: { type: String },
+        filename: { type: String },
+        mimetype: { type: String }
+    }],
     creator: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

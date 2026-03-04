@@ -28,6 +28,7 @@ const Navbar = ({
     isAppSettingPage, appActiveSection, onAppSectionChange, // เพิ่ม props สำหรับ AppSettings page
     isClassDetailPage, classDetailActiveSection, onClassDetailSectionChange, // เพิ่ม props สำหรับ ClassDetail page
     isStreamPage, streamActiveSection, onStreamSectionChange, // ✨ เพิ่ม props สำหรับ Stream page
+    isAssignmentDetailPage, classId, // ✨ สำหรับหน้า Assignment Detail Page
 
     onAddNotification, // ✨ Prop สำหรับรับฟังก์ชันเพิ่มการแจ้งเตือน
     children // ✨ Allow custom children content
@@ -559,15 +560,6 @@ const Navbar = ({
                                 </div>
                             </li>
                             <li
-                                className={`sidebar-list-item ${classDetailActiveSection === 'scoreboard' ? 'active' : ''}`}
-                                onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('scoreboard')}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <FaTrophy size={16} />
-                                    <span>Scoreboard</span>
-                                </div>
-                            </li>
-                            <li
                                 className={`sidebar-list-item ${classDetailActiveSection === 'history' ? 'active' : ''}`}
                                 onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('history')}
                             >
@@ -630,6 +622,48 @@ const Navbar = ({
                             <li
                                 className={`sidebar-list-item ${streamActiveSection === 'classwork' ? 'active' : ''}`}
                                 onClick={() => onStreamSectionChange && onStreamSectionChange('classwork')}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaLayerGroup size={16} />
+                                    <span>Classwork</span>
+                                </div>
+                            </li>
+                            <li
+                                className={`sidebar-list-item ${streamActiveSection === 'calendar' ? 'active' : ''}`}
+                                onClick={() => onStreamSectionChange && onStreamSectionChange('calendar')}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaCalendarCheck size={16} />
+                                    <span>Calendar</span>
+                                </div>
+                            </li>
+                        </>
+                    ) : isAssignmentDetailPage ? (
+                        <>
+                            <li className="sidebar-list-item sidebar-back-button" onClick={onClassroomBackClick || handleBackClick}>
+                                <FiArrowLeft size={18} />
+                                <span>Back to Classwork</span>
+                            </li>
+                            <hr className="divider" style={{
+                                margin: "8px 0",
+                                border: "none",
+                                height: "1px",
+                                backgroundColor: "#e2e8f0",
+                                width: "100%",
+                                display: "block"
+                            }} />
+                            <li
+                                className={`sidebar-list-item`}
+                                onClick={() => navigate(`/classroom/${classroom?._id || classId}/stream`, { state: { activeTab: 'stream' } })}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FiBook size={16} />
+                                    <span>Stream</span>
+                                </div>
+                            </li>
+                            <li
+                                className="sidebar-list-item active"
+                                onClick={() => navigate(`/classroom/${classroom?._id || classId}/stream`, { state: { activeTab: 'classwork' } })}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaLayerGroup size={16} />

@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import AssignRate from '../components/AssignRate';
-import Scoreboard from '../components/Scoreboard';
+
 import Loader from '../components/Loader';
 import '../CSS/ClassDetailPage.css';
 import '../CSS/Navbar.css';
@@ -94,11 +94,9 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
     const renderContent = () => {
         switch (activeSection) {
             case 'summary':
-                return <Summary classId={classId} user={user} />;
+                return <Summary classId={classId} user={user} classroom={classroom} onUpdateScores={handleUpdateScores} />;
             case '1':
                 return <AssignRate classId={classId} user={user} />;
-            case 'scoreboard':
-                return <Scoreboard classroom={classroom} user={user} onUpdateScores={handleUpdateScores} />;
             case '2':
                 return (
                     <div className="class-detail-content">

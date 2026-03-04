@@ -10,8 +10,8 @@
   transform: none;
   margin-top: auto;
   /* ✨ Push to bottom if space permits */
-  width: 100%;
-  /* ✨ Full width container */
+  width: auto;
+  /* ✨ Automatically fill remaining space minus margins */
   display: flex;
   /* ✨ Use flex to center the navbody */
   justify-content: center;
@@ -20,17 +20,17 @@
   overflow: visible;
   /* ✨ Ensure popovers can be seen */
   margin-left: 10px;
-  margin-right: auto;
+  margin-right: 10px;
   margin-top: 10px;
 }
 
 #navbody {
-  margin-right: 10px;
-  width: 100%;
+  margin: 0;
+  flex: 1;
+  width: auto;
   /* ✨ Expanded width to match container */
   max-width: none;
   /* Remove cap to align edges */
-  min-width: 300px;
   min-width: 300px;
   margin-bottom: 5px;
   /* ✨ Align flush to bottom */
@@ -127,14 +127,14 @@
     position: relative;
     bottom: auto;
     /* ✨ Remove fixed bottom */
-    width: 100%;
+    width: auto;
     /* ✨ Full width */
     margin-top: 8px;
     /* ✨ Add space above */
     z-index: 1;
     /* ✨ Lower z-index since it's not fixed */
-    margin-left: 10px;
-    margin-right: 10px;
+    margin-left: 5px;
+    margin-right: 5px;
   }
 
   #navbody {
@@ -142,7 +142,8 @@
     /* ✨ Tighten padding */
     border-radius: 12px;
     /* ✨ Slightly more rounded */
-    width: 100%;
+    width: auto;
+    flex: 1;
     /* ✨ Match seating arrangement width */
     margin: 0;
     /* ✨ Reset margin */
@@ -151,11 +152,10 @@
     height: auto;
     /* ✨ Allow height to grow */
     min-height: 60px;
-    margin-right: 10px;
   }
 
   .ul {
-    justify-content: flex-start;
+    justify-content: center;
     /* ✨ Center items */
     padding: 5px;
     /* ✨ Add internal padding */

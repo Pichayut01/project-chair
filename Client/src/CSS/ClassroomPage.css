@@ -90,13 +90,14 @@
 
 .classroom-header-content {
   flex: 1;
+  width: 100%;
   position: relative;
   /* Ensure content is above overlay */
   z-index: 1;
   /* Higher z-index to be on top of the overlay */
   min-width: 0;
   /* ให้สามารถย่อได้ */
-  margin-right: 10px;
+  margin-right: 0px;
   /* ลดระยะห่างจากปุ่ม */
 }
 
@@ -146,6 +147,62 @@
     white-space: normal;
     /* Allow wrapping */
     font-size: 0.9rem;
+  }
+}
+
+.classroom-header-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  margin-bottom: 0px;
+}
+
+.classroom-header-titles {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 1; /* Allow titles to shrink if necessary */
+  min-width: 0;
+}
+
+.header-student-banner-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-left: auto; /* Always push to the far right */
+  flex-shrink: 0; /* Prevent the banner from getting squished too much */
+}
+
+@media (max-width: 768px) {
+  .classroom-header {
+    padding: 12px 15px;
+  }
+  .classroom-header-title-row {
+    flex-direction: column; /* Stack on mobile */
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+  }
+  .classroom-header-titles {
+    width: 100%;
+    min-width: 0;
+  }
+  .classroom-header h1 {
+    font-size: 1.25rem !important;
+    white-space: normal !important; /* Allow it to wrap if really long, or keep nowrap */
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .classroom-header p {
+    display: none !important; /* Hide subtitle to save space on mobile */
+  }
+  .header-student-banner-container {
+    align-self: flex-start; /* Align banner to the left */
+    margin-left: 0;
+  }
+  .banner-collapse-btn {
+    display: none !important; /* Hide collapse button on mobile */
   }
 }
 
@@ -296,7 +353,6 @@
   width: 320px;
   /* Expanded width */
   opacity: 1;
-  margin-left: 10px;
   margin-right: 10px;
   border: 1px solid #ffffff;
 }
@@ -722,6 +778,7 @@
     /* Slide in */
     width: 100%;
     margin-left: 0;
+    margin-right: 0;
     /* Override desktop margin */
   }
 
@@ -992,10 +1049,21 @@
   }
 
   .classroom-header {
-    padding: 20px;
+    padding: 15px;
     background-color: #ffffff;
     /* Ensure consistent background on mobile */
     border-left-width: 8px;
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+
+  .classroom-layout-container {
+    margin-top: 5px;
+  }
+
+  .seating-area-card {
+    margin-left: 5px;
+    margin-right: 5px;
   }
 
   .classroom-header h1 {
@@ -1039,10 +1107,11 @@
   }
 
   .seating-chart-section {
-    padding: 0px;
+    padding: 0;
     /* Align perfectly with header on mobile */
-    min-width: 100%;
-    /* Allow full width on mobile */
+    min-width: 0;
+    /* Allow full width on mobile without overflow */
+    width: 100%;
   }
 
   .stream-chat-column {
@@ -1283,7 +1352,7 @@
   display: flex;
   align-items: center;
   height: 100%;
-  padding-right: 120px;
+  padding-right: 0px;
   /* เว้นที่สำหรับปุ่ม edit */
 }
 

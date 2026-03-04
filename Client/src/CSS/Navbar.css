@@ -129,13 +129,13 @@ html {
 }
 
 .notification-item.unread {
-  background-color: #e8f0fe;
-  border-left: 4px solid #1a73e8;
+  background-color: #e8f2e9;
+  border-left: 4px solid #0aa158;
   padding-left: 12px;
 }
 
 .notification-item.unread:hover {
-  background-color: #d2e3fc;
+  background-color: #ceead6;
 }
 
 .notification-item:last-child {
@@ -172,7 +172,7 @@ html {
   background: none;
   border: none;
   font-size: 12px;
-  color: #1a73e8;
+  color: #0aa158;
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
@@ -224,7 +224,7 @@ html {
 }
 
 .navbar__notification:hover {
-  background-color: #e8f0fe; /* สีพื้นหลังเมื่อ hover */
+  background-color: #e8f2e9; /* สีพื้นหลังเมื่อ hover */
 }
 
 .navbar__profile {
@@ -276,7 +276,7 @@ html {
 }
 
 .sidebar-list-item:hover {
-  background-color: #e8f0fe;
+  background-color: #e8f2e9;
   color: #65ad67;
 }
 
@@ -348,7 +348,7 @@ html {
 }
 
 .navbar-profile-image:hover {
-  box-shadow: 0 0 0 4px #e8f0fe;
+  box-shadow: 0 0 0 4px #e8f2e9;
 }
 
 .dropdown-menu {

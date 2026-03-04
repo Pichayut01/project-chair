@@ -26,6 +26,7 @@ import ClassroomEvent from '../components/ClassroomEvent';
 import GroupingModal from '../components/GroupingModal';
 import ViewToggle from '../components/ViewToggle'; // ✨ Import ViewToggle
 import ClassChat from '../components/ClassChat'; // ✨ Import ClassChat
+import StudentStatusBanner from '../components/StudentStatusBanner'; // ✨ Import Performance Banner
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 const PRESETS_API_URL = process.env.REACT_APP_PRESETS_API_URL || 'http://localhost:5001';
@@ -2617,8 +2618,18 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 >
                     <div className="classroom-header-overlay"></div>
                     <div className="classroom-header-content">
-                        <h1>{classroom.name}</h1>
-                        <p>{classroom.subname}</p>
+                        <div className="classroom-header-title-row">
+                            <div className="classroom-header-titles">
+                                <h1>{classroom.name}</h1>
+                                <p>{classroom.subname}</p>
+                            </div>
+                            {/* ✨ Student Performance Banner (Visible if enabled & user is student) */}
+                            {classroom.showStudentStatus && !isCreator && (
+                                <div className="header-student-banner-container">
+                                    <StudentStatusBanner classroom={classroom} user={user} />
+                                </div>
+                            )}
+                        </div>
                     </div>
                     {isCreator && (
                         <div className="classroom-header-actions">

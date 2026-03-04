@@ -416,6 +416,12 @@ exports.updateSettings = async (req, res) => {
             classroom.allowSelfJoin = allowSelfJoin;
         }
 
+        // Student Performance Status visibility toggle
+        const { showStudentStatus } = req.body;
+        if (typeof showStudentStatus === 'boolean') {
+            classroom.showStudentStatus = showStudentStatus;
+        }
+
         const updatedClassroom = await classroom.save();
         res.json({ msg: 'Settings updated successfully', classroom: updatedClassroom });
     } catch (err) {
