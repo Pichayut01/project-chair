@@ -78,80 +78,203 @@ body {
 }
 
 .classroom-card {
-  background: #f5f5f5;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
-  cursor: pointer;
   position: relative;
-  z-index: 1;
-  /* กำหนด z-index พื้นฐานให้กับ card */
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 1.5rem;
-  padding-bottom: 25px;
-  border-left: 20px solid;
-  /* กำหนดให้มี border-left แต่ไม่มีสี เพื่อให้ JSX กำหนดสีเอง */
+  overflow: visible;
+  border: 1px solid #f3f4f6;
+  z-index: 1;
 }
 
-/* เพิ่ม class เมื่อ card มี dropdown เปิดอยู่ */
+.classroom-card:hover {
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-3px);
+}
+
+/* Left accent bar */
+.card-accent-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  border-radius: 16px 0 0 16px;
+  transition: width 0.3s ease;
+}
+
+.classroom-card:hover .card-accent-bar {
+  width: 8px;
+}
+
+/* Card active dropdown state */
 .classroom-card.active-dropdown {
   z-index: 10;
 }
 
-.classroom-text-content {
-  padding-right: 1rem;
-  flex-grow: 1;
+/* Top section: title, subname, menu */
+.card-top-section {
+  padding: 20px 20px 16px 22px;
 }
 
-.classroom-card > .classroom-text-content > h2 {
-  font-weight: normal;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 0;
-  margin-bottom: 1.8rem;
-  text-align: left;
-}
-
-.classroom-subname {
-  font-size: 1rem;
-  color: rgb(68, 68, 68);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-  margin-left: 3rem;
-  text-align: left;
-  font-weight: normal;
-}
-
-.classroom-image-container {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  overflow: hidden;
-  background-color: #f0f0f0;
+.card-header-row {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.card-title-area {
+  flex: 1;
+  min-width: 0;
+  padding-right: 8px;
+}
+
+.card-title-area h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s ease;
+}
+
+.classroom-card:hover .card-title-area h3 {
+  color: #2563eb;
+}
+
+.card-title-area .card-subname {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 4px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Creator info */
+.card-creator-info {
+  display: flex;
   align-items: center;
-  z-index: 1;
+  gap: 10px;
+  margin-top: 14px;
 }
 
-.classroom-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.card-creator-avatar {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
-.classroom-card:hover {
-  transform: translateY(-5px);
+.card-creator-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.card-creator-label {
+  font-size: 0.68rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.card-creator-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Divider line */
+.card-divider {
+  height: 1px;
+  background: #f3f4f6;
+  margin: 0 20px;
+}
+
+/* Bottom section: members */
+.card-bottom-section {
+  padding: 12px 20px 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(249, 250, 251, 0.5);
+}
+
+.card-member-count {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #6b7280;
+}
+
+.card-member-count svg {
+  width: 16px;
+  height: 16px;
+}
+
+.card-member-count span {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Avatar group */
+.card-avatar-group {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.card-avatar-group img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  margin-left: -8px;
+  transition: transform 0.2s ease;
+  position: relative;
+}
+
+.card-avatar-group img:hover {
+  transform: scale(1.12);
+  z-index: 10;
+}
+
+.card-avatar-group img:last-child {
+  margin-left: 0;
+}
+
+.card-avatar-extra {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #4b5563;
+  margin-left: -8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
 }
 
 /* Placeholder for empty sections to stabilize layout */
@@ -299,43 +422,27 @@ body {
   }
 
   .classroom-card {
-    padding: 1rem;
-    padding-bottom: 25px;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
+    border-radius: 12px;
   }
 
-  .classroom-text-content {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
+  .card-top-section {
+    padding: 16px 16px 12px 18px;
   }
 
-  /* Fix classroom title overflow on mobile */
-  .classroom-card > .classroom-text-content > h2 {
+  .card-title-area h3 {
     white-space: normal;
     word-wrap: break-word;
     overflow-wrap: break-word;
     line-height: 1.3;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
   }
 
-  /* Fix classroom subname overflow on mobile */
-  .classroom-subname {
+  .card-title-area .card-subname {
     white-space: normal;
     word-wrap: break-word;
-    overflow-wrap: break-word;
-    margin-left: 1rem;
-    width: calc(100% - 1rem);
-    max-width: calc(100% - 1rem);
-    box-sizing: border-box;
+  }
+
+  .card-bottom-section {
+    padding: 10px 16px 12px 18px;
   }
 
   /* Ensure main content doesn't expand */

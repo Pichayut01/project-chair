@@ -188,9 +188,7 @@ function AppRoutes({ user, onLoginSuccess, handleSignOut, updateUserProfile, isS
                 <Route
                     path="/login"
                     element={user ? <Navigate to="/" /> :
-                        <Layout user={null} handleSignOut={handleSignOut} classrooms={[]} isLoginPage={true} onAddNotification={onAddNotification}>
-                            <LoginPage onLoginSuccess={onLoginSuccess} />
-                        </Layout>
+                        <LoginPage onLoginSuccess={onLoginSuccess} />
                     }
                 />
                 <Route

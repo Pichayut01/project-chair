@@ -11,7 +11,8 @@ exports.getClassrooms = async (req, res) => {
                 { creator: userId },
                 { participants: userId }
             ]
-        }).populate('creator', 'displayName photoURL _id');
+        }).populate('creator', 'displayName photoURL _id')
+            .populate('participants', 'displayName photoURL _id');
         res.json(classrooms);
     } catch (err) {
         console.error(err.message);
