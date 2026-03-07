@@ -20,8 +20,7 @@ const Navbar = ({
     onKickMember,
     onDemoteMember,
     isCreator, isEditing, onToggleEditMode, onSavePositions, onCancelEdit, userSeatId, onLeaveSeat, classroom,
-    isEditClassroomPage, onBackClick, // เพิ่ม props สำหรับ EditClassroomPage
-    editActiveSection, onEditSectionChange, // เพิ่ม props สำหรับ EditClassroomPage navigation
+    onBackClick, // Back navigation prop
     accountActiveSection, onAccountSectionChange, // เพิ่ม props สำหรับ AccountSetting navigation
     onClassroomBackClick, // เพิ่ม props สำหรับ ClassroomPage back navigation
     isLoginPage = false, // เพิ่ม props สำหรับ Login page
@@ -312,7 +311,7 @@ const Navbar = ({
                         <FiMenu size={24} />
                     </button>
                     <img src={icon} alt="Logo" className="navbar__logo-image" />
-                    <h1 style={{ color: "#414141ff", fontSize: "24px" }}>EChair <span style={{ color: "#0aa158" }}></span></h1>
+                    <h1 style={{ color: "#414141ff", fontSize: "24px" }}>EChair <span style={{ color: "#0aa158" , fontSize: "13px" }}> @CED_KMUTNB</span></h1>
                 </div>
 
                 {/* ✨ ย้ายปุ่มมาไว้ตรงกลาง Navbar เพื่อให้แสดงผลถูกต้อง */}
@@ -591,8 +590,8 @@ const Navbar = ({
                                 onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('6')}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <FaInfoCircle size={16} />
-                                    <span>About</span>
+                                    <FaCog size={16} />
+                                    <span>Settings</span>
                                 </div>
                             </li>
                         </>
@@ -669,39 +668,6 @@ const Navbar = ({
                                     <FaLayerGroup size={16} />
                                     <span>Classwork</span>
                                 </div>
-                            </li>
-                        </>
-                    ) : isEditClassroomPage ? (
-                        <>
-                            <li className="sidebar-list-item sidebar-back-button" onClick={onBackClick}>
-                                <FiArrowLeft size={18} />
-                                <span>Back to Classroom</span>
-                            </li>
-                            <hr className="divider" style={{
-                                margin: "8px 0",
-                                border: "none",
-                                height: "1px",
-                                backgroundColor: "#e2e8f0",
-                                width: "100%",
-                                display: "block"
-                            }} />
-                            <li
-                                className={`sidebar-list-item ${editActiveSection === 'theme' ? 'active' : ''}`}
-                                onClick={() => onEditSectionChange('theme')}
-                            >
-                                <span>Theme</span>
-                            </li>
-                            <li
-                                className={`sidebar-list-item ${editActiveSection === 'role' ? 'active' : ''}`}
-                                onClick={() => onEditSectionChange('role')}
-                            >
-                                <span>Role</span>
-                            </li>
-                            <li
-                                className={`sidebar-list-item ${editActiveSection === 'other' ? 'active' : ''}`}
-                                onClick={() => onEditSectionChange('other')}
-                            >
-                                <span>Other</span>
                             </li>
                         </>
                     ) : isClassroomPage ? (

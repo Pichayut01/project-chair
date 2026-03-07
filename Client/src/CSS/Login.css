@@ -13,7 +13,7 @@
 /* ===== LOGIN MAIN CONTAINER ===== */
 .login-main {
   position: fixed;
-  top: -25px;
+  top: 0px;
   left: 0;
   right: 0;
   bottom: 0;
@@ -171,27 +171,17 @@
 }
 
 .login-brand:hover .brand-icon-wrapper {
-  transform: scale(1.1);
-  background: #34d399;
 }
 
 .login-brand:hover .brand-icon-wrapper img {
-  filter: brightness(10);
 }
 
 .brand-icon-wrapper {
-  background: #ecfdf5;
-  padding: 10px;
-  border-radius: 14px;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .brand-icon-wrapper img {
-  width: 32px;
-  height: 32px;
+  width: 45px;
+  height: 45px;
   transition: filter 0.3s ease;
 }
 

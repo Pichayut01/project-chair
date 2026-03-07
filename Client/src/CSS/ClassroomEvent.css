@@ -630,6 +630,71 @@
   }
 }
 
+/* ✨ Draft Event Styles */
+.draft-card-wrapper {
+  opacity: 0.7;
+  filter: grayscale(80%);
+  position: relative;
+  transition: all 0.3s ease;
+  pointer-events: none; /* Disable interaction with the blurred content */
+}
+
+/* Ensure the wrapper itself can be interacted with to allow clicking the post button */
+.draft-card-wrapper > .draft-overlay {
+  pointer-events: auto;
+}
+
+.draft-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.4); /* Light tint over the blur */
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.draft-badge {
+  background: #cbd5e1;
+  color: #334155;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.draft-post-btn {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s ease;
+}
+
+.draft-post-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.draft-post-btn:active {
+  transform: translateY(0);
+}
+
 /* ✨ Event Zoom Wrapper */
 .event-zoom-wrapper {
   touch-action: pan-x pan-y;
@@ -4841,6 +4906,212 @@
     transform: scale(1.08);
     border-color: #059669;
     box-shadow: 0 0 12px 2px rgba(16, 185, 129, 0.25);
+  }
+}
+
+/* ============================================
+   ✨ SLOT-MACHINE ANIMATION FOR RANDOM STUDENT
+   ============================================ */
+
+/* --- Slot swap vertical slide for each avatar change --- */
+.random-animating-item.slot-swap {
+  animation: slotSwapIn 0.12s ease-out;
+  overflow: hidden;
+}
+
+.random-animating-item.slot-swap.slowing {
+  animation: slotSwapIn 0.22s ease-out;
+}
+
+.random-animating-item.slot-swap.reveal {
+  animation: revealPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes slotSwapIn {
+  0% {
+    opacity: 0.3;
+    transform: translateY(-30px) scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes revealPop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* --- Phase-based display area styles --- */
+.random-display-area.spinning.spinning {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #ecfdf5 100%);
+  background-size: 200% 200%;
+  animation: shimmerBg 1.5s ease infinite;
+}
+
+.random-display-area.spinning.slowing {
+  border-color: #059669;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #d1fae5 100%);
+  background-size: 200% 200%;
+  animation: shimmerBg 2s ease infinite;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+.random-display-area.reveal {
+  border-color: #10b981 !important;
+  background: radial-gradient(circle, #d1fae5 0%, #f0fdf4 100%) !important;
+  animation: celebrationPulse 0.6s ease-out;
+  box-shadow:
+    0 0 30px rgba(16, 185, 129, 0.3),
+    0 0 60px rgba(16, 185, 129, 0.1) !important;
+  transform: scale(1.02);
+}
+
+@keyframes shimmerBg {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes celebrationPulse {
+  0% {
+    transform: scale(0.97);
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.4);
+  }
+  100% {
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+  }
+}
+
+/* --- Avatar phases --- */
+.random-avatar.animating.spinning,
+.random-avatar-placeholder.animating.spinning {
+  width: 90px;
+  height: 90px;
+  border-color: #6ee7b7;
+  animation: avatarSpin 0.15s ease-out;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+}
+
+.random-avatar.animating.slowing,
+.random-avatar-placeholder.animating.slowing {
+  width: 95px;
+  height: 95px;
+  border-color: #34d399;
+  animation: avatarSpin 0.25s ease-out;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+}
+
+.random-avatar.animating.reveal,
+.random-avatar-placeholder.animating.reveal {
+  width: 100px;
+  height: 100px;
+  border-color: #10b981;
+  animation: revealPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+@keyframes avatarSpin {
+  0% {
+    opacity: 0.4;
+    transform: translateY(-20px) rotate(-5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+}
+
+/* --- Multi-spin bubble phases --- */
+.spin-bubble.spinning {
+  animation: spinBubblePulse 0.2s ease-in-out infinite alternate;
+}
+
+.spin-bubble.slowing {
+  animation: spinBubblePulse 0.4s ease-in-out infinite alternate;
+  border-color: #059669;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.spin-bubble.reveal {
+  animation: revealPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  border-color: #10b981;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+/* --- Winner display area celebration --- */
+.random-display-area.winner {
+  animation: winnerReveal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes winnerReveal {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  60% {
+    transform: scale(1.07);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+/* --- Winner bubble entrance animation --- */
+.random-winner-bubble {
+  animation: winnerBubbleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.random-winner-bubble:nth-child(1) {
+  animation-delay: 0s;
+}
+.random-winner-bubble:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.random-winner-bubble:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.random-winner-bubble:nth-child(4) {
+  animation-delay: 0.3s;
+}
+.random-winner-bubble:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+@keyframes winnerBubbleIn {
+  0% {
+    transform: scale(0) rotate(-10deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
   }
 }
 

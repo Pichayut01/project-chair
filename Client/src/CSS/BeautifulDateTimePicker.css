@@ -69,6 +69,7 @@
   overflow: hidden;
   transform-origin: top left;
   min-width: 320px;
+  max-height: 380px;
 }
 
 /* ─── Calendar Left Part ─── */
@@ -200,6 +201,7 @@
   flex: 1;
   display: flex;
   overflow: hidden;
+  height: 250px;
 }
 
 .bdp-time-col {
@@ -276,5 +278,8 @@
   .bdp-time {
     width: 100%;
     height: 180px;
+  }
+  .bdp-time-sections {
+    height: 150px;
   }
 }

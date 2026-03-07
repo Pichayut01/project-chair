@@ -36,15 +36,23 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
         if (!isDraggable || !chairRef.current) return;
         setIsDragging(true);
         const chairRect = chairRef.current.getBoundingClientRect();
+        
+        const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+
         // Calculate offset based on SCREEN coordinates, no zoom needed here as clientX/Y are screen relative
         offset.current = {
-            x: e.clientX - chairRect.left,
-            y: e.clientY - chairRect.top
+            x: clientX - chairRect.left,
+            y: clientY - chairRect.top
         };
     }, [isDraggable]);
 
     const handleMouseMove = useCallback((e) => {
         if (!isDragging || !chairRef.current) return;
+
+        if (e.cancelable && e.type.startsWith('touch')) {
+            e.preventDefault();
+        }
 
         // Use offsetParent to get the correct coordinate space (handling translations of parent groups)
         const parentEl = chairRef.current.offsetParent || containerRef.current;
@@ -53,9 +61,12 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
         const parentRect = parentEl.getBoundingClientRect();
         const chairRect = chairRef.current.getBoundingClientRect();
 
+        const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+
         // Calculate raw position relative to parent's visual top-left
-        let rawX = e.clientX - parentRect.left - offset.current.x;
-        let rawY = e.clientY - parentRect.top - offset.current.y;
+        let rawX = clientX - parentRect.left - offset.current.x;
+        let rawY = clientY - parentRect.top - offset.current.y;
 
         let newX = rawX / zoomScale;
         let newY = rawY / zoomScale;
@@ -90,13 +101,19 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
         if (isDragging) {
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('mouseup', handleMouseUp);
+            window.addEventListener('touchmove', handleMouseMove, { passive: false });
+            window.addEventListener('touchend', handleMouseUp);
         } else {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('touchmove', handleMouseMove);
+            window.removeEventListener('touchend', handleMouseUp);
         }
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('touchmove', handleMouseMove);
+            window.removeEventListener('touchend', handleMouseUp);
         };
     }, [isDragging, handleMouseMove, handleMouseUp]);
 
@@ -162,9 +179,11 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
                 transform: `rotate(${rotation}deg)`, // Apply counter-rotation
                 boxShadow: isSelectedForGroup ? '0 0 0 3px #4CAF50, 0 4px 6px rgba(0,0,0,0.1)' : undefined, 
                 border: isSelectedForGroup ? '2px solid #fff' : undefined,
-                transition: 'box-shadow 0.3s ease, border 0.3s ease'
+                transition: 'box-shadow 0.3s ease, border 0.3s ease',
+                touchAction: isDraggable ? 'none' : 'auto' // Prevent scrolling on mobile when draggable
             }}
             onMouseDown={handleMouseDown}
+            onTouchStart={handleMouseDown}
             onClick={handleClick}
         >
             {/* Selection Number Badge */}

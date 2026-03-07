@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import AssignRate from '../components/AssignRate';
+import ClassroomSettings from '../components/ClassroomSettings';
 
 import Loader from '../components/Loader';
 import '../CSS/ClassDetailPage.css';
@@ -123,16 +124,12 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
                 return <AttendanceTracker classroom={classroom} user={user} />;
             case '6':
                 return (
-                    <div className="class-detail-content">
-                        <h2>Menu Item 6</h2>
-                        <p>This is the content for menu item 6. You can add any functionality here.</p>
-                        <div className="content-placeholder">
-                            <div className="placeholder-card">
-                                <h3>Feature 6</h3>
-                                <p>Description of feature 6 functionality.</p>
-                            </div>
-                        </div>
-                    </div>
+                    <ClassroomSettings
+                        classId={classId}
+                        user={user}
+                        classroom={classroom}
+                        onRefresh={fetchClassroomDetails}
+                    />
                 );
             default:
                 return (

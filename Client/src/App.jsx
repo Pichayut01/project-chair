@@ -15,7 +15,7 @@ const OtpVerificationPage = lazy(() => import('./pages/OtpVerificationPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 // Import the new ClassroomPage component
 const ClassroomPage = lazy(() => import('./pages/ClassroomPage')); // ✨ Add this line
-const EditClassroomPage = lazy(() => import('./pages/EditClassroomPage')); // ✨ Add Edit Classroom Page
+
 const ClassDetailPage = lazy(() => import('./pages/ClassDetailPage')); // ✨ Add Class Detail Page
 const AppSettingsPage = lazy(() => import('./pages/AppSettingsPage')); // ✨ Add App Settings Page
 const PrivateClassroomPage = lazy(() => import('./pages/PrivateClassroomPage')); // ✨ Add Private Classroom Page
@@ -247,16 +247,7 @@ function AppRoutes({ user, onLoginSuccess, handleSignOut, updateUserProfile, isS
                         handleSignOut={handleSignOutAndNavigate}
                     /> : <Navigate to="/login" />}
                 /> {/* ✨ Add this new route */}
-                {/* Add a new route for the edit classroom page */}
-                <Route
-                    path="/classroom/:classId/edit"
-                    element={user ? <EditClassroomPage
-                        user={user}
-                        isSidebarOpen={isSidebarOpen}
-                        toggleSidebar={toggleSidebar}
-                        handleSignOut={handleSignOutAndNavigate}
-                    /> : <Navigate to="/login" />}
-                /> {/* ✨ Add Edit Classroom route */}
+
                 {/* Add a new route for the class detail page */}
                 <Route
                     path="/classroom/:classId/detail"

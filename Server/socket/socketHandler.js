@@ -207,18 +207,20 @@ module.exports = (io) => {
                     { new: true }
                 );
 
-                // Notify all participants about the new event
-                const { createAndSendNotification } = require('../utils/notificationHelper');
-                if (updatedClassroom && updatedClassroom.participants) {
-                    for (const participantId of updatedClassroom.participants) {
-                        await createAndSendNotification(
-                            io,
-                            participantId,
-                            'New Activity',
-                            `A new ${event.title || event.type} has started in ${updatedClassroom.name}`,
-                            'event',
-                            classId
-                        );
+                // Notify all participants about the new event ONLY if it's not a draft
+                if (event.status !== 'draft') {
+                    const { createAndSendNotification } = require('../utils/notificationHelper');
+                    if (updatedClassroom && updatedClassroom.participants) {
+                        for (const participantId of updatedClassroom.participants) {
+                            await createAndSendNotification(
+                                io,
+                                participantId,
+                                'New Activity',
+                                `A new ${event.title || event.type} has started in ${updatedClassroom.name}`,
+                                'event',
+                                classId
+                            );
+                        }
                     }
                 }
 
@@ -245,11 +247,40 @@ module.exports = (io) => {
                     updateFields[`classroomEvents.$.${key}`] = value;
                 }
 
-                await Class.findOneAndUpdate(
+                const updatedClass = await Class.findOneAndUpdate(
                     { _id: classId, "classroomEvents.id": eventId },
                     { $set: updateFields },
                     { new: true }
                 );
+
+                // If event was just published (transitioned FROM draft TO active/idle), send notification
+                if (updates.status === 'idle' || updates.status === 'active') {
+                    const updatedEvent = updatedClass?.classroomEvents?.find(e => e.id === eventId);
+                    // Check if it was previously a draft (We don't strictly know prior state here efficiently, 
+                    // but we only manually send 'status: idle' when posting a draft, so it's a safe proxy for 'App just posted it')
+                    if (updatedEvent && updates._isPublishingDraft) {
+                        const { createAndSendNotification } = require('../utils/notificationHelper');
+                        if (updatedClass.participants) {
+                            for (const participantId of updatedClass.participants) {
+                                await createAndSendNotification(
+                                    io,
+                                    participantId,
+                                    'New Activity',
+                                    `A new ${updatedEvent.title || updatedEvent.type} has started in ${updatedClass.name}`,
+                                    'event',
+                                    classId
+                                );
+                            }
+                        }
+                        // Remove the temp flag so it doesn't get saved to DB unnecessarily
+                        delete updates._isPublishingDraft;
+                        // update the db again just to be safe if it was saved
+                        await Class.findOneAndUpdate(
+                            { _id: classId, "classroomEvents.id": eventId },
+                            { $unset: { "classroomEvents.$._isPublishingDraft": "" } }
+                        );
+                    }
+                }
 
                 // Broadcast trigger update to all users in the classroom
                 io.to(classId).emit('classroom-event-triggered', { eventId, updates });

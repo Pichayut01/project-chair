@@ -358,7 +358,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="อีเมลของคุณ"
+                  placeholder="Your Email"
                 />
               </div>
 
@@ -423,7 +423,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="อีเมลของคุณ"
+                  placeholder="Your Email"
                 />
               </div>
 

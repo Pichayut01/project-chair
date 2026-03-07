@@ -8,7 +8,7 @@ import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, onDeleteEvent, onSubmitAnswer, onEndEvent, candidates = [], currentUser, zoomScale = 1 }) => {
+const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, onDeleteEvent, onSubmitAnswer, onEndEvent, onPublishDraftEvent, candidates = [], currentUser, zoomScale = 1 }) => {
     const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
     const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [selectedConfigType, setSelectedConfigType] = useState(null);
@@ -106,7 +106,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
         setIsAddEventModalOpen(false);
     };
 
-    const handleConfigSubmit = () => {
+    const handleConfigSubmit = (isDraft = false) => {
         if (selectedConfigType === 'random') {
             const count = parseInt(studentCountInput);
             const max = candidates.length > 0 ? candidates.length : 1;
@@ -120,7 +120,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                 return;
             }
 
-            handleSelectEvent({ type: 'random', count: count, scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined });
+            handleSelectEvent({ type: 'random', count: count, status: isDraft ? 'draft' : 'idle', scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined });
             setIsConfigModalOpen(false);
         } else if (selectedConfigType === 'question') {
             if (!questionTextInput.trim()) {
@@ -128,7 +128,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                 return;
             }
 
-            handleSelectEvent({ type: 'question', questionText: questionTextInput, imageUrl: selectedImage, scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined });
+            handleSelectEvent({ type: 'question', questionText: questionTextInput, imageUrl: selectedImage, status: isDraft ? 'draft' : 'idle', scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined });
             setIsConfigModalOpen(false);
         } else if (selectedConfigType === 'poll') {
             const validOptions = pollOptions.filter(opt => opt.trim() !== '');
@@ -169,6 +169,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             handleSelectEvent({
                 type: 'poll',
                 questionText: questionTextInput,
+                status: isDraft ? 'draft' : 'idle',
                 imageUrl: selectedImage,
                 // For polls, scoring is driven by per-option scores only
                 scoring: isScored ? { enabled: true, points: 0 } : undefined,
@@ -192,11 +193,12 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             handleSelectEvent({
                 scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined,
                 type: 'wordcloud',
+                status: isDraft ? 'draft' : 'idle',
                 config: { topic: cloudTopic, scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined }
             });
             setIsConfigModalOpen(false);
         } else if (selectedConfigType === 'buzz') {
-            handleSelectEvent({ type: 'buzz', scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined });
+            handleSelectEvent({ type: 'buzz', status: isDraft ? 'draft' : 'idle', scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined });
             setIsConfigModalOpen(false);
         }
     };
@@ -293,6 +295,14 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                             );
                         }
                         const event = item;
+
+                        // ✨ Hide draft events from non-creators
+                        if (event.status === 'draft' && !isCreator) {
+                            return null;
+                        }
+
+                        const isDraft = event.status === 'draft';
+
                         return (
                             <div key={event.id} style={{ 
                                 display: 'inline-block',
@@ -301,8 +311,9 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                 WebkitColumnBreakInside: 'avoid',
                                 marginBottom: '24px',
                                 overflow: 'hidden',
+                                position: 'relative'
                             }}>
-                                <div className="event-card" style={{ 
+                                <div className={`event-card ${isDraft ? 'draft-card-wrapper' : ''}`} style={{ 
                                     width: '100%',
                                     zoom: zoomScale,
                                     marginBottom: 0,
@@ -336,6 +347,16 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                             onDeleteEvent={onDeleteEvent}
                                         />
                                     </div>
+                                    
+                                    {/* ✨ Draft Overlay for Creator */}
+                                    {isDraft && isCreator && (
+                                        <div className="draft-overlay">
+                                            <div className="draft-badge">Draft</div>
+                                            <button className="draft-post-btn" onClick={() => onPublishDraftEvent && onPublishDraftEvent(event)}>
+                                                Post Event
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -595,9 +616,17 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
 
                         <div className="modal-footer-new">
                             <button className="cfg-cancel-btn" onClick={() => setIsConfigModalOpen(false)}>Back</button>
-                            <button className="cfg-create-btn" onClick={handleConfigSubmit}>
-                                <FaPlus style={{ marginRight: '6px' }} /> Create Event
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button className="cfg-draft-btn" onClick={() => handleConfigSubmit(true)} style={{
+                                    backgroundColor: '#e2e8f0', color: '#475569', padding: '10px 16px', borderRadius: '8px',
+                                    border: '1px solid #cbd5e1', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', transition: 'all 0.2s'
+                                }} onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#cbd5e1'; e.currentTarget.style.color = '#334155'; }} onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#e2e8f0'; e.currentTarget.style.color = '#475569'; }}>
+                                    Save as Draft
+                                </button>
+                                <button className="cfg-create-btn" onClick={() => handleConfigSubmit(false)}>
+                                    <FaPlus style={{ marginRight: '6px' }} /> Create Event
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>,
@@ -611,6 +640,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
 const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEvent, candidates = [], currentUser, onDeleteEvent }) => {
     const [displayNames, setDisplayNames] = useState([]);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [animationPhase, setAnimationPhase] = useState('idle'); // idle | spinning | slowing | reveal
     const [showResults, setShowResults] = useState(false);
     const [answerInput, setAnswerInput] = useState('');
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -644,6 +674,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                 // Don't animate if event is already ended
                 if (event.status === 'ended') {
                     setIsAnimating(false);
+                    setAnimationPhase('idle');
                     setShowResults(true);
                     return;
                 }
@@ -653,6 +684,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                     startAnimation();
                 } else {
                     setIsAnimating(false);
+                    setAnimationPhase('idle');
                     setShowResults(true);
                 }
             } else {
@@ -717,17 +749,8 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
 
         setIsAnimating(true);
         setShowResults(false);
+        setAnimationPhase('spinning');
         const count = event.config?.count || 1;
-
-        const interval = setInterval(() => {
-            // Pick random candidates to show "shuffling"
-            const randomPicks = [];
-            for (let i = 0; i < count; i++) {
-                const randomCandidate = candidates[Math.floor(Math.random() * candidates.length)] || { name: '...' };
-                randomPicks.push(randomCandidate);
-            }
-            setDisplayNames(randomPicks);
-        }, 100); // Change every 100ms
 
         // Calculate remaining animation time based on when the event was updated globally
         const animationDuration = event.animationDuration || 3500;
@@ -735,16 +758,54 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
         const timeRemaining = Math.max(0, animationDuration - timeElapsed);
 
         if (timeRemaining <= 0) {
-             clearInterval(interval);
-             setIsAnimating(false);
-             setShowResults(true);
-        } else {
-             setTimeout(() => {
-                 clearInterval(interval);
-                 setIsAnimating(false);
-                 setShowResults(true);
-             }, timeRemaining);
+            setIsAnimating(false);
+            setAnimationPhase('idle');
+            setShowResults(true);
+            return;
         }
+
+        // Slot-machine style decelerating animation
+        const startTime = Date.now();
+        let currentInterval = null;
+
+        const pickRandom = () => {
+            const randomPicks = [];
+            for (let i = 0; i < count; i++) {
+                const randomCandidate = candidates[Math.floor(Math.random() * candidates.length)] || { name: '...' };
+                randomPicks.push(randomCandidate);
+            }
+            setDisplayNames(randomPicks);
+        };
+
+        const scheduleNext = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / timeRemaining, 1);
+
+            if (progress >= 1) {
+                // Animation done — show reveal
+                setAnimationPhase('reveal');
+                setTimeout(() => {
+                    setIsAnimating(false);
+                    setAnimationPhase('idle');
+                    setShowResults(true);
+                }, 600); // Brief reveal phase
+                return;
+            }
+
+            // Switch to slowing phase at 60%
+            if (progress > 0.6) {
+                setAnimationPhase('slowing');
+            }
+
+            pickRandom();
+
+            // Decelerate: start at 60ms, end at ~300ms
+            const delay = 60 + (progress * progress * 240);
+            currentInterval = setTimeout(scheduleNext, delay);
+        };
+
+        pickRandom(); // Initial pick
+        currentInterval = setTimeout(scheduleNext, 60);
     };
 
     return (
@@ -777,7 +838,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
 
                     <div className="random-body-new">
                         {/* Display Area for Spinning/Winner */}
-                        <div className={`random-display-area ${isAnimating ? 'spinning' : ''} ${(showResults && event.results?.length > 0) ? 'winner' : ''} ${(!isAnimating && !showResults) ? 'idle' : ''}`}>
+                        <div className={`random-display-area ${isAnimating ? 'spinning' : ''} ${(showResults && event.results?.length > 0) ? 'winner' : ''} ${(!isAnimating && !showResults) ? 'idle' : ''} ${animationPhase}`}>
                             
                             {!isAnimating && !showResults && (
                                 <h3 className="random-idle-text">Click to start!</h3>
@@ -785,26 +846,25 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
 
                             {isAnimating && !showResults && (
                                 (event.config?.count || 1) === 1 ? (
-                                    /* Single random — big avatar + name */
-                                    <div className="random-animating-container">
+                                    /* Single random — big avatar only, no name */
+                                    <div className={`random-animating-container ${animationPhase}`}>
                                         {displayNames.map((candidate, i) => (
-                                            <div key={i} className="random-animating-item">
+                                            <div key={i} className={`random-animating-item slot-swap ${animationPhase}`}>
                                                 {candidate.photoSrc ? (
-                                                    <img src={candidate.photoSrc} alt="avatar" className="random-avatar animating" />
+                                                    <img src={candidate.photoSrc} alt="avatar" className={`random-avatar animating ${animationPhase}`} />
                                                 ) : (
-                                                    <div className="random-avatar-placeholder animating">
+                                                    <div className={`random-avatar-placeholder animating ${animationPhase}`}>
                                                         <FaUser />
                                                     </div>
                                                 )}
-                                                <h3 className="random-name animating">{candidate.name}</h3>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
                                     /* Multi random — circular avatar cluster, no names */
-                                    <div className="random-multi-spin-cluster">
+                                    <div className={`random-multi-spin-cluster ${animationPhase}`}>
                                         {displayNames.map((candidate, i) => (
-                                            <div key={i} className="spin-bubble">
+                                            <div key={i} className={`spin-bubble ${animationPhase}`}>
                                                 {candidate.photoSrc ? (
                                                     <img src={candidate.photoSrc} alt="avatar" className="spin-bubble-img" />
                                                 ) : (

@@ -9,7 +9,7 @@ import Loader from '../components/Loader';
 import '../CSS/ClassroomPage.css';
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
-import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
+import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 import Chair from '../components/Chair';
 import ChairAssignModal from '../components/ChairAssignModal';
 import ChairPresets from '../components/ChairPresets';
@@ -18,7 +18,7 @@ import StudentRatingModal from '../components/StudentRatingModal';
 import { useSocket } from '../hooks/useSocket';
 
 
-import { FaEdit, FaTh, FaRandom, FaBars, FaThLarge, FaChevronUp, FaChevronDown, FaExchangeAlt, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaTimes, FaLayerGroup, FaChevronLeft, FaChevronRight, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaTrophy, FaUser, FaUsers, FaUsersSlash } from 'react-icons/fa';
+import { FaEdit, FaTh, FaThLarge, FaChevronUp, FaChevronDown, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaUsers, FaUsersSlash } from 'react-icons/fa';
 import ActionBar from '../components/ActionBar';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupOverlay from '../components/GroupOverlay';
@@ -29,7 +29,7 @@ import ClassChat from '../components/ClassChat'; // ✨ Import ClassChat
 import StudentStatusBanner from '../components/StudentStatusBanner'; // ✨ Import Performance Banner
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
-const PRESETS_API_URL = process.env.REACT_APP_PRESETS_API_URL || 'http://localhost:5001';
+
 
 const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     const { classId } = useParams();
@@ -39,7 +39,6 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const [error, setError] = useState(null);
     const [seatingPositions, setSeatingPositions] = useState({});
     const [isEditing, setIsEditing] = useState(false);
-    const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false); // ✨ State for hierarchical edit menu
     const [isGroupModalOpen, setIsGroupModalOpen] = useState(false); // ✨ State for grouping modal
     const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(() => {
         // ✨ Read from localStorage, default to true (open) on desktop, false on mobile
@@ -91,7 +90,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
     // ✨ Chat State
     const [chatMessages, setChatMessages] = useState([]);
-    const [newMessage, setNewMessage] = useState('');
+
     const chatContainerRef = useRef(null);
 
     // Zoom functionality state (seating)
@@ -536,6 +535,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             id: `event-${Date.now()}`,
             description: 'New classroom event started',
             type: 'default',
+            status: eventConfig.status || 'idle', // ✨ Set status from config or default to idle
             createdAt: Date.now(),
             createdBy: user.id
         };
@@ -597,6 +597,14 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         emitChatMessage(chatPayload);
     };
 
+    // ✨ Handler for publishing a draft event to active
+    const handlePublishDraftEvent = (event) => {
+        emitTriggerClassroomEvent(event.id, { 
+            status: 'idle', 
+            _isPublishingDraft: true // Flag for backend to send notification
+        });
+    };
+
     // ✨ Handler for triggering an event (Creator only)
     const handleTriggerEvent = (event, updates) => {
         // ✨ Generic trigger support (Buzz Button, etc.)
@@ -607,7 +615,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
         // ✨ Existing Random Student Logic
         if (event.type === 'random') {
-            const count = event.config?.count || 1;
+            const count = event.config?.count || event.count || 1;
 
             // Get all seated users (excluding creator if they are seated?)
             // Usually creator is teacher, students are in assignedUsers.
@@ -630,8 +638,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 photoSrc: getProfileImageSrc(s.photoURL, isGoogleUser(s))
             }));
 
-            // Emit trigger
-            emitTriggerClassroomEvent(event.id, { results, animationDuration: 3500 });
+            // Emit trigger with explicitly defined updatedAt so animation runs
+            emitTriggerClassroomEvent(event.id, { results, animationDuration: 3500, updatedAt: Date.now() });
 
             // ✨ Send result to chat after animation (approx 3.5s)
             setTimeout(() => {
@@ -1796,7 +1804,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 navigate(`/classroom/${classId}/error`);
                 return;
             }
-            setLoading(false);
+
         }
     }, [classId, user, navigate]);
 
@@ -2094,13 +2102,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
     };
 
-    const handleEditClassroom = () => {
-        navigate(`/classroom/${classId}/edit`);
-    };
 
-    const handleClassDetail = () => {
-        navigate(`/classroom/${classId}/detail`);
-    };
 
     const handleApplyPreset = async (presetType) => {
         if (!containerRef.current) return;
@@ -2631,13 +2633,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                             )}
                         </div>
                     </div>
-                    {isCreator && (
-                        <div className="classroom-header-actions">
-                            <span className="classroom-edit-btn" title="Edit Classroom Settings" onClick={handleEditClassroom} style={{ marginBottom: '-13px' }}>
-                                <FaEdit size={20} />
-                            </span>
-                        </div>
-                    )}
+
 
                     {/* Banner toggle button */}
                     <button
@@ -2713,9 +2709,11 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                     onDeleteEvent={handleDeleteEvent}
                                     onSubmitAnswer={handleSubmitAnswer}
                                     onEndEvent={handleEndAndScoreEvent}
-                                    candidates={Object.values(assignedUsers).map(u => ({
-                                        name: u.userName,
-                                        photoSrc: getProfileImageSrc(u.photoURL, isGoogleUser(u))
+                                    onPublishDraftEvent={handlePublishDraftEvent} // ✨ Pass publish handler
+                                    candidates={Object.values(assignedUsers).filter(user => user?.userName).map(user => ({
+                                        id: user.userId,
+                                        name: user.userName,
+                                        photoSrc: getProfileImageSrc(user.photoURL, isGoogleUser(user))
                                     }))}
                                     currentUser={user}
                                     zoomScale={eventZoomLevel}
