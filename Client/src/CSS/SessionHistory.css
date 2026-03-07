@@ -1,0 +1,416 @@
+/* ── SessionHistory.css ── */
+
+.session-history-container {
+  padding: 8px 0;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.session-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.session-history-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.session-count {
+  font-size: 13px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* ── Date Group ── */
+.session-date-group {
+  margin-bottom: 28px;
+}
+
+.session-date-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+.session-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Session Card ── */
+.session-history-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.session-history-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.session-history-card.expanded {
+  border-color: #667eea;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.12);
+}
+
+.session-card-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  gap: 16px;
+  user-select: none;
+}
+
+.session-card-time {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.session-time-range {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.session-duration-badge {
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.session-card-stats {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.session-mini-stat {
+  font-size: 13px;
+  color: #475569;
+}
+
+.session-started-by {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.session-expand-icon {
+  font-size: 12px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* ── Card Body ── */
+.session-card-body {
+  border-top: 1px solid #f1f5f9;
+  padding: 16px 20px;
+  background: #fafbfc;
+}
+
+.session-mini-leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.session-mini-rank {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid #f1f5f9;
+}
+
+.session-mini-rank.mini-rank-1 {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.session-mini-rank.mini-rank-2 {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.session-mini-rank.mini-rank-3 {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.mini-rank-pos {
+  width: 28px;
+  text-align: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.mini-rank-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.mini-rank-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-rank-pts {
+  font-weight: 700;
+  font-size: 14px;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.mini-rank-pts.negative {
+  color: #dc2626;
+}
+
+.session-no-data {
+  text-align: center;
+  padding: 20px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* ── Loading ── */
+.session-history-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+}
+
+.session-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Empty ── */
+.session-history-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: #94a3b8;
+}
+
+.session-history-empty .empty-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.session-history-empty h3 {
+  margin: 0 0 8px;
+  color: #475569;
+  font-size: 18px;
+}
+
+.session-history-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* ── Responsive ── */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .session-history-container {
+    padding: 8px 8px;
+    max-width: 100%;
+  }
+
+  .session-history-header h2 {
+    font-size: 19px;
+  }
+
+  .session-card-header {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .session-card-time {
+    min-width: 120px;
+  }
+
+  .session-card-stats {
+    gap: 10px;
+  }
+
+  .session-card-body {
+    padding: 14px 16px;
+  }
+
+  .session-mini-rank {
+    padding: 6px 10px;
+    gap: 8px;
+  }
+
+  .mini-rank-avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .session-history-empty {
+    padding: 50px 16px;
+  }
+
+  .session-history-empty .empty-icon {
+    font-size: 44px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .session-history-container {
+    padding: 4px 4px;
+  }
+
+  .session-history-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .session-history-header h2 {
+    font-size: 17px;
+  }
+
+  .session-date-group {
+    margin-bottom: 20px;
+  }
+
+  .session-date-label {
+    font-size: 12px;
+  }
+
+  .session-history-card {
+    border-radius: 10px;
+    position: relative;
+  }
+
+  .session-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 14px;
+    gap: 6px;
+  }
+
+  .session-card-time {
+    min-width: unset;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .session-time-range {
+    font-size: 13px;
+  }
+
+  .session-card-stats {
+    gap: 8px;
+    width: 100%;
+  }
+
+  .session-mini-stat {
+    font-size: 12px;
+  }
+
+  .session-started-by {
+    font-size: 11px;
+  }
+
+  .session-expand-icon {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+  }
+
+  .session-card-body {
+    padding: 12px 14px;
+  }
+
+  .session-mini-rank {
+    padding: 6px 8px;
+    gap: 6px;
+    border-radius: 8px;
+  }
+
+  .mini-rank-pos {
+    width: 24px;
+    font-size: 14px;
+  }
+
+  .mini-rank-avatar {
+    width: 26px;
+    height: 26px;
+  }
+
+  .mini-rank-name {
+    font-size: 12px;
+  }
+
+  .mini-rank-pts {
+    font-size: 12px;
+  }
+
+  .session-history-empty {
+    padding: 40px 12px;
+  }
+
+  .session-history-empty .empty-icon {
+    font-size: 40px;
+    margin-bottom: 10px;
+  }
+
+  .session-history-empty h3 {
+    font-size: 16px;
+  }
+
+  .session-history-empty p {
+    font-size: 13px;
+  }
+
+  .session-history-loading {
+    padding: 40px 12px;
+  }
+}

@@ -1,5 +1,6 @@
 const Class = require('../models/Class');
 const User = require('../models/User');
+const TeachingSession = require('../models/TeachingSession');
 const createLogger = require('../utils/logger');
 const logger = createLogger('ClassController');
 
@@ -506,6 +507,136 @@ exports.updateAttendance = async (req, res) => {
         res.json({ msg: 'Attendance updated successfully', classroom: updatedClassroom });
     } catch (err) {
         console.error('Error updating attendance:', err);
+        res.status(500).send('Server error');
+    }
+};
+
+// ── Teaching Session Controllers ──
+
+exports.startSession = async (req, res) => {
+    const { classId } = req.params;
+    const userId = req.user._id;
+
+    try {
+        const classroom = await Class.findById(classId);
+        if (!classroom) return res.status(404).json({ msg: 'Classroom not found' });
+
+        // Only creators can start sessions
+        if (!classroom.creator.map(id => id.toString()).includes(userId.toString())) {
+            return res.status(403).json({ msg: 'Only creators can start teaching sessions.' });
+        }
+
+        // Check if there's an active session already
+        const existingSession = await TeachingSession.findOne({
+            classroomId: classId,
+            endedAt: null
+        });
+        if (existingSession) {
+            return res.status(400).json({
+                msg: 'A session is already active for this classroom.',
+                session: existingSession
+            });
+        }
+
+        const session = new TeachingSession({
+            classroomId: classId,
+            startedBy: userId,
+            startedAt: new Date()
+        });
+
+        await session.save();
+        res.status(201).json({ msg: 'Teaching session started', session });
+    } catch (err) {
+        console.error('Error starting session:', err);
+        res.status(500).send('Server error');
+    }
+};
+
+exports.endSession = async (req, res) => {
+    const { classId } = req.params;
+    const userId = req.user._id;
+    const { sessionId, scoreChanges } = req.body;
+
+    try {
+        const classroom = await Class.findById(classId);
+        if (!classroom) return res.status(404).json({ msg: 'Classroom not found' });
+
+        if (!classroom.creator.map(id => id.toString()).includes(userId.toString())) {
+            return res.status(403).json({ msg: 'Only creators can end teaching sessions.' });
+        }
+
+        const session = await TeachingSession.findById(sessionId);
+        if (!session) return res.status(404).json({ msg: 'Session not found' });
+        if (session.endedAt) return res.status(400).json({ msg: 'Session already ended' });
+
+        const now = new Date();
+        const durationSeconds = Math.round((now - session.startedAt) / 1000);
+
+        // Store score changes
+        session.scoreChanges = scoreChanges || [];
+        session.endedAt = now;
+        session.durationSeconds = durationSeconds;
+
+        // Calculate summary
+        const studentTotals = {};
+        (scoreChanges || []).forEach(change => {
+            if (!studentTotals[change.studentId]) {
+                studentTotals[change.studentId] = {
+                    studentId: change.studentId,
+                    studentName: change.studentName || 'Unknown',
+                    photoURL: change.photoURL || null,
+                    totalPoints: 0
+                };
+            }
+            studentTotals[change.studentId].totalPoints += change.pointsChange;
+            // Keep the latest name/photo
+            if (change.studentName) studentTotals[change.studentId].studentName = change.studentName;
+            if (change.photoURL) studentTotals[change.studentId].photoURL = change.photoURL;
+        });
+
+        const topStudents = Object.values(studentTotals)
+            .sort((a, b) => b.totalPoints - a.totalPoints);
+
+        session.summary = {
+            totalScoreChanges: (scoreChanges || []).length,
+            studentsScored: Object.keys(studentTotals).length,
+            topStudents
+        };
+
+        await session.save();
+        res.json({ msg: 'Teaching session ended', session });
+    } catch (err) {
+        console.error('Error ending session:', err);
+        res.status(500).send('Server error');
+    }
+};
+
+exports.getSessions = async (req, res) => {
+    const { classId } = req.params;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = parseInt(req.query.skip) || 0;
+
+    try {
+        const classroom = await Class.findById(classId);
+        if (!classroom) return res.status(404).json({ msg: 'Classroom not found' });
+
+        // Must be a member
+        const userId = req.user._id.toString();
+        const isMember = classroom.creator.some(id => id.toString() === userId) ||
+            classroom.participants.some(id => id.toString() === userId);
+        if (!isMember) return res.status(403).json({ msg: 'Access denied' });
+
+        const sessions = await TeachingSession.find({ classroomId: classId })
+            .sort({ startedAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate('startedBy', 'displayName photoURL');
+
+        const total = await TeachingSession.countDocuments({ classroomId: classId });
+
+        res.json({ sessions, total });
+    } catch (err) {
+        console.error('Error fetching sessions:', err);
         res.status(500).send('Server error');
     }
 };

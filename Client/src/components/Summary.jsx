@@ -581,7 +581,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                     )}
 
                     {/* ═══ Tile 3: Bell Curve ═══ */}
-                    <div className="bento-tile bento-chart" style={{ '--delay': '2' }}>
+                    <div className={`bento-tile bento-chart ${(!scoreStats || Object.keys(scoreStats.categoryAverages).length === 0) ? 'full-width' : ''}`} style={{ '--delay': '2' }}>
                         <div className="bento-tile-header">
                             <SvgBellCurve />
                             <h3>Normal Distribution (Bell Curve)</h3>

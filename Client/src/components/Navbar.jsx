@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import "../CSS/Navbar.css";
 import icon from "../image/icon.ico";
 import { FiPlus, FiLogOut, FiArrowLeft, FiShare2, FiEdit2, FiSave, FiX, FiChevronDown, FiChevronRight, FiBell, FiMenu, FiBook } from "react-icons/fi"; // ✨ เพิ่ม icon ใหม่
-import { FaCog, FaCrown, FaLayerGroup, FaStar, FaTrophy, FaHistory, FaInfoCircle, FaCalendarCheck } from 'react-icons/fa'; // ✨ เพิ่ม icons สำหรับ sidebar
+import { FaCog, FaCrown, FaLayerGroup, FaStar, FaTrophy, FaHistory, FaInfoCircle, FaCalendarCheck, FaPlay, FaClock, FaStop } from 'react-icons/fa'; // ✨ เพิ่ม icons สำหรับ sidebar
 import { useNavigate, Link } from 'react-router-dom';
 import { getProfileImageSrc, getCurrentUserProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
 import axios from 'axios';
@@ -28,6 +28,9 @@ const Navbar = ({
     isClassDetailPage, classDetailActiveSection, onClassDetailSectionChange, // เพิ่ม props สำหรับ ClassDetail page
     isStreamPage, streamActiveSection, onStreamSectionChange, // ✨ เพิ่ม props สำหรับ Stream page
     isAssignmentDetailPage, classId, // ✨ สำหรับหน้า Assignment Detail Page
+
+    // ✨ Teaching Session Props
+    isSessionActive, sessionElapsed, onStartSession, onEndSession, formatSessionTime,
 
     onAddNotification, // ✨ Prop สำหรับรับฟังก์ชันเพิ่มการแจ้งเตือน
     children // ✨ Allow custom children content
@@ -311,7 +314,7 @@ const Navbar = ({
                         <FiMenu size={24} />
                     </button>
                     <img src={icon} alt="Logo" className="navbar__logo-image" />
-                    <h1 style={{ color: "#414141ff", fontSize: "24px" }}>EChair <span style={{ color: "#0aa158" , fontSize: "13px" }}> @CED_KMUTNB</span></h1>
+                    <h1 style={{ color: "#414141ff", fontSize: "24px" }}>EChair <span style={{ color: "#0aa158" , fontSize: "13px" }}> </span></h1>
                 </div>
 
                 {/* ✨ ย้ายปุ่มมาไว้ตรงกลาง Navbar เพื่อให้แสดงผลถูกต้อง */}
@@ -586,6 +589,15 @@ const Navbar = ({
                                 </div>
                             </li>
                             <li
+                                className={`sidebar-list-item ${classDetailActiveSection === 'sessions' ? 'active' : ''}`}
+                                onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('sessions')}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaTrophy size={16} />
+                                    <span>Class Sessions</span>
+                                </div>
+                            </li>
+                            <li
                                 className={`sidebar-list-item ${classDetailActiveSection === '6' ? 'active' : ''}`}
                                 onClick={() => onClassDetailSectionChange && onClassDetailSectionChange('6')}
                             >
@@ -694,6 +706,39 @@ const Navbar = ({
                                     <FiEdit2 size={18} />
                                     <span>Class Detail</span>
                                 </li>
+                            )}
+
+                            {/* ✨ Teaching Session Widget */}
+                            {isCreator && (
+                                <>
+                                    <hr className="divider" style={{
+                                        margin: "8px 0",
+                                        border: "none",
+                                        height: "1px",
+                                        backgroundColor: "#e2e8f0",
+                                        width: "100%",
+                                        display: "block"
+                                    }} />
+                                    {isSessionActive ? (
+                                        <div className="sidebar-session-widget active">
+                                            <div className="sidebar-session-header">
+                                                <div className="sidebar-session-dot"></div>
+                                                <span className="sidebar-session-title">Session Active</span>
+                                            </div>
+                                            <div className="sidebar-session-timer">
+                                                ⏱ {formatSessionTime ? formatSessionTime(sessionElapsed || 0) : '00:00'}
+                                            </div>
+                                            <button className="sidebar-session-end-btn" onClick={onEndSession}>
+                                                <FaStop size={12} /> End Class
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <li className="sidebar-list-item sidebar-start-session" onClick={onStartSession}>
+                                            <FaPlay size={14} />
+                                            <span>Start Session</span>
+                                        </li>
+                                    )}
+                                </>
                             )}
 
                             {/* ส่วนแสดงสมาชิก */}

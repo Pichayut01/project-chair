@@ -15,6 +15,7 @@ import EventHistoryView from '../components/events/EventHistoryView';
 import GroupHistoryView from '../components/events/GroupHistoryView';
 import AttendanceTracker from '../components/AttendanceTracker'; // ✨ Import Attendance Tracker
 import Summary from '../components/Summary'; // ✨ Import Summary
+import SessionHistory from '../components/SessionHistory'; // ✨ Import SessionHistory
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
@@ -122,6 +123,8 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
                 return <GroupHistoryView classroom={classroom} user={user} onRefresh={fetchClassroomDetails} />;
             case '5':
                 return <AttendanceTracker classroom={classroom} user={user} />;
+            case 'sessions':
+                return <SessionHistory classId={classId} user={user} />;
             case '6':
                 return (
                     <ClassroomSettings

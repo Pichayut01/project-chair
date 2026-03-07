@@ -21,4 +21,9 @@ router.get('/:classId/chat', authMiddleware, classController.getChatHistory);
 // Toggle pin route is technically under /api/classrooms/:classId/toggle-pin
 router.post('/:classId/toggle-pin', authMiddleware, userController.togglePinClass);
 
+// Teaching Session routes
+router.post('/:classId/session/start', authMiddleware, classController.startSession);
+router.post('/:classId/session/end', authMiddleware, classController.endSession);
+router.get('/:classId/sessions', authMiddleware, classController.getSessions);
+
 module.exports = router;

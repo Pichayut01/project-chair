@@ -582,3 +582,95 @@
   border: 2px dashed #cbd5e1;
   border-radius: 12px;
 }
+
+/* ═══════════════════════════════
+   RESPONSIVE LAYOUT
+   ═══════════════════════════════ */
+@media (max-width: 768px) {
+  .attendance-tracker-container {
+    padding: 16px;
+  }
+  .attendance-header {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    gap: 16px;
+  }
+  .attendance-header h2 {
+    text-align: center;
+  }
+  .attendance-tabs {
+    position: static;
+    transform: none;
+    width: 100%;
+    justify-content: center;
+  }
+  .tab-btn {
+    flex: 1;
+    text-align: center;
+  }
+  .attendance-controls {
+    justify-content: center;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .attendance-legend {
+    justify-content: center;
+    padding: 12px;
+  }
+  .summary-table-container,
+  .summary-chart-container {
+    padding: 16px;
+  }
+  .attendance-table th,
+  .attendance-table td {
+    padding: 12px 8px;
+  }
+  .attendance-table .sticky-col.name-col {
+    min-width: 160px;
+  }
+  .student-name {
+    max-width: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .attendance-controls .btn.outline {
+    flex: 1;
+    text-align: center;
+  }
+  .days-label {
+    flex: 1;
+  }
+  .attendance-controls {
+    gap: 8px;
+  }
+  .attendance-legend {
+    gap: 12px;
+  }
+  .legend-item {
+    font-size: 0.8rem;
+  }
+  .legend-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8rem;
+  }
+  .attendance-header h2 {
+    font-size: 1.4rem;
+  }
+  .attendance-table .sticky-col.name-col {
+    min-width: 140px;
+  }
+  .student-name {
+    max-width: 80px;
+    font-size: 0.85rem;
+  }
+  .student-avatar {
+    width: 32px;
+    height: 32px;
+  }
+  .chart-wrapper {
+    height: 260px;
+  }
+}

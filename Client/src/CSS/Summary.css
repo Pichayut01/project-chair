@@ -226,6 +226,7 @@
   padding: 26px;
   border: 1px solid var(--bento-border);
   box-shadow: var(--bento-shadow);
+  min-width: 0;
   transition:
     box-shadow 0.3s,
     transform 0.3s;
@@ -296,6 +297,9 @@
 .bento-categories {
   grid-column: span 2;
   grid-row: span 1;
+}
+.bento-chart.full-width {
+  grid-column: span 4;
 }
 .bento-score-table {
   grid-column: span 4;
@@ -989,6 +993,9 @@
   .bento-grid.student-view .bento-categories {
     grid-column: span 2;
   }
+  .bento-chart.full-width {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1023,6 +1030,44 @@
 
   .podium-wrap {
     min-height: auto;
+    padding-top: 20px;
+    gap: 8px;
+  }
+
+  .podium-col {
+    max-width: 30%;
+  }
+
+  .podium-img {
+    width: 44px;
+    height: 44px;
+    margin-bottom: -22px;
+  }
+
+  .podium-img.first-img {
+    width: 60px;
+    height: 60px;
+    margin-bottom: -30px;
+  }
+
+  .podium-bar {
+    font-size: 0.95rem;
+  }
+
+  .podium-col.first .podium-bar {
+    height: 140px;
+    font-size: 1.2rem;
+  }
+
+  .podium-col.second .podium-bar {
+    height: 100px;
+  }
+  .podium-col.third .podium-bar {
+    height: 80px;
+  }
+
+  .podium-name {
+    font-size: 0.8rem;
   }
 
   .profile-metrics {
@@ -1030,7 +1075,20 @@
   }
 
   .stats-mini-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-mini {
+    padding: 12px;
+    gap: 10px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-mini-icon {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto;
   }
 
   .bento-tile {
@@ -1039,6 +1097,10 @@
 
   .bento-chart-wrap {
     height: 240px;
+  }
+
+  .bento-status-toggle {
+    justify-content: flex-start;
   }
 }
 
@@ -1052,27 +1114,36 @@
   }
 
   .podium-wrap {
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 6px;
   }
 
-  .podium-col.first .podium-bar,
-  .podium-col.second .podium-bar,
+  .podium-col.first .podium-bar {
+    height: 110px !important;
+  }
+  .podium-col.second .podium-bar {
+    height: 80px !important;
+  }
   .podium-col.third .podium-bar {
-    height: 60px !important;
-    padding-top: 10px;
-    border-radius: 12px;
+    height: 65px !important;
   }
 
   .podium-img {
-    margin-bottom: -20px;
+    width: 36px;
+    height: 36px;
+    margin-bottom: -18px;
   }
 
   .podium-img.first-img {
-    width: 64px;
-    height: 64px;
-    margin-bottom: -24px;
+    width: 50px;
+    height: 50px;
+    margin-bottom: -25px;
+  }
+
+  .podium-name {
+    font-size: 0.75rem;
+    max-width: 60px;
   }
 }
 

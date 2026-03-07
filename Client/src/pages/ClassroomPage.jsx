@@ -18,7 +18,7 @@ import StudentRatingModal from '../components/StudentRatingModal';
 import { useSocket } from '../hooks/useSocket';
 
 
-import { FaEdit, FaTh, FaThLarge, FaChevronUp, FaChevronDown, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaUsers, FaUsersSlash } from 'react-icons/fa';
+import { FaEdit, FaTh, FaThLarge, FaChevronUp, FaChevronDown, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaUsers, FaUsersSlash, FaPlay, FaClock, FaStop } from 'react-icons/fa';
 import ActionBar from '../components/ActionBar';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupOverlay from '../components/GroupOverlay';
@@ -27,6 +27,7 @@ import GroupingModal from '../components/GroupingModal';
 import ViewToggle from '../components/ViewToggle'; // ✨ Import ViewToggle
 import ClassChat from '../components/ClassChat'; // ✨ Import ClassChat
 import StudentStatusBanner from '../components/StudentStatusBanner'; // ✨ Import Performance Banner
+import SessionSummaryModal from '../components/SessionSummaryModal'; // ✨ Import Session Summary Modal
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
@@ -91,6 +92,16 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     // ✨ Chat State
     const [chatMessages, setChatMessages] = useState([]);
 
+    // ✨ Teaching Session State
+    const [isSessionActive, setIsSessionActive] = useState(false);
+    const [sessionStartTime, setSessionStartTime] = useState(null);
+    const [sessionId, setSessionId] = useState(null);
+    const [sessionScoreChanges, setSessionScoreChanges] = useState([]);
+    const [sessionElapsed, setSessionElapsed] = useState(0);
+    const [showSessionSummary, setShowSessionSummary] = useState(false);
+    const [sessionSummaryData, setSessionSummaryData] = useState(null);
+    const sessionTimerRef = useRef(null);
+
     const chatContainerRef = useRef(null);
 
     // Zoom functionality state (seating)
@@ -124,6 +135,16 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     useEffect(() => {
         localStorage.setItem(`chat-sidebar-open-${classId}`, JSON.stringify(isChatSidebarOpen));
     }, [isChatSidebarOpen, classId]);
+
+    // ✨ Cleanup session timer on unmount
+    useEffect(() => {
+        return () => {
+            if (sessionTimerRef.current) {
+                clearInterval(sessionTimerRef.current);
+                sessionTimerRef.current = null;
+            }
+        };
+    }, []);
 
     // Calculate isCreator early to avoid reference errors
     const isCreator = user && classroom?.creator && (
@@ -761,6 +782,19 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             });
 
             setStudentScores(updatedStudentScores);
+
+            // ✨ Track score changes in active session
+            if (isSessionActive) {
+                const newChanges = scoredEntries.map(entry => ({
+                    studentId: entry.userId,
+                    studentName: entry.userName || 'Unknown',
+                    photoURL: null,
+                    category: category,
+                    pointsChange: entry.points,
+                    timestamp: new Date()
+                }));
+                setSessionScoreChanges(prev => [...prev, ...newChanges]);
+            }
 
             // Emit real-time score updates
             scoredEntries.forEach(entry => {
@@ -1670,6 +1704,22 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
             setStudentScores(updatedStudentScores);
 
+            // ✨ Track score changes in active session
+            if (isSessionActive) {
+                const scoreChange = preset.scoreType === 'subtract' ? -preset.scoreValue : preset.scoreValue;
+                const newChanges = groupMembers.map(member => ({
+                    studentId: member.userId,
+                    studentName: assignedUsers[Object.keys(assignedUsers).find(
+                        key => assignedUsers[key].userId === member.userId
+                    )]?.userName || member.userName || 'Unknown',
+                    photoURL: member.photoURL || null,
+                    category: category,
+                    pointsChange: scoreChange,
+                    timestamp: new Date()
+                }));
+                setSessionScoreChanges(prev => [...prev, ...newChanges]);
+            }
+
             // Emit real-time score updates for each member
             groupMembers.forEach(member => {
                 const memberName = assignedUsers[Object.keys(assignedUsers).find(
@@ -1744,6 +1794,18 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
             // Update local state
             setStudentScores(updatedStudentScores);
+
+            // ✨ Track score change in active session
+            if (isSessionActive) {
+                setSessionScoreChanges(prev => [...prev, {
+                    studentId: studentId,
+                    studentName: studentUser?.userName || 'Unknown',
+                    photoURL: studentUser?.photoURL || null,
+                    category: category,
+                    pointsChange: scoreChange,
+                    timestamp: new Date()
+                }]);
+            }
 
             // Emit real-time update
             emitScoreUpdate(studentId, updatedStudentScores[studentId], preset.name, studentUser.userName);
@@ -2421,6 +2483,93 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         key => assignedUsers[key]?.userId === user.id
     );
 
+    // ✨ Teaching Session Handlers
+    const formatSessionTime = (totalSeconds) => {
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    const handleStartSession = async () => {
+        try {
+            const res = await axios.post(
+                `${API_BASE_URL}/api/classrooms/${classId}/session/start`,
+                {},
+                { headers: { 'x-auth-token': user.token } }
+            );
+            setIsSessionActive(true);
+            setSessionStartTime(new Date());
+            setSessionId(res.data.session._id);
+            setSessionScoreChanges([]);
+            setSessionElapsed(0);
+
+            // Start timer
+            sessionTimerRef.current = setInterval(() => {
+                setSessionElapsed(prev => prev + 1);
+            }, 1000);
+
+            Swal.fire({
+                icon: 'success',
+                title: '🎓 Session Started!',
+                text: 'Teaching session is now active. Scores will be tracked.',
+                timer: 2000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+        } catch (err) {
+            console.error('Error starting session:', err);
+            Swal.fire('Error', err.response?.data?.msg || 'Failed to start session.', 'error');
+        }
+    };
+
+    const handleEndSession = async () => {
+        const result = await Swal.fire({
+            title: '🏁 End Teaching Session?',
+            text: `Session has been running for ${formatSessionTime(sessionElapsed)}. End now?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'End Session',
+            cancelButtonText: 'Continue',
+            confirmButtonColor: '#e74c3c'
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            // Stop timer
+            if (sessionTimerRef.current) {
+                clearInterval(sessionTimerRef.current);
+                sessionTimerRef.current = null;
+            }
+
+            const res = await axios.post(
+                `${API_BASE_URL}/api/classrooms/${classId}/session/end`,
+                {
+                    sessionId: sessionId,
+                    scoreChanges: sessionScoreChanges
+                },
+                { headers: { 'x-auth-token': user.token } }
+            );
+
+            // Show summary modal
+            setSessionSummaryData(res.data.session);
+            setShowSessionSummary(true);
+
+            // Reset session state
+            setIsSessionActive(false);
+            setSessionStartTime(null);
+            setSessionId(null);
+            setSessionScoreChanges([]);
+            setSessionElapsed(0);
+        } catch (err) {
+            console.error('Error ending session:', err);
+            Swal.fire('Error', err.response?.data?.msg || 'Failed to end session.', 'error');
+        }
+    };
+
     const actionBarActions = [
         ...(!isCreator ? [{
             id: 'raise-hand',
@@ -2459,6 +2608,13 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             label: 'Create Groups',
             onClick: () => setIsGroupModalOpen(true),
             isActive: isGroupModalOpen
+        }] : []),
+        ...(isCreator && isSessionActive ? [{
+            id: 'session',
+            icon: <FaClock />,
+            label: 'Session Active',
+            onClick: () => {},
+            isActive: true
         }] : []),
         {
             id: 'view',
@@ -2604,6 +2760,11 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 onKickMember={handleKickMember}
                 classroom={classroom}
                 onClassroomBackClick={() => navigate('/')}
+                isSessionActive={isSessionActive}
+                sessionElapsed={sessionElapsed}
+                onStartSession={handleStartSession}
+                onEndSession={handleEndSession}
+                formatSessionTime={formatSessionTime}
             >
                 {/* ✨ Navbar Children removed - Tools moved to ActionBar */}
             </Navbar>
@@ -2774,6 +2935,16 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 activeGroupingEvent={classroomEvents?.find(e => e.type === 'grouping' && e.status === 'active')}
                 onCancelGrouping={(event) => handleEndAndScoreEvent(event)}
             />
+            {/* ✨ Session Summary Modal */}
+            {showSessionSummary && sessionSummaryData && (
+                <SessionSummaryModal
+                    sessionData={sessionSummaryData}
+                    onClose={() => {
+                        setShowSessionSummary(false);
+                        setSessionSummaryData(null);
+                    }}
+                />
+            )}
         </>
     );
 };

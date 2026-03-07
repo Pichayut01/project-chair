@@ -53,10 +53,16 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
             {classes.map((room) => {
                 const isPinned = user?.pinnedClasses?.includes(room._id);
                 const creator = room.creator && room.creator[0];
-                const allMembers = [
+                const allMembersRaw = [
                     ...(room.creator || []),
                     ...(room.participants || [])
                 ];
+                const seen = new Set();
+                const allMembers = allMembersRaw.filter(m => {
+                    if (!m._id || seen.has(m._id)) return false;
+                    seen.add(m._id);
+                    return true;
+                });
                 const totalMembers = allMembers.length;
                 const displayAvatars = allMembers.slice(0, 4);
                 const extraMembers = totalMembers - displayAvatars.length;
