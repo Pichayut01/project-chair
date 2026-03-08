@@ -5,14 +5,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FiAlertTriangle, FiArrowLeft, FiRefreshCw } from 'react-icons/fi';
 import Navbar from '../components/Navbar';
 import '../CSS/ClassroomErrorPage.css';
+import { useTranslation } from 'react-i18next';
 
 const ClassroomErrorPage = ({
     user,
     isSidebarOpen,
     toggleSidebar,
     handleSignOut,
-    errorMessage = "Failed to load classroom details."
+    errorMessage
 }) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { classroomId } = useParams();
 
@@ -50,44 +52,43 @@ const ClassroomErrorPage = ({
                         <FiAlertTriangle size={64} />
                     </div>
 
-                    <h1 className="error-title">Classroom Not Available</h1>
+                    <h1 className="error-title">{t('classroomErrorPage.title') || 'Classroom Not Available'}</h1>
 
                     <p className="error-description">
-                        {errorMessage}
+                        {errorMessage || t('classroomErrorPage.defaultError')}
                     </p>
 
                     <div className="error-details">
-                        <p><strong>Possible reasons:</strong></p>
+                        <p><strong>{t('classroomErrorPage.possibleReasons') || 'Possible reasons:'}</strong></p>
                         <ul>
-                            <li>The classroom may have been deleted</li>
-                            <li>You may not have permission to access this classroom</li>
-                            <li>There might be a temporary network issue</li>
-                            <li>The classroom ID may be invalid</li>
+                            <li>{t('classroomErrorPage.reasonDeleted') || 'The classroom may have been deleted'}</li>
+                            <li>{t('classroomErrorPage.reasonNoPermission') || 'You may not have permission to access this classroom'}</li>
+                            <li>{t('classroomErrorPage.reasonNetwork') || 'There might be a temporary network issue'}</li>
+                            <li>{t('classroomErrorPage.reasonInvalidId') || 'The classroom ID may be invalid'}</li>
                         </ul>
                     </div>
 
                     <div className="error-actions">
                         <button
                             className="error-btn error-btn-primary"
-                            onClick={handleGoBack}
+                            onClick={handleTryAgain}
                         >
-                            <FiArrowLeft size={18} />
-                            <span>Go to Dashboard</span>
+                            <FiRefreshCw size={18} />
+                            <span>{t('classroomErrorPage.tryAgain') || 'Try Again'}</span>
                         </button>
 
                         <button
                             className="error-btn error-btn-secondary"
-                            onClick={handleTryAgain}
+                            onClick={handleGoBack}
                         >
-                            <FiRefreshCw size={18} />
-                            <span>Try Again</span>
+                            <FiArrowLeft size={18} />
+                            <span>{t('classroomErrorPage.goHome') || 'Go to Dashboard'}</span>
                         </button>
                     </div>
 
                     <div className="error-help">
                         <p>
-                            If you continue to experience issues, please contact your teacher
-                            or try refreshing the page.
+                            {t('classroomErrorPage.helpText') || 'If this problem persists, please contact your teacher or try refreshing the page.'}
                         </p>
                     </div>
                 </div>

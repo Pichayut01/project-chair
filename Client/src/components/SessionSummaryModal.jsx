@@ -3,6 +3,7 @@
 import React from 'react';
 import '../CSS/SessionSummaryModal.css';
 import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
+import { useTranslation } from 'react-i18next';
 
 const formatDuration = (seconds) => {
     const h = Math.floor(seconds / 3600);
@@ -21,6 +22,7 @@ const getRankDisplay = (index) => {
 };
 
 const SessionSummaryModal = ({ sessionData, onClose }) => {
+    const { t } = useTranslation();
     if (!sessionData) return null;
 
     const { durationSeconds, scoreChanges, summary } = sessionData;
@@ -41,20 +43,20 @@ const SessionSummaryModal = ({ sessionData, onClose }) => {
             <div className="session-summary-modal" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="session-summary-header">
-                    <h2>🏁 Class Session Ended</h2>
-                    <p className="session-subtitle">Here's what happened during this session</p>
+                    <h2>{t('sessionSummaryModal.title') || '🏁 Class Session Ended'}</h2>
+                    <p className="session-subtitle">{t('sessionSummaryModal.subtitle') || "Here's what happened during this session"}</p>
                     <div className="session-stats-row">
                         <div className="session-stat-item">
                             <span className="session-stat-value">{formatDuration(durationSeconds || 0)}</span>
-                            <span className="session-stat-label">Duration</span>
+                            <span className="session-stat-label">{t('sessionSummaryModal.duration') || 'Duration'}</span>
                         </div>
                         <div className="session-stat-item">
                             <span className="session-stat-value">{summary?.studentsScored || 0}</span>
-                            <span className="session-stat-label">Students</span>
+                            <span className="session-stat-label">{t('sessionSummaryModal.students') || 'Students'}</span>
                         </div>
                         <div className="session-stat-item">
                             <span className="session-stat-value">{summary?.totalScoreChanges || 0}</span>
-                            <span className="session-stat-label">Score Changes</span>
+                            <span className="session-stat-label">{t('sessionSummaryModal.scoreChanges') || 'Score Changes'}</span>
                         </div>
                     </div>
                 </div>
@@ -63,7 +65,7 @@ const SessionSummaryModal = ({ sessionData, onClose }) => {
                 <div className="session-summary-body">
                     {topStudents.length > 0 ? (
                         <>
-                            <h3>🏆 Session Leaderboard</h3>
+                            <h3>{t('sessionSummaryModal.leaderboardTitle') || '🏆 Session Leaderboard'}</h3>
                             <div className="session-leaderboard">
                                 {topStudents.map((student, index) => {
                                     const rankDisplay = getRankDisplay(index);
@@ -104,7 +106,7 @@ const SessionSummaryModal = ({ sessionData, onClose }) => {
                     ) : (
                         <div className="session-no-scores">
                             <div className="no-score-icon">📋</div>
-                            <p>No scores were given during this session.</p>
+                            <p>{t('sessionSummaryModal.noScores') || 'No scores were given during this session.'}</p>
                         </div>
                     )}
                 </div>
@@ -112,7 +114,7 @@ const SessionSummaryModal = ({ sessionData, onClose }) => {
                 {/* Footer */}
                 <div className="session-summary-footer">
                     <button className="session-close-btn" onClick={onClose}>
-                        Close
+                        {t('sessionSummaryModal.closeBtn') || 'Close'}
                     </button>
                 </div>
             </div>

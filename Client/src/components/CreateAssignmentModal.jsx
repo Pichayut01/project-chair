@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import BeautifulDateTimePicker from './BeautifulDateTimePicker';
@@ -37,6 +38,7 @@ const isImageMimetype = (mimetype) => mimetype && mimetype.startsWith('image/');
 const isImageUrl = (url) => /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i.test(url);
 
 const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCreated, assignment }) => {
+    const { t } = useTranslation('translation', { keyPrefix: 'createAssignmentModal' });
     const [title, setTitle] = useState(assignment?.title || '');
     const [description, setDescription] = useState(assignment?.description || '');
     const [dueDate, setDueDate] = useState(
@@ -109,7 +111,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCre
             }]);
         } catch (err) {
             console.error('Error uploading file:', err);
-            setError('Failed to upload file.');
+            setError(t('errorUpload'));
         } finally {
             setUploadingFile(false);
             e.target.value = '';
@@ -122,7 +124,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCre
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!title.trim()) { setError('Title is required'); return; }
+        if (!title.trim()) { setError(t('errorTitle')); return; }
         setLoading(true);
         setError(null);
         try {
@@ -149,7 +151,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCre
             onAssignmentCreated(res.data);
             handleClose();
         } catch (err) {
-            setError(err.response?.data?.msg || `Failed to ${assignment ? 'update' : 'create'} assignment`);
+            setError(err.response?.data?.msg || (assignment ? t('errorUpdate') : t('errorCreate')));
             setLoading(false);
         }
     };
@@ -170,18 +172,18 @@ const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCre
     return createPortal(
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && handleClose()}>
             <div className="create-assignment-modal">
-                <h2>{assignment ? 'Edit Assignment' : 'Create Assignment'}</h2>
+                <h2>{assignment ? t('editTitle') : t('createTitle')}</h2>
                 {error && <div className="error-message">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="assignment-form">
                     {/* Title */}
                     <div className="form-group">
-                        <label>Title (required)</label>
+                        <label>{t('labelTitle')}</label>
                         <input
                             type="text"
                             value={title}
                             onChange={e => setTitle(e.target.value)}
-                            placeholder="e.g. Chapter 3 Reading Report"
+                            placeholder={t('placeholderTitle')}
                             required
                             autoFocus
                         />
@@ -189,55 +191,65 @@ const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCre
 
                     {/* Instructions */}
                     <div className="form-group">
-                        <label>Instructions (optional)</label>
+                        <label>{t('labelInstructions')}</label>
                         <textarea
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            placeholder="Describe the task, rubric, or any resources..."
+                            placeholder={t('placeholderInstructions')}
                             rows="4"
                         />
                     </div>
 
                     {/* ═══ Attachments Section ═══ */}
                     <div className="cam-attachments-section">
-                        <label className="cam-attachments-label">Attachments</label>
+                        <label className="cam-attachments-label">{t('labelAttachments')}</label>
 
                         {/* Attachment buttons */}
                         <div className="cam-attach-buttons">
                             <button type="button" className="cam-attach-btn" onClick={() => setShowLinkInput(!showLinkInput)}>
-                                <SvgLink /> Add Link
+                                <SvgLink /> {t('btnAddLink')}
                             </button>
                             <label className={`cam-attach-btn ${uploadingFile ? 'cam-attach-btn--disabled' : ''}`}>
-                                <SvgUpload /> {uploadingFile ? 'Uploading...' : 'Upload File'}
+                                <SvgUpload /> {uploadingFile ? t('uploading') : t('btnUploadFile')}
                                 <input type="file" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploadingFile} />
                             </label>
                         </div>
 
-                        {/* Link input popover */}
+                        {/* Link input popover (now rendered as a modal) */}
                         {showLinkInput && (
-                            <div className="cam-link-input-area">
-                                <input
-                                    type="url"
-                                    placeholder="Paste a URL..."
-                                    value={linkUrl}
-                                    onChange={e => setLinkUrl(e.target.value)}
-                                    className="cam-link-url-input"
-                                    autoFocus
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Display name (optional)"
-                                    value={linkName}
-                                    onChange={e => setLinkName(e.target.value)}
-                                    className="cam-link-name-input"
-                                />
-                                <div className="cam-link-actions">
-                                    <button type="button" className="cam-link-add-btn" onClick={handleAddLink} disabled={!linkUrl.trim()}>
-                                        Add
-                                    </button>
-                                    <button type="button" className="cam-link-cancel-btn" onClick={() => { setShowLinkInput(false); setLinkUrl(''); setLinkName(''); }}>
-                                        Cancel
-                                    </button>
+                            <div className="cam-link-modal-overlay" onClick={() => { setShowLinkInput(false); setLinkUrl(''); setLinkName(''); }}>
+                                <div className="cam-link-modal" onClick={e => e.stopPropagation()}>
+                                    <div className="cam-link-modal-header">
+                                        <h3>{t('linkModal.title')}</h3>
+                                        <button className="cam-link-modal-close" onClick={() => { setShowLinkInput(false); setLinkUrl(''); setLinkName(''); }}>
+                                            <SvgX />
+                                        </button>
+                                    </div>
+                                    <div className="cam-link-input-area">
+                                        <input
+                                            type="url"
+                                            placeholder={t('linkModal.placeholderUrl')}
+                                            value={linkUrl}
+                                            onChange={e => setLinkUrl(e.target.value)}
+                                            className="cam-link-url-input"
+                                            autoFocus
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder={t('linkModal.placeholderName')}
+                                            value={linkName}
+                                            onChange={e => setLinkName(e.target.value)}
+                                            className="cam-link-name-input"
+                                        />
+                                        <div className="cam-link-actions">
+                                            <button type="button" className="cam-link-cancel-btn" onClick={() => { setShowLinkInput(false); setLinkUrl(''); setLinkName(''); }}>
+                                                {t('linkModal.cancel')}
+                                            </button>
+                                            <button type="button" className="cam-link-add-btn" onClick={handleAddLink} disabled={!linkUrl.trim()}>
+                                                {t('linkModal.add')}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -273,15 +285,15 @@ const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCre
                     {/* Due date + points */}
                     <div className="form-row">
                         <div className="form-group half">
-                            <label>Due date</label>
+                            <label>{t('labelDueDate')}</label>
                             <BeautifulDateTimePicker 
                                 value={dueDate}
                                 onChange={setDueDate}
-                                placeholder="When is it due?"
+                                placeholder={t('placeholderDueDate')}
                             />
                         </div>
                         <div className="form-group half">
-                            <label>Points</label>
+                            <label>{t('labelPoints')}</label>
                             <input
                                 type="number"
                                 value={points}
@@ -301,7 +313,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCre
                                 onChange={e => setAllowLateSubmission(e.target.checked)}
                             />
                             <span className="toggle-switch" />
-                            <span className="toggle-tile-text">Allow late submissions</span>
+                            <span className="toggle-tile-text">{t('allowLate')}</span>
                         </label>
                         <label className="toggle-tile">
                             <input
@@ -310,17 +322,17 @@ const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCre
                                 onChange={e => setShowScoreToStudents(e.target.checked)}
                             />
                             <span className="toggle-switch" />
-                            <span className="toggle-tile-text">Show score to students after grading</span>
+                            <span className="toggle-tile-text">{t('showScore')}</span>
                         </label>
                     </div>
 
                     {/* Actions */}
                     <div className="modal-actions">
                         <button type="button" className="cancel-btn" onClick={handleClose} disabled={loading}>
-                            Cancel
+                            {t('btnCancel')}
                         </button>
                         <button type="submit" className="primary-btn" disabled={loading}>
-                            {loading ? (assignment ? 'Updating...' : 'Assigning...') : (assignment ? 'Save Changes' : 'Assign →')}
+                            {loading ? (assignment ? t('updating') : t('assigning')) : (assignment ? t('btnSaveChanges') : t('btnAssign'))}
                         </button>
                     </div>
                 </form>

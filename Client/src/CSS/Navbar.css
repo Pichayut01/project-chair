@@ -109,6 +109,27 @@ html {
   flex-direction: column;
 }
 
+@media (max-width: 768px) {
+  .notification-dropdown {
+    width: 300px;
+    right: -50px; /* Adjust right offset for smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-dropdown {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+}
+
 .notification-list {
   max-height: calc(3 * 76px); /* Roughly 3 items, assuming ~70px+padding each */
   overflow-y: auto;

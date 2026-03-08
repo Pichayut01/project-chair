@@ -16,12 +16,14 @@ import GroupHistoryView from '../components/events/GroupHistoryView';
 import AttendanceTracker from '../components/AttendanceTracker'; // ✨ Import Attendance Tracker
 import Summary from '../components/Summary'; // ✨ Import Summary
 import SessionHistory from '../components/SessionHistory'; // ✨ Import SessionHistory
+import { useTranslation } from 'react-i18next';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
 const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     const { classId } = useParams();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [classroom, setClassroom] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -36,9 +38,9 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
             setLoading(false);
         } catch (err) {
             if (err.response?.status === 403 && err.response?.data?.requiresInvitation) {
-                setError('This classroom is private and requires an invitation to access.');
+                setError(t('classDetailPage.privateClassError') || 'This classroom is private and requires an invitation to access.');
             } else {
-                setError('Failed to load classroom details.');
+                setError(t('classDetailPage.loadError') || 'Failed to load classroom details.');
             }
             setLoading(false);
             console.error("Error fetching classroom details:", err);
@@ -102,12 +104,12 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
             case '2':
                 return (
                     <div className="class-detail-content">
-                        <h2>Menu Item 2</h2>
-                        <p>This is the content for menu item 2. You can add any functionality here.</p>
+                        <h2>{t('classDetailPage.placeholderMenu2Title') || 'Menu Item 2'}</h2>
+                        <p>{t('classDetailPage.placeholderMenu2Text') || 'This is the content for menu item 2. You can add any functionality here.'}</p>
                         <div className="content-placeholder">
                             <div className="placeholder-card">
-                                <h3>Feature 2</h3>
-                                <p>Description of feature 2 functionality.</p>
+                                <h3>{t('classDetailPage.placeholderFeature2Title') || 'Feature 2'}</h3>
+                                <p>{t('classDetailPage.placeholderFeature2Desc') || 'Description of feature 2 functionality.'}</p>
                             </div>
                         </div>
                     </div>
@@ -137,8 +139,8 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
             default:
                 return (
                     <div className="class-detail-content">
-                        <h2>Menu Item 1</h2>
-                        <p>This is the content for menu item 1. You can add any functionality here.</p>
+                        <h2>{t('classDetailPage.placeholderMenu1Title') || 'Menu Item 1'}</h2>
+                        <p>{t('classDetailPage.placeholderMenu1Text') || 'This is the content for menu item 1. You can add any functionality here.'}</p>
                     </div>
                 );
         }
@@ -153,7 +155,7 @@ const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) 
     }
 
     if (!classroom) {
-        return <div className="error">Classroom not found.</div>;
+        return <div className="error">{t('classDetailPage.notFoundError') || 'Classroom not found.'}</div>;
     }
 
     return (

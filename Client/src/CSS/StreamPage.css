@@ -27,9 +27,10 @@
 
 /* ===================== STREAM PAGE LAYOUT ===================== */
 .stream-page-container {
-  max-width: 1400px;
+  max-width: 1040px;
   margin: 0 auto;
-  padding: 0;
+  padding: 24px;
+  box-sizing: border-box;
 }
 
 /* Banner */
@@ -43,7 +44,7 @@
   align-items: flex-end;
   animation: fadeInUp 0.4s ease-out;
   background: white;
-  margin-top: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Better shadow */
 }
 
 .sp-hero-banner--has-bg {
@@ -54,6 +55,12 @@
 .sp-hero-overlay {
   position: absolute;
   inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 .sp-hero-content {
@@ -88,9 +95,17 @@
   backdrop-filter: blur(10px);
   padding: 6px 14px;
   border-radius: 20px;
-  color: rgb(122, 122, 122);
+  color: rgb(80, 80, 80);
   font-size: 0.9rem;
   font-weight: 600;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+
+.sp-hero-code:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .sp-hero-collapse-btn {
@@ -159,6 +174,7 @@
 .sp-feed-col {
   flex: 1;
   min-width: 0;
+  max-width: 100%;
 }
 
 .sp-sidebar-col {
@@ -248,6 +264,8 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   padding: 20px 24px;
   margin-bottom: 24px;
+  max-width: 100%;
+  box-sizing: border-box;
   transition:
     box-shadow 0.3s,
     border-color 0.3s;
@@ -294,6 +312,7 @@
   gap: 10px;
   transition: all 0.25s ease;
   cursor: pointer;
+  min-width: 0;
 }
 
 .cpb-placeholder:hover .cpb-placeholder-text {
@@ -301,6 +320,13 @@
   border-color: #ceead6;
   color: #0aa158;
   box-shadow: 0 2px 10px rgba(10, 161, 88, 0.1);
+}
+
+.cpb-placeholder-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 /* Expanded form */
@@ -611,6 +637,8 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   margin-bottom: 20px;
   overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
   transition:
     box-shadow 0.2s,
     transform 0.2s;
@@ -759,6 +787,8 @@
   font-weight: 600;
   color: #0aa158;
   margin: 0 0 8px;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .sp-content {
@@ -767,7 +797,8 @@
   line-height: 1.6;
   margin: 0;
   white-space: pre-wrap;
-  word-break: break-word;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* Assignment CTA */
@@ -1037,6 +1068,7 @@
 @media (max-width: 960px) {
   .sp-two-col {
     flex-direction: column;
+    max-width: 100%;
   }
   .sp-sidebar-col {
     width: 100%;
@@ -1045,6 +1077,12 @@
 }
 
 @media (max-width: 768px) {
+  .stream-page-container {
+    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
   .sp-hero-banner {
     border-radius: 14px;
     min-height: 130px;
@@ -1079,15 +1117,24 @@
     border-radius: 12px;
     padding: 16px 18px;
   }
+  .cpb-placeholder-text {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
   .cpb-actions {
-    flex-direction: column;
+    flex-direction: row;
     gap: 12px;
-    align-items: stretch;
+    align-items: center;
+    flex-wrap: wrap;
   }
-  .cpb-actions-left,
+  .cpb-actions-left {
+    flex: 1;
+    justify-content: flex-start;
+  }
   .cpb-actions-right {
-    justify-content: center;
+    justify-content: flex-end;
   }
+  /* Hide sidebar (including chat) on mobile as requested by user */
   .sp-sidebar-col {
     display: none;
   }

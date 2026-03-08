@@ -49,7 +49,7 @@ exports.googleLoginVerify = async (req, res) => {
             user = new User({
                 email,
                 displayName: name || email.split('@')[0],
-                photoURL: picture || '',
+                photoURL: picture || `https://api.dicebear.com/9.x/toon-head/svg?seed=${encodeURIComponent(email)}`,
                 uid
             });
             await user.save();
@@ -193,7 +193,7 @@ exports.register = async (req, res) => {
             email: normalizedEmail,
             password: hashedPassword,
             displayName: displayName || normalizedEmail.split('@')[0],
-            photoURL: null,
+            photoURL: `https://api.dicebear.com/9.x/toon-head/svg?seed=${encodeURIComponent(normalizedEmail)}`,
             uid: new mongoose.Types.ObjectId().toString(),
             role: isFirstUser ? 'admin' : 'user'
         });
@@ -687,7 +687,7 @@ exports.updatePhoto = async (req, res) => {
 
     try {
         const user = req.user;
-        if (user.photoURL) {
+        if (user.photoURL && !user.photoURL.startsWith('http')) {
             const oldPhotoPath = path.join(__dirname, '../', user.photoURL);
             if (fs.existsSync(oldPhotoPath)) {
                 fs.unlinkSync(oldPhotoPath);
@@ -716,19 +716,21 @@ exports.updatePhoto = async (req, res) => {
 exports.deletePhoto = async (req, res) => {
     try {
         const user = req.user;
-        if (user.photoURL) {
+        if (user.photoURL && !user.photoURL.startsWith('http')) {
             const photoPath = path.join(__dirname, '../', user.photoURL);
             if (fs.existsSync(photoPath)) fs.unlinkSync(photoPath);
-            user.photoURL = null;
-            await user.save();
         }
+
+        user.photoURL = `https://api.dicebear.com/9.x/toon-head/svg?seed=${encodeURIComponent(user.email)}`;
+        await user.save();
+
         res.json({
             msg: 'Profile photo deleted',
             user: {
                 id: user._id,
                 email: user.email,
                 displayName: user.displayName,
-                photoURL: null,
+                photoURL: user.photoURL,
                 uid: user.uid
             }
         });

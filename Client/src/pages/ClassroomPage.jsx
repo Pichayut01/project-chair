@@ -18,7 +18,7 @@ import StudentRatingModal from '../components/StudentRatingModal';
 import { useSocket } from '../hooks/useSocket';
 
 
-import { FaEdit, FaTh, FaThLarge, FaChevronUp, FaChevronDown, FaChalkboardTeacher, FaObjectGroup, FaLink, FaTrash, FaUndo, FaHandPaper, FaSmile, FaComment, FaCheck, FaUsers, FaUsersSlash, FaPlay, FaClock, FaStop } from 'react-icons/fa';
+import { FaSearch, FaChalkboardTeacher, FaEdit, FaCheck, FaTimes, FaUndo, FaTrash, FaObjectGroup, FaUsers, FaTh, FaThLarge, FaSave, FaUserPlus, FaEllipsisV, FaHandPaper, FaDownload, FaCrown, FaUserCog, FaRobot, FaMicrophone, FaRegLightbulb, FaSmile, FaImages, FaPlay, FaMedal, FaExternalLinkAlt, FaClock, FaComment, FaLink, FaUsersSlash, FaChevronDown, FaChevronUp, FaUserCheck } from 'react-icons/fa';
 import ActionBar from '../components/ActionBar';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupOverlay from '../components/GroupOverlay';
@@ -28,12 +28,14 @@ import ViewToggle from '../components/ViewToggle'; // ✨ Import ViewToggle
 import ClassChat from '../components/ClassChat'; // ✨ Import ClassChat
 import StudentStatusBanner from '../components/StudentStatusBanner'; // ✨ Import Performance Banner
 import SessionSummaryModal from '../components/SessionSummaryModal'; // ✨ Import Session Summary Modal
+import { useTranslation } from 'react-i18next';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
 
 const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     const { classId } = useParams();
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [classroom, setClassroom] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -163,8 +165,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             const studentName = data.studentName || 'a student';
             Swal.fire({
                 icon: 'info',
-                title: 'Score Updated',
-                text: `${data.presetName} applied to ${studentName}`,
+                title: t('classroomPage.swal.scoreUpdatedTitle') || 'Score Updated',
+                text: t('classroomPage.swal.scoreUpdatedText', { presetName: data.presetName, studentName: studentName }) || `${data.presetName} applied to ${studentName}`,
                 timer: 3000,
                 showConfirmButton: false,
                 position: 'top-end',
@@ -1059,11 +1061,11 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
         if (!currentSeatId && chairUser) {
             Swal.fire({
-                title: 'Seat Taken',
-                text: 'This seat is already taken by another student.',
+                title: t('classroomPage.swal.seatTakenTitle') || 'Seat Taken',
+                text: t('classroomPage.swal.seatTakenText') || 'This seat is already taken by another student.',
                 icon: 'warning',
                 confirmButtonColor: '#ffc107',
-                confirmButtonText: 'OK'
+                confirmButtonText: t('common.save') ? 'OK' : 'OK' // using common, wait I will just leave it OK for now, wait "OK" in common?
             });
             return;
         }
@@ -1076,13 +1078,14 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             if (currentSeatId === chairId) return;
             if (!chairUser) {
                 const result = await Swal.fire({
-                    title: 'Move Seat?',
-                    text: 'Do you want to move to this new seat?',
+                    title: t('classroomPage.swal.moveSeatTitle') || 'Move Seat?',
+                    text: t('classroomPage.swal.moveSeatText') || 'Do you want to move to this new seat?',
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#7ec282',
                     cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, move!'
+                    confirmButtonText: t('classroomPage.swal.yesMoveBtn') || 'Yes, move!',
+                    cancelButtonText: t('common.cancel') || 'Cancel'
                 });
                 if (result.isConfirmed) {
                     setSelectedChairId(chairId);
@@ -1092,8 +1095,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             }
             if (chairUser) {
                 Swal.fire({
-                    title: 'Cannot Move',
-                    text: 'This seat is already taken. Please choose an empty seat.',
+                    title: t('classroomPage.swal.cannotMoveTitle') || 'Cannot Move',
+                    text: t('classroomPage.swal.cannotMoveText') || 'This seat is already taken. Please choose an empty seat.',
                     icon: 'error',
                     confirmButtonColor: '#d33',
                     confirmButtonText: 'OK'
@@ -1189,36 +1192,119 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         setRatingModalOpen(true);
     };
 
-    const handleCheckAttendance = async () => {
+    const handleCheckAttendance = async (studentIdFromDropdown = null) => {
         setDropdownOpen(false);
-        const studentUser = assignedUsers[selectedStudentChair];
-        if (!studentUser) return;
+        
+        // Define default states to support Global/Everyone selection
+        let isGlobalCheck = !studentIdFromDropdown;
+        let selectedUserId = studentIdFromDropdown || 'ALL';
+        
+        // Fetch matching student to display in the modal (if specific selection)
+        let studentUser = null;
+        let photoSrc = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+        let displayUserName = 'Everyone';
+        
+        if (!isGlobalCheck) {
+            studentUser = assignedUsers[Object.keys(assignedUsers).find(k => assignedUsers[k]?.userId === selectedUserId)] || Object.values(assignedUsers).find(u => u?.userId === selectedUserId);
+            if (studentUser) {
+                photoSrc = getProfileImageSrc(studentUser.photoURL);
+                displayUserName = studentUser.userName;
+            }
+        }
 
         const currentDays = attendanceDays || 20;
-        const photoSrc = getProfileImageSrc(studentUser.photoURL);
 
         let defaultDay = 1;
-        const pId = studentUser.userId; 
-        const matchedParticipant = classroom?.participants?.find(p => (p._id || p.id)?.toString() === pId?.toString());
-        const studentIdToSearch = matchedParticipant ? (matchedParticipant._id || matchedParticipant.id) : pId;
-        const studentAtt = attendance[studentIdToSearch];
-        if (studentAtt) {
-             const markedDays = Object.keys(studentAtt).map(Number).filter(d => !isNaN(d)).sort((a,b)=>b-a);
-             if (markedDays.length > 0) defaultDay = markedDays[0];
+        if (!isGlobalCheck && studentUser) {
+            const pId = studentUser.userId; 
+            const matchedParticipant = classroom?.participants?.find(p => (p._id || p.id)?.toString() === pId?.toString());
+            const studentIdToSearch = matchedParticipant ? (matchedParticipant._id || matchedParticipant.id) : pId;
+            const studentAtt = attendance[studentIdToSearch];
+            if (studentAtt) {
+                 const markedDays = Object.keys(studentAtt).map(Number).filter(d => !isNaN(d)).sort((a,b)=>b-a);
+                 if (markedDays.length > 0) defaultDay = markedDays[0];
+            }
         }
+
+        const usersSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`;
+
+        const initialAvatarHtml = isGlobalCheck 
+            ? `<div style="width: 50px; height: 50px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 1.5rem;">${usersSvg}</div>`
+            : `<img src="${photoSrc}" class="attendance-student-photo" onerror="this.src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'"/>`;
+
+        // Create structured options for the custom dropdown
+        // Exclude creator(s) from the list
+        let creatorIds = [];
+        if (classroom?.creator) {
+            if (Array.isArray(classroom.creator)) {
+                creatorIds = classroom.creator.map(c => (c._id || c.id || '').toString());
+            } else {
+                creatorIds = [(classroom.creator._id || classroom.creator.id || '').toString()];
+            }
+        }
+        const filteredParticipants = (classroom?.participants || []).filter(p => !creatorIds.includes((p._id || p.id || '').toString()));
+
+        const customOptions = [
+            {
+                value: 'ALL',
+                label: 'Everyone',
+                photo: `<div style="width: 24px; height: 24px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 0.8rem; margin-right: 10px;">${usersSvg}</div>`
+            },
+            ...filteredParticipants.map(p => {
+                const pIdStr = (p._id || p.id || '').toString();
+                const matchedUser = Object.values(assignedUsers).find(u => u?.userId?.toString() === pIdStr);
+                const displayName = matchedUser ? matchedUser.userName : (p.displayName || p.name || p.username || `User ${pIdStr}`);
+                const rawPhoto = matchedUser ? matchedUser.photoURL : (p.photoURL || p.userPhoto);
+                const photoSrc = rawPhoto ? getProfileImageSrc(rawPhoto) : 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+                return {
+                    value: pIdStr,
+                    label: displayName,
+                    photo: `<img src="${photoSrc}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; margin-right: 10px;" onerror="this.src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'" />`
+                };
+            })
+        ];
+
+        // Ensure the selected default option is first or explicitly styled
+        const selectedOptionObj = customOptions.find(o => o.value === selectedUserId) || customOptions[0];
+
+        const customDropdownHtml = `
+            <div id="custom-attendance-select" style="position: relative; width: 100%; text-align: left; font-family: inherit;">
+                <div id="custom-select-trigger" style="display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: #fff; cursor: pointer;">
+                    <div style="display: flex; align-items: center;" id="custom-select-selected-content">
+                        ${selectedOptionObj.photo}
+                        <span style="font-size: 1rem; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${selectedOptionObj.label}</span>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div id="custom-select-options" style="display: none; position: absolute; z-index: 9999; top: 100%; left: 0; right: 0; margin-top: 4px; background: #fff; border: 1px solid #eef0f2; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto;">
+                    ${customOptions.map(opt => `
+                        <div class="custom-select-option" data-value="${opt.value}" style="display: flex; align-items: center; padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9;">
+                            ${opt.photo}
+                            <span style="font-size: 0.95rem; font-weight: 500; color: #333;">${opt.label}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <input type="hidden" id="swal-student-select-hidden" value="${selectedOptionObj.value}" />
+            </div>
+            <style>
+                .custom-select-option:hover { background-color: #f8fafc; }
+                .custom-select-option:last-child { border-bottom: none !important; }
+            </style>
+        `;
 
         const { value: formValues } = await Swal.fire({
             title: 'Attendance Check',
             html: `
-                <div class="attendance-modal-content">
-                    <div class="attendance-student-info">
-                        <img src="${photoSrc}" class="attendance-student-photo" onerror="this.src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'"/>
-                        <div class="attendance-student-details">
-                            <h3 class="attendance-student-name">${studentUser.userName}</h3>
-                            <p class="attendance-student-role">Student</p>
+                <div class="attendance-modal-content" style="overflow: visible;">
+                    <div class="attendance-student-info" style="align-items: center;">
+                        <div id="swal-student-avatar-container" style="flex-shrink: 0;">
+                            ${initialAvatarHtml}
+                        </div>
+                        <div class="attendance-student-details" style="width: 100%; min-width: 0; margin-left: 15px;">
+                            ${customDropdownHtml}
                         </div>
                     </div>
-                    
+                <!-- Rest of form remains same -->
                     <div class="attendance-form-group">
                         <label class="attendance-form-label">
                             <i class="fas fa-calendar-day"></i> Select Day
@@ -1282,21 +1368,64 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             preConfirm: () => {
                 const popup = Swal.getPopup();
                 const status = popup.getAttribute('data-selected-status');
-                const day = popup.getAttribute('data-selected-day');
+                const day = document.getElementById('swal-day').value;
+                const targetStudentId = document.getElementById('swal-student-select-hidden').value;
+                
                 if (!status) {
                     Swal.showValidationMessage('Please select a status');
                     return false;
                 }
-                return { status, day };
+                return { status, day, targetStudentId };
             },
             didOpen: () => {
-                const buttons = Swal.getHtmlContainer().querySelectorAll('.attendance-status-btn');
+                const popup = Swal.getPopup();
+                const buttons = popup.querySelectorAll('.attendance-status-btn');
+                const trigger = popup.querySelector('#custom-select-trigger');
+                const optionsList = popup.querySelector('#custom-select-options');
+                const hiddenInput = popup.querySelector('#swal-student-select-hidden');
+                const selectedContent = popup.querySelector('#custom-select-selected-content');
+                const avatarContainer = popup.querySelector('#swal-student-avatar-container');
+                const optionElements = popup.querySelectorAll('.custom-select-option');
+                
+                // Toggle dropdown menu
+                trigger.addEventListener('click', () => {
+                    const isVisible = optionsList.style.display === 'block';
+                    optionsList.style.display = isVisible ? 'none' : 'block';
+                });
+
+                // Close dropdown on click outside
+                document.addEventListener('click', (e) => {
+                    const customSelect = popup.querySelector('#custom-attendance-select');
+                    if (customSelect && !customSelect.contains(e.target)) {
+                        optionsList.style.display = 'none';
+                    }
+                });
+                
+                // Handle option selection
+                optionElements.forEach(option => {
+                    option.addEventListener('click', () => {
+                        const val = option.getAttribute('data-value');
+                        hiddenInput.value = val;
+                        selectedContent.innerHTML = option.innerHTML; // Copy HTML content
+                        optionsList.style.display = 'none';
+                        
+                        // Update the large left avatar just like before
+                        if (val === 'ALL') {
+                            avatarContainer.innerHTML = '<div style="width: 50px; height: 50px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 1.5rem;">' + usersSvg + '</div>';
+                        } else {
+                            const matchedUser = Object.values(assignedUsers).find(u => u?.userId?.toString() === val);
+                            const participant = classroom?.participants?.find(p => (p._id || p.id || '').toString() === val);
+                            const rawPhoto = matchedUser ? matchedUser.photoURL : (participant?.photoURL || participant?.userPhoto);
+                            const newPhotoSrc = rawPhoto ? getProfileImageSrc(rawPhoto) : 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+                            avatarContainer.innerHTML = "<img src='" + newPhotoSrc + "' class='attendance-student-photo' onerror='this.src=\"https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y\"' />";
+                        }
+                    });
+                });
+
                 buttons.forEach(btn => {
                     btn.addEventListener('click', () => {
                         const status = btn.getAttribute('data-status');
-                        const day = document.getElementById('swal-day').value;
-                        Swal.getPopup().setAttribute('data-selected-status', status);
-                        Swal.getPopup().setAttribute('data-selected-day', day);
+                        popup.setAttribute('data-selected-status', status);
                         Swal.clickConfirm();
                     });
                 });
@@ -1305,21 +1434,31 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
         if (formValues && formValues.status) {
             try {
-                // Normalize student id to match Attendance page expectations (use participant _id)
-                let studentId = studentUser.userId;
-                const participantsList = classroom?.participants || [];
-                const matchedParticipant = participantsList.find(p => {
-                    const pid = p?._id || p?.id;
-                    return pid?.toString?.() === studentUser.userId?.toString?.();
-                });
-                if (matchedParticipant && matchedParticipant._id) {
-                    studentId = matchedParticipant._id.toString?.() || matchedParticipant._id;
-                }
-
-                const newAttendance = { ...attendance };
-                if (!newAttendance[studentId]) newAttendance[studentId] = {};
                 const dayKey = String(formValues.day);
-                newAttendance[studentId][dayKey] = formValues.status;
+                const newAttendance = { ...attendance };
+                
+                let targetMessage = '';
+
+                if (formValues.targetStudentId === 'ALL') {
+                    // Update everyone
+                    const participantsList = classroom?.participants || [];
+                    participantsList.forEach(p => {
+                        const pIdStr = (p._id || p.id || '').toString();
+                        if (pIdStr) {
+                            if (!newAttendance[pIdStr]) newAttendance[pIdStr] = {};
+                            newAttendance[pIdStr][dayKey] = formValues.status;
+                        }
+                    });
+                    targetMessage = `Everyone`;
+                } else {
+                    // Update single user
+                    const studentId = formValues.targetStudentId;
+                    if (!newAttendance[studentId]) newAttendance[studentId] = {};
+                    newAttendance[studentId][dayKey] = formValues.status;
+                    
+                    const matchedUser = Object.values(assignedUsers).find(u => u?.userId?.toString() === studentId);
+                    targetMessage = matchedUser ? matchedUser.userName : 'Student';
+                }
 
                 setAttendance(newAttendance);
 
@@ -1332,7 +1471,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 Swal.fire({
                     icon: 'success',
                     title: 'Attendance Saved',
-                    text: `${studentUser.userName} marked as ${formValues.status} for ${formValues.day}`,
+                    text: `${targetMessage} marked as ${formValues.status} for ${formValues.day}`,
                     timer: 2000,
                     showConfirmButton: false,
                     toast: true,
@@ -1471,8 +1610,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         if (!isStudentInGroup(studentUser.userId)) {
             Swal.fire({
                 icon: 'info',
-                title: 'Not in Group',
-                text: 'This student is not currently in any group.',
+                title: t('classroomPage.swal.notInGroupTitle') || 'Not in Group',
+                text: t('classroomPage.swal.notInGroupText') || 'This student is not currently in any group.',
                 timer: 2000,
                 showConfirmButton: false,
                 position: 'top-end',
@@ -1486,8 +1625,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         if (groupMembers.length === 0) {
             Swal.fire({
                 icon: 'info',
-                title: 'Group Not Found',
-                text: 'Could not find group information for this student.',
+                title: t('classroomPage.swal.groupNotFoundTitle') || 'Group Not Found',
+                text: t('classroomPage.swal.groupNotFoundText') || 'Could not find group information for this student.',
                 timer: 2000,
                 showConfirmButton: false,
                 position: 'top-end',
@@ -1498,14 +1637,14 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
         // Show rating modal with group context
         Swal.fire({
-            title: 'Rate Group',
+            title: t('classroomPage.swal.rateGroupTitle') || 'Rate Group',
             html: `
                 <div style="text-align: left; margin: 20px 0;">
                     <p><strong>Student:</strong> ${studentUser.userName}</p>
                     <p><strong>Group Members:</strong> ${groupMembers.length} student(s)</p>
                     <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
                         <p style="margin: 0; font-size: 0.9em; color: #666;">
-                            This rating will be applied to all ${groupMembers.length} members of this group.
+                            ${t('classroomPage.swal.rateGroupDescText', { count: groupMembers.length }) || `This rating will be applied to all ${groupMembers.length} members of this group.`}
                         </p>
                     </div>
                 </div>
@@ -1514,8 +1653,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             showCancelButton: true,
             confirmButtonColor: '#10b981',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Continue',
-            cancelButtonText: 'Cancel'
+            confirmButtonText: t('common.save') || 'Continue',
+            cancelButtonText: t('common.cancel') || 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
                 // Show rating presets modal
@@ -1732,7 +1871,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             // Show success message
             Swal.fire({
                 icon: 'success',
-                title: '🏆 Group Rated!',
+                title: t('classroomPage.swal.groupRatedTitle') || '🏆 Group Rated!',
                 html: `
                     <div style="text-align: left;">
                         <p><strong>${preset.name}</strong> applied to <strong>${groupMembers.length}</strong> student(s)</p>
@@ -1753,8 +1892,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             console.error('Error applying group rating:', error);
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: 'Failed to apply group rating. Please try again.',
+                title: t('common.error') || 'Error',
+                text: t('classroomPage.swal.groupRatedErrorText') || 'Failed to apply group rating. Please try again.',
                 timer: 2000,
                 showConfirmButton: false,
                 position: 'top-end',
@@ -1812,8 +1951,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
             Swal.fire({
                 icon: 'success',
-                title: 'Score Updated',
-                text: `${preset.name} applied to ${studentUser.userName}`,
+                title: t('classroomPage.swal.scoreUpdatedTitle') || 'Score Updated',
+                text: t('classroomPage.swal.scoreUpdatedText', { presetName: preset.name, studentName: studentUser.userName }) || `${preset.name} applied to ${studentUser.userName}`,
                 timer: 2000,
                 showConfirmButton: false,
                 position: 'top-end',
@@ -1824,8 +1963,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             console.error('Error applying rating:', error);
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: 'Failed to apply rating. Please try again.'
+                title: t('common.error') || 'Error',
+                text: t('classroomPage.swal.ratingErrorText') || 'Failed to apply rating. Please try again.'
             });
         }
     };
@@ -1989,10 +2128,10 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             // ✨ Emit chair groups
             emitChairGroupUpdate(chairGroups);
 
-            Swal.fire('Saved!', 'Seating arrangement updated successfully.', 'success');
+            Swal.fire(t('classroomPage.swal.savedTitle') || 'Saved!', t('classroomPage.swal.savedText') || 'Seating arrangement updated successfully.', 'success');
         } catch (error) {
             console.error('Failed to save seating positions:', error);
-            Swal.fire('Error', 'Failed to save seating arrangement.', 'error');
+            Swal.fire(t('common.error') || 'Error', t('classroomPage.swal.saveErrorText') || 'Failed to save seating arrangement.', 'error');
         }
     };
 
@@ -2044,14 +2183,14 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         if (!isCreator) return;
 
         const result = await Swal.fire({
-            title: 'Reset All Chairs?',
-            text: "Are you sure you want to make all students leave their chairs? This cannot be undone.",
+            title: t('classroomPage.swal.resetChairsTitle') || 'Reset All Chairs?',
+            text: t('classroomPage.swal.resetChairsText') || "Are you sure you want to make all students leave their chairs? This cannot be undone.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, Reset All',
-            cancelButtonText: 'Cancel'
+            confirmButtonText: t('classroomPage.swal.yesResetBtn') || 'Yes, Reset All',
+            cancelButtonText: t('common.cancel') || 'Cancel'
         });
 
         if (result.isConfirmed) {
@@ -2072,8 +2211,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Chairs Reset',
-                    text: 'All students have been moved out of their chairs.',
+                    title: t('classroomPage.swal.chairsResetTitle') || 'Chairs Reset',
+                    text: t('classroomPage.swal.chairsResetText') || 'All students have been moved out of their chairs.',
                     timer: 2000,
                     showConfirmButton: false,
                     toast: true,
@@ -2081,7 +2220,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 });
             } catch (error) {
                 console.error('Error resetting chairs:', error);
-                Swal.fire('Error', 'Failed to reset chairs.', 'error');
+                Swal.fire(t('common.error') || 'Error', t('classroomPage.swal.resetErrorText') || 'Failed to reset chairs.', 'error');
                 fetchClassroomDetails(); // Rollback if error
             }
         }
@@ -2090,14 +2229,14 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const onPromoteMember = async (memberId, memberName) => {
         try {
             const result = await Swal.fire({
-                title: `Promote ${memberName} to Creator?`,
-                text: "This user will gain the same permissions as the classroom owner.",
+                title: t('classroomPage.swal.promoteTitle', { memberName }) || `Promote ${memberName} to Creator?`,
+                text: t('classroomPage.swal.promoteText') || "This user will gain the same permissions as the classroom owner.",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Promote',
-                cancelButtonText: 'Cancel'
+                confirmButtonText: t('classroomPage.swal.promoteBtn') || 'Promote',
+                cancelButtonText: t('common.cancel') || 'Cancel'
             });
             if (result.isConfirmed) {
                 await axios.put(
@@ -2105,25 +2244,25 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                     { userId: memberId },
                     { headers: { 'x-auth-token': user.token } }
                 );
-                Swal.fire('Success', `${memberName} has been promoted to Creator.`, 'success');
+                Swal.fire(t('common.success') || 'Success', t('classroomPage.swal.promoteSuccess', { memberName }) || `${memberName} has been promoted to Creator.`, 'success');
                 fetchClassroomDetails();
             }
         } catch (err) {
-            Swal.fire('Error', 'Could not promote the member.', 'error');
+            Swal.fire(t('common.error') || 'Error', t('classroomPage.swal.promoteError') || 'Could not promote the member.', 'error');
         }
     };
 
     const onDemoteMember = async (memberId, memberName) => {
         try {
             const result = await Swal.fire({
-                title: `Demote ${memberName}?`,
-                text: "This user will lose their Creator permissions.",
+                title: t('classroomPage.swal.demoteTitle', { memberName }) || `Demote ${memberName}?`,
+                text: t('classroomPage.swal.demoteText') || "This user will lose their Creator permissions.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#e74c3c',
                 cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Demote',
-                cancelButtonText: 'Cancel'
+                confirmButtonText: t('classroomPage.swal.demoteBtn') || 'Demote',
+                cancelButtonText: t('common.cancel') || 'Cancel'
             });
             if (result.isConfirmed) {
                 await axios.put(
@@ -2131,22 +2270,22 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                     { userId: memberId },
                     { headers: { 'x-auth-token': user.token } }
                 );
-                Swal.fire('Success', `${memberName} has been demoted to a participant.`, 'success');
+                Swal.fire(t('common.success') || 'Success', t('classroomPage.swal.demoteSuccess', { memberName }) || `${memberName} has been demoted to a participant.`, 'success');
                 fetchClassroomDetails();
             }
         } catch (err) {
-            Swal.fire('Error', err.response?.data?.msg || 'Could not demote the member.', 'error');
+            Swal.fire(t('common.error') || 'Error', err.response?.data?.msg || t('classroomPage.swal.demoteError') || 'Could not demote the member.', 'error');
         }
     };
 
     const handleKickMember = async (memberId, memberName) => {
         const result = await Swal.fire({
-            title: `Kick ${memberName} from the classroom?`,
-            text: "This user will be removed from the classroom.",
+            title: t('classroomPage.swal.kickTitle', { memberName }) || `Kick ${memberName} from the classroom?`,
+            text: t('classroomPage.swal.kickText') || "This user will be removed from the classroom.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Kick',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: t('classroomPage.swal.kickBtn') || 'Kick',
+            cancelButtonText: t('common.cancel') || 'Cancel',
             confirmButtonColor: '#e74c3c'
         });
         if (result.isConfirmed) {
@@ -2156,10 +2295,10 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                     { userId: memberId },
                     { headers: { 'x-auth-token': user.token } }
                 );
-                Swal.fire('Success', `${memberName} has been kicked from the classroom.`, 'success');
+                Swal.fire(t('common.success') || 'Success', t('classroomPage.swal.kickSuccess', { memberName }) || `${memberName} has been kicked from the classroom.`, 'success');
                 fetchClassroomDetails();
             } catch (err) {
-                Swal.fire('Error', 'Could not kick the member.', 'error');
+                Swal.fire(t('common.error') || 'Error', t('classroomPage.swal.kickError') || 'Could not kick the member.', 'error');
             }
         }
     };
@@ -2173,19 +2312,20 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         const chairCount = Object.keys(currentChairPositions).length;
 
         if (chairCount === 0) {
-            Swal.fire('No Chairs', 'Please add some chairs first before applying presets.', 'info');
+            Swal.fire(t('classroomPage.swal.noChairsTitle') || 'No Chairs', t('classroomPage.swal.noChairsText') || 'Please add some chairs first before applying presets.', 'info');
             return;
         }
 
+        const presetLabel = presetType.charAt(0).toUpperCase() + presetType.slice(1);
         const result = await Swal.fire({
-            title: `Apply ${presetType.charAt(0).toUpperCase() + presetType.slice(1)} Layout?`,
-            text: "This will rearrange all chairs according to the selected preset.",
+            title: t('classroomPage.swal.applyLayoutTitle', { presetType: presetLabel }) || `Apply ${presetLabel} Layout?`,
+            text: t('classroomPage.swal.applyLayoutText') || "This will rearrange all chairs according to the selected preset.",
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Apply Layout',
-            cancelButtonText: 'Cancel'
+            confirmButtonText: t('classroomPage.swal.applyLayoutBtn') || 'Apply Layout',
+            cancelButtonText: t('common.cancel') || 'Cancel'
         });
 
         if (result.isConfirmed) {
@@ -2210,7 +2350,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             });
 
             setCurrentChairPositions(updatedPositions);
-            Swal.fire('Success', `${presetType.charAt(0).toUpperCase() + presetType.slice(1)} layout applied!`, 'success');
+            Swal.fire(t('common.success') || 'Success', t('classroomPage.swal.layoutAppliedText', { presetType: presetLabel }) || `${presetLabel} layout applied!`, 'success');
         }
     };
 
@@ -2359,7 +2499,6 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                 transformOrigin: 'center center',
                                 transition: 'transform 0.5s ease'
                             }}>
-                                {/* Front of classroom blackboard */}
                                 <div
                                     id="front-classroom-board"
                                     className="front-classroom-board"
@@ -2367,7 +2506,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                         transform: `translateX(-50%) rotate(${isTeacherView ? 180 : 0}deg)`, // ✨ Rotate text
                                         transition: 'transform 0.5s ease'
                                     }}>
-                                    <span className="board-label">FRONT OF CLASSROOM</span>
+                                    <span className="board-label">{t('classroomPage.frontOfClass') || 'FRONT OF CLASSROOM'}</span>
                                 </div>
 
                                 {/* ✨ Centering Group for Chairs */}
@@ -2574,14 +2713,14 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         ...(!isCreator ? [{
             id: 'raise-hand',
             icon: <FaHandPaper />,
-            label: 'Raise Hand',
+            label: t('classroomPage.actions.raiseHand') || 'Raise Hand',
             onClick: handleRaiseHand,
             isActive: raisedHands.has(user.id) // ✨ Show active state
         }] : []),
         ...(!isCreator ? [{
             id: 'emoji',
             icon: <FaSmile />,
-            label: 'Emoji',
+            label: t('classroomPage.actions.emoji') || 'Emoji',
             onClick: handleEmoji,
             isActive: isEmojiPickerOpen,
             isPopover: true,
@@ -2598,31 +2737,31 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         {
             id: 'chat',
             icon: <FaComment />,
-            label: 'Chat',
+            label: t('classroomPage.actions.chat') || 'Chat',
             onClick: handleChat,
             isActive: isChatSidebarOpen
         },
         ...(isCreator ? [{
             id: 'grouping',
             icon: <FaUsers />,
-            label: 'Create Groups',
+            label: t('classroomPage.actions.createGroups') || 'Create Groups',
             onClick: () => setIsGroupModalOpen(true),
             isActive: isGroupModalOpen
         }] : []),
         ...(isCreator && isSessionActive ? [{
             id: 'session',
             icon: <FaClock />,
-            label: 'Session Active',
+            label: t('classroomPage.actions.sessionActive') || 'Session Active',
             onClick: () => {},
             isActive: true
         }] : []),
-        {
-            id: 'view',
-            icon: <FaChalkboardTeacher />,
-            label: 'Toggle View',
-            onClick: handleToggleView,
-            isActive: isTeacherView
-        }
+        ...(isCreator ? [{
+            id: 'attendance',
+            icon: <FaUserCheck />,
+            label: t('classroomPage.actions.attendance') || 'Attendance',
+            onClick: () => handleCheckAttendance(), // Call with no arguments for Everyone
+            isActive: false
+        }] : [])
     ];
 
     const handleConnectClick = async () => {
@@ -2664,28 +2803,28 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 {
                     id: 'layout-rows',
                     icon: <FaTh />,
-                    label: 'Rows Layout',
+                    label: t('classroomPage.actions.rowsLayout') || 'Rows Layout',
                     onClick: () => handleApplyPreset('rows'),
                     isActive: false
                 },
                 {
                     id: 'layout-grid',
                     icon: <FaThLarge />,
-                    label: 'Grid Layout',
+                    label: t('classroomPage.actions.gridLayout') || 'Grid Layout',
                     onClick: () => handleApplyPreset('grid'),
                     isActive: false
                 },
                 {
                     id: 'layout-groups',
                     icon: <FaObjectGroup />,
-                    label: 'Groups Layout',
+                    label: t('classroomPage.actions.groupsLayout') || 'Groups Layout',
                     onClick: () => handleApplyPreset('groups'),
                     isActive: false
                 },
                 {
                     id: 'connect',
                     icon: <FaLink />,
-                    label: isGroupingMode ? 'Finish Connecting' : 'Connect Chairs',
+                    label: isGroupingMode ? (t('classroomPage.actions.finishConnecting') || 'Finish Connecting') : (t('classroomPage.actions.connectChairs') || 'Connect Chairs'),
                     onClick: handleConnectClick,
                     isActive: isGroupingMode
                 }
@@ -2695,14 +2834,14 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 actionBarActions.push({
                     id: 'undo',
                     icon: <FaUndo />,
-                    label: 'Undo Connection',
+                    label: t('classroomPage.actions.undoConnection') || 'Undo Connection',
                     onClick: handleUndoGroup,
                     isActive: false
                 });
                 actionBarActions.push({
                     id: 'reset',
                     icon: <FaTrash />,
-                    label: 'Reset Connections',
+                    label: t('classroomPage.actions.resetConnections') || 'Reset Connections',
                     onClick: handleClearGroups,
                     isActive: false
                 });
@@ -2712,7 +2851,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             actionBarActions.push({
                 id: 'save',
                 icon: <FaCheck />,
-                label: 'Save & Exit',
+                label: t('classroomPage.actions.saveExit') || 'Save & Exit',
                 onClick: handleSavePositions,
                 isActive: true
             });
@@ -2721,7 +2860,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             actionBarActions.push({
                 id: 'edit',
                 icon: <FaEdit />,
-                label: 'Edit Layout',
+                label: t('classroomPage.actions.editLayout') || 'Edit Layout',
                 onClick: handleToggleEditMode,
                 isActive: false
             });
@@ -2729,7 +2868,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
             actionBarActions.push({
                 id: 'reset-all',
                 icon: <FaUsersSlash />, // Assuming FaUsersSlash is imported from 'react-icons/fa'
-                label: 'Reset All Chairs',
+                label: t('classroomPage.actions.resetAllChairs') || 'Reset All Chairs',
                 onClick: handleResetAllChairs,
                 isActive: false
             });

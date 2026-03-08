@@ -8,10 +8,12 @@ import ClassActionModal from '../components/ClassActionModal';
 import Loader from '../components/Loader';
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
+import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
 const API_BASE_URL = 'http://localhost:5000';
 
 const DashboardPage = ({ user, updateUserProfile, onSignOut, isSidebarOpen, toggleSidebar, addNotification, onAddNotification }) => {
+    const { t } = useTranslation(); // ✨ Apply hook
     const [classrooms, setClassrooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -61,7 +63,7 @@ const DashboardPage = ({ user, updateUserProfile, onSignOut, isSidebarOpen, togg
                 await onSignOut();
                 return;
             }
-            setError('Failed to load classrooms. Please try again.');
+            setError(t('dashboard.failedLoad') || 'Failed to load classrooms. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -89,7 +91,7 @@ const DashboardPage = ({ user, updateUserProfile, onSignOut, isSidebarOpen, togg
     };
 
     const handleLeaveClassroom = async (classId) => {
-        if (!window.confirm('คุณต้องการออกจากห้องนี้ใช่หรือไม่?')) return;
+        if (!window.confirm(t('dashboard.leaveConfirm') || 'คุณต้องการออกจากห้องนี้ใช่หรือไม่?')) return;
         try {
             await axios.post(
                 `${API_BASE_URL}/api/classrooms/${classId}/leave`,
@@ -99,7 +101,7 @@ const DashboardPage = ({ user, updateUserProfile, onSignOut, isSidebarOpen, togg
             // รีเฟรชรายการห้องหลังออกจากห้องสำเร็จ
             await updateAllData();
         } catch (e) {
-            alert('ออกจากห้องไม่สำเร็จ');
+            alert(t('dashboard.leaveFail') || 'ออกจากห้องไม่สำเร็จ');
         }
     };
 
@@ -149,7 +151,7 @@ const DashboardPage = ({ user, updateUserProfile, onSignOut, isSidebarOpen, togg
                 <div style={{ maxWidth: 960, margin: '16px auto', padding: '12px 16px', background: '#FEF2F2', color: '#991B1B', border: '1px solid #FCA5A5', borderRadius: 6 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span>{error}</span>
-                        <button onClick={updateAllData} style={{ background: '#991B1B', color: 'white', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>Retry</button>
+                        <button onClick={updateAllData} style={{ background: '#991B1B', color: 'white', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('common.retry') || 'Retry'}</button>
                     </div>
                 </div>
             )}
@@ -171,11 +173,11 @@ const DashboardPage = ({ user, updateUserProfile, onSignOut, isSidebarOpen, togg
 
             {!error && classrooms && classrooms.length === 0 && (
                 <div style={{ maxWidth: 960, margin: '16px auto', padding: '24px', textAlign: 'center', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8 }}>
-                    <h3 style={{ margin: '0 0 8px' }}>No classrooms yet</h3>
-                    <p style={{ margin: '0 0 16px', color: '#475569' }}>Create a new classroom or join with a class code.</p>
+                    <h3 style={{ margin: '0 0 8px' }}>{t('dashboard.empty.title')}</h3>
+                    <p style={{ margin: '0 0 16px', color: '#475569' }}>{t('dashboard.empty.message')}</p>
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                        <button onClick={() => setIsModalOpen(true)} style={{ background: '#16A34A', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 6, cursor: 'pointer' }}>Create / Join</button>
-                        <button onClick={updateAllData} style={{ background: '#334155', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 6, cursor: 'pointer' }}>Retry</button>
+                        <button onClick={() => setIsModalOpen(true)} style={{ background: '#16A34A', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 6, cursor: 'pointer' }}>{t('dashboard.createJoin') || 'Create / Join'}</button>
+                        <button onClick={updateAllData} style={{ background: '#334155', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 6, cursor: 'pointer' }}>{t('common.retry') || 'Retry'}</button>
                     </div>
                 </div>
             )}

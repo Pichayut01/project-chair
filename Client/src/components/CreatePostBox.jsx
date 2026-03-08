@@ -1,6 +1,7 @@
 // src/components/CreatePostBox.jsx
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
@@ -41,6 +42,7 @@ const FileDocIcon = () => (
 );
 
 const CreatePostBox = ({ classId, user, onPostCreated }) => {
+    const { t } = useTranslation('translation', { keyPrefix: 'createPostBox' });
     const [isExpanded, setIsExpanded] = useState(false);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -62,7 +64,7 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
         if (!file) return;
 
         if (file.size > 20 * 1024 * 1024) {
-             Swal.fire('File too large', 'Please select a file smaller than 20MB', 'error');
+             Swal.fire(t('swal.fileTooLarge'), t('swal.fileTooLargeDesc'), 'error');
              return;
         }
 
@@ -86,7 +88,7 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
              }]);
         } catch (error) {
              console.error('Upload Error:', error);
-             Swal.fire('Upload Failed', 'There was an error uploading your file.', 'error');
+             Swal.fire(t('swal.uploadFailed'), t('swal.uploadFailedDesc'), 'error');
         } finally {
              setUploadingFile(false);
              e.target.value = null;
@@ -100,7 +102,7 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!title.trim()) {
-            Swal.fire('Error', 'Please enter a title for your post.', 'error');
+            Swal.fire(t('swal.error'), t('swal.titleRequired'), 'error');
             return;
         }
 
@@ -120,10 +122,10 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
             setContent('');
             setAttachments([]);
             setIsExpanded(false);
-            Swal.fire('Success', 'Post created successfully!', 'success');
+            Swal.fire(t('swal.success'), t('swal.postCreated'), 'success');
         } catch (error) {
             console.error('Error creating post:', error);
-            Swal.fire('Error', 'Failed to create post. Please try again.', 'error');
+            Swal.fire(t('swal.error'), t('swal.postFailed'), 'error');
         } finally {
             setLoading(false);
         }
@@ -149,10 +151,10 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
                         onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Me'; }}
                     />
                     <div className="cpb-placeholder-text">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                         </svg>
-                        Announce something to your class
+                        <span className="cpb-placeholder-label">{t('placeholder')}</span>
                     </div>
                 </div>
             ) : (
@@ -161,14 +163,14 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
                         <input
                             className="cpb-title-input"
                             type="text"
-                            placeholder="Post Title (Required)"
+                            placeholder={t('titlePlaceholder')}
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             autoFocus
                         />
                         <textarea
                             className="cpb-content-input"
-                            placeholder="Announce something to your class..."
+                            placeholder={t('contentPlaceholder')}
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             rows={4}
@@ -202,13 +204,13 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
                             <input
                                 className="cpb-link-input"
                                 type="url"
-                                placeholder="Paste link here..."
+                                placeholder={t('linkPlaceholder')}
                                 value={linkInput}
                                 onChange={(e) => setLinkInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddLink())}
                                 autoFocus
                             />
-                            <button type="button" className="cpb-link-add-btn" onClick={handleAddLink}>Add</button>
+                            <button type="button" className="cpb-link-add-btn" onClick={handleAddLink}>{t('btnAdd')}</button>
                             <button type="button" className="cpb-link-cancel-btn" onClick={() => setShowLinkInput(false)}>
                                 <CloseIcon />
                             </button>
@@ -219,10 +221,10 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
                     <div className="cpb-actions">
                         <div className="cpb-actions-left">
                             <button type="button" className="cpb-action-btn" onClick={() => setShowLinkInput(true)}>
-                                <LinkIcon /> Link
+                                <LinkIcon /> {t('btnLink')}
                             </button>
                             <label className={`cpb-action-btn ${uploadingFile ? 'cpb-action-btn--disabled' : ''}`}>
-                                <PaperclipIcon /> {uploadingFile ? 'Uploading...' : 'File'}
+                                <PaperclipIcon /> {uploadingFile ? t('uploading') : t('btnFile')}
                                 <input 
                                     type="file" 
                                     onChange={handleFileUpload} 
@@ -233,10 +235,10 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
                         </div>
                         <div className="cpb-actions-right">
                             <button type="button" className="cpb-cancel-btn" onClick={handleCancel}>
-                                Cancel
+                                {t('btnCancel')}
                             </button>
                             <button type="submit" className={`cpb-submit-btn ${loading ? 'cpb-submit-btn--loading' : ''}`} disabled={loading}>
-                                <SendIcon /> {loading ? 'Posting...' : 'Post'}
+                                <SendIcon /> {loading ? t('posting') : t('btnPost')}
                             </button>
                         </div>
                     </div>

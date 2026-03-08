@@ -10,6 +10,7 @@ import { getProfileImageSrc, getCurrentUserProfileImageSrc, isGoogleUser, handle
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import io from 'socket.io-client';
+import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -34,8 +35,8 @@ const Navbar = ({
 
     onAddNotification, // ✨ Prop สำหรับรับฟังก์ชันเพิ่มการแจ้งเตือน
     children // ✨ Allow custom children content
-
 }) => {
+    const { t } = useTranslation(); // ✨ Apply hook
     const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -264,8 +265,8 @@ const Navbar = ({
                     title: member.displayName,
                     showDenyButton: false,
                     showCancelButton: true,
-                    confirmButtonText: 'Demote to Participant',
-                    cancelButtonText: 'Cancel',
+                    confirmButtonText: t('common.save') === 'Save' ? 'Demote to Participant' : 'ลดระดับเป็นผู้เข้าร่วม', // Simplified translation mapping
+                    cancelButtonText: t('common.cancel'),
                     icon: 'info',
                     confirmButtonColor: '#e74c3c',
                 }).then(async (result) => {
@@ -277,10 +278,10 @@ const Navbar = ({
                 // ถ้าไม่ใช่ Original Creator ให้แสดงข้อมูลเท่านั้น
                 Swal.fire({
                     title: member.displayName,
-                    text: 'This is a Co-Creator. Only the Original Creator can manage this member.',
+                    text: t('common.save') === 'Save' ? 'This is a Co-Creator. Only the Original Creator can manage this member.' : 'นี่คือผู้สร้างร่วม เฉพาะผู้สร้างคนแรกเท่านั้นที่สามารถจัดการสมาชิกนี้ได้',
                     icon: 'info',
                     showConfirmButton: true,
-                    confirmButtonText: 'OK'
+                    confirmButtonText: t('common.close') === 'Close' ? 'OK' : 'ตกลง'
                 });
             }
         } else {
@@ -289,9 +290,9 @@ const Navbar = ({
                 title: member.displayName,
                 showDenyButton: true,
                 showCancelButton: true,
-                confirmButtonText: 'Promote to Creator',
-                denyButtonText: 'Kick from Classroom',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: t('common.save') === 'Save' ? 'Promote to Creator' : 'เลื่อนระดับเป็นผู้สร้าง',
+                denyButtonText: t('common.save') === 'Save' ? 'Kick from Classroom' : 'เตะออกจากชั้นเรียน',
+                cancelButtonText: t('common.cancel'),
                 icon: 'info'
             }).then(async (result) => {
                 if (result.isConfirmed) {
@@ -331,12 +332,12 @@ const Navbar = ({
                             {isNotificationOpen && (
                                 <div className="notification-dropdown">
                                     <div className="notification-header">
-                                        <h3>Notifications</h3>
+                                        <h3>{t('navbar.notifications.header')}</h3>
                                         {hasUnread && (
                                             <button className="mark-all-read-btn" onClick={(e) => {
                                                 e.stopPropagation();
                                                 markAllAsRead();
-                                            }}>Mark all as read</button>
+                                            }}>{t('navbar.notifications.markAllRead')}</button>
                                         )}
                                     </div>
                                     <ul className="notification-list">
@@ -363,7 +364,7 @@ const Navbar = ({
                                             ))
                                         ) : (
                                             <li className="notification-item empty">
-                                                <p>No new notifications</p>
+                                                <p>{t('navbar.notifications.noNew')}</p>
                                             </li>
                                         )}
                                     </ul>
@@ -402,14 +403,14 @@ const Navbar = ({
                                 <hr style={{ border: "none", height: "1px", backgroundColor: "#dadce0", margin: "8px 0" }} />
                                 <div className="dropdown-list">
                                     <span className="dropdown-item" onClick={handleAccountSettingClick}>
-                                        Account Setting
+                                        {t('navbar.profileMenu.accountSetting')}
                                     </span>
                                     <span className="dropdown-item" onClick={handleAppSettingClick}>
-                                        App Settings
+                                        {t('navbar.profileMenu.appSettings')}
                                     </span>
                                     <span className="dropdown-item" onClick={handleSignOutClick}>
                                         <FiLogOut />
-                                        Sign Out
+                                        {t('navbar.profileMenu.signOut')}
                                     </span>
                                 </div>
                             </div>
@@ -431,13 +432,13 @@ const Navbar = ({
                     {/* ✨ เพิ่มโค้ดนี้: เพิ่มเงื่อนไขสำหรับหน้า Account Setting และ Edit Classroom */}
                     {isLoginPage ? (
                         <li className="sidebar-list-item" style={{ textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
-                            Welcome to Chair
+                            {t('navbar.title')}
                         </li>
                     ) : isAccountSettingPage ? (
                         <>
                             <li className="sidebar-list-item sidebar-back-button" onClick={handleBackClick}>
                                 <FiArrowLeft size={18} />
-                                <span>Back</span>
+                                <span>{t('navbar.sidebar.back')}</span>
                             </li>
                             <hr className="divider" style={{
                                 margin: "8px 0",
@@ -451,32 +452,32 @@ const Navbar = ({
                                 className={`sidebar-list-item ${accountActiveSection === 'account' ? 'active' : ''}`}
                                 onClick={() => onAccountSectionChange && onAccountSectionChange('account')}
                             >
-                                <span>Account Settings</span>
+                                <span>{t('navbar.accountSettings.account')}</span>
                             </li>
                             <li
                                 className={`sidebar-list-item ${accountActiveSection === 'security' ? 'active' : ''}`}
                                 onClick={() => onAccountSectionChange && onAccountSectionChange('security')}
                             >
-                                <span>Security</span>
+                                <span>{t('navbar.accountSettings.security')}</span>
                             </li>
                             <li
                                 className={`sidebar-list-item ${accountActiveSection === 'privacy' ? 'active' : ''}`}
                                 onClick={() => onAccountSectionChange && onAccountSectionChange('privacy')}
                             >
-                                <span>Privacy</span>
+                                <span>{t('navbar.accountSettings.privacy')}</span>
                             </li>
                             <li
                                 className={`sidebar-list-item ${accountActiveSection === 'notifications' ? 'active' : ''}`}
                                 onClick={() => onAccountSectionChange && onAccountSectionChange('notifications')}
                             >
-                                <span>Notifications</span>
+                                <span>{t('navbar.accountSettings.notifications')}</span>
                             </li>
                         </>
                     ) : isAppSettingPage ? (
                         <>
                             <li className="sidebar-list-item sidebar-back-button" onClick={handleBackClick}>
                                 <FiArrowLeft size={18} />
-                                <span>Back</span>
+                                <span>{t('navbar.sidebar.back')}</span>
                             </li>
                             <hr className="divider" style={{
                                 margin: "8px 0",
@@ -490,50 +491,50 @@ const Navbar = ({
                                 className={`sidebar-list-item ${appActiveSection === 'general' ? 'active' : ''}`}
                                 onClick={() => onAppSectionChange && onAppSectionChange('general')}
                             >
-                                <span>General</span>
+                                <span>{t('navbar.appSettings.general')}</span>
                             </li>
                             <li
                                 className={`sidebar-list-item ${appActiveSection === 'data' ? 'active' : ''}`}
                                 onClick={() => onAppSectionChange && onAppSectionChange('data')}
                             >
-                                <span>Data Management</span>
+                                <span>{t('navbar.appSettings.dataManagement')}</span>
                             </li>
                             <li
                                 className={`sidebar-list-item ${appActiveSection === 'security' ? 'active' : ''}`}
                                 onClick={() => onAppSectionChange && onAppSectionChange('security')}
                             >
-                                <span>Security</span>
+                                <span>{t('navbar.appSettings.security')}</span>
                             </li>
                             <li
                                 className={`sidebar-list-item ${appActiveSection === 'notifications' ? 'active' : ''}`}
                                 onClick={() => onAppSectionChange && onAppSectionChange('notifications')}
                             >
-                                <span>Notifications</span>
+                                <span>{t('navbar.appSettings.notifications')}</span>
                             </li>
                             <li
                                 className={`sidebar-list-item ${appActiveSection === 'users' ? 'active' : ''}`}
                                 onClick={() => onAppSectionChange && onAppSectionChange('users')}
                             >
-                                <span>User Management</span>
+                                <span>{t('navbar.appSettings.userManagement')}</span>
                             </li>
                             <li
                                 className={`sidebar-list-item ${appActiveSection === 'integration' ? 'active' : ''}`}
                                 onClick={() => onAppSectionChange && onAppSectionChange('integration')}
                             >
-                                <span>Integration</span>
+                                <span>{t('navbar.appSettings.integration')}</span>
                             </li>
                             <li
                                 className={`sidebar-list-item ${appActiveSection === 'help' ? 'active' : ''}`}
                                 onClick={() => onAppSectionChange && onAppSectionChange('help')}
                             >
-                                <span>Help & Support</span>
+                                <span>{t('navbar.appSettings.helpSupport')}</span>
                             </li>
                         </>
                     ) : isClassDetailPage ? (
                         <>
                             <li className="sidebar-list-item sidebar-back-button" onClick={onClassroomBackClick || handleBackClick}>
                                 <FiArrowLeft size={18} />
-                                <span>Back to Classroom</span>
+                                <span>{t('navbar.sidebar.backToClassroom')}</span>
                             </li>
                             <hr className="divider" style={{
                                 margin: "8px 0",
@@ -549,7 +550,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaInfoCircle size={16} />
-                                    <span>Summary</span>
+                                    <span>{t('navbar.classDetail.summary')}</span>
                                 </div>
                             </li>
                             <li
@@ -558,7 +559,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaStar size={16} />
-                                    <span>Assign Rate</span>
+                                    <span>{t('navbar.classDetail.assignRate')}</span>
                                 </div>
                             </li>
                             <li
@@ -567,7 +568,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaHistory size={16} />
-                                    <span>Event History</span>
+                                    <span>{t('navbar.classDetail.eventHistory')}</span>
                                 </div>
                             </li>
                             <li
@@ -576,7 +577,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaLayerGroup size={16} />
-                                    <span>Group History</span>
+                                    <span>{t('navbar.classDetail.groupHistory')}</span>
                                 </div>
                             </li>
                             <li
@@ -585,7 +586,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaCalendarCheck size={16} />
-                                    <span>Attendance</span>
+                                    <span>{t('navbar.classDetail.attendance')}</span>
                                 </div>
                             </li>
                             <li
@@ -594,7 +595,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaTrophy size={16} />
-                                    <span>Class Sessions</span>
+                                    <span>{t('navbar.classDetail.classSessions')}</span>
                                 </div>
                             </li>
                             <li
@@ -603,7 +604,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaCog size={16} />
-                                    <span>Settings</span>
+                                    <span>{t('navbar.classDetail.settings')}</span>
                                 </div>
                             </li>
                         </>
@@ -611,7 +612,7 @@ const Navbar = ({
                         <>
                             <li className="sidebar-list-item sidebar-back-button" onClick={onClassroomBackClick || handleBackClick}>
                                 <FiArrowLeft size={18} />
-                                <span>Back to Classroom</span>
+                                <span>{t('navbar.sidebar.backToClassroom')}</span>
                             </li>
                             <hr className="divider" style={{
                                 margin: "8px 0",
@@ -627,7 +628,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FiBook size={16} />
-                                    <span>Stream</span>
+                                    <span>{t('navbar.stream.stream')}</span>
                                 </div>
                             </li>
                             <li
@@ -636,7 +637,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaLayerGroup size={16} />
-                                    <span>Classwork</span>
+                                    <span>{t('navbar.stream.classwork')}</span>
                                 </div>
                             </li>
                             <li
@@ -645,7 +646,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaCalendarCheck size={16} />
-                                    <span>Calendar</span>
+                                    <span>{t('navbar.stream.calendar')}</span>
                                 </div>
                             </li>
                         </>
@@ -653,7 +654,7 @@ const Navbar = ({
                         <>
                             <li className="sidebar-list-item sidebar-back-button" onClick={onClassroomBackClick || handleBackClick}>
                                 <FiArrowLeft size={18} />
-                                <span>Back to Classwork</span>
+                                <span>{t('navbar.sidebar.backToClasswork')}</span>
                             </li>
                             <hr className="divider" style={{
                                 margin: "8px 0",
@@ -669,7 +670,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FiBook size={16} />
-                                    <span>Stream</span>
+                                    <span>{t('navbar.stream.stream')}</span>
                                 </div>
                             </li>
                             <li
@@ -678,7 +679,7 @@ const Navbar = ({
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaLayerGroup size={16} />
-                                    <span>Classwork</span>
+                                    <span>{t('navbar.stream.classwork')}</span>
                                 </div>
                             </li>
                         </>
@@ -686,25 +687,25 @@ const Navbar = ({
                         <>
                             <li className="sidebar-list-item sidebar-back-button" onClick={onClassroomBackClick || handleBackClick}>
                                 <FiArrowLeft size={18} />
-                                <span>Back</span>
+                                <span>{t('navbar.sidebar.back')}</span>
                             </li>
                             {/* ✨ การแก้ไข: เพิ่มการตรวจสอบ user ก่อนแสดงส่วนนี้เพื่อป้องกัน error */}
                             {user && (
                                 <li className="sidebar-list-item sidebar-share-class" onClick={onShareClick}>
                                     <FiShare2 size={18} />
-                                    <span>Share Class</span>
+                                    <span>{t('navbar.sidebar.shareClass')}</span>
                                 </li>
                             )}
                             {/* ✨ เพิ่ม Stream button */}
                             <li className="sidebar-list-item sidebar-stream" onClick={() => navigate(`/classroom/${classroom?._id}/stream`)}>
                                 <FiBook size={18} />
-                                <span>Stream</span>
+                                <span>{t('navbar.sidebar.stream')}</span>
                             </li>
                             {/* ✨ เพิ่ม Class Detail button สำหรับ creator เท่านั้น */}
                             {isCreator && (
                                 <li className="sidebar-list-item sidebar-class-detail" onClick={() => navigate(`/classroom/${classroom?._id}/detail`)}>
                                     <FiEdit2 size={18} />
-                                    <span>Class Detail</span>
+                                    <span>{t('navbar.sidebar.classDetail')}</span>
                                 </li>
                             )}
 
@@ -723,19 +724,19 @@ const Navbar = ({
                                         <div className="sidebar-session-widget active">
                                             <div className="sidebar-session-header">
                                                 <div className="sidebar-session-dot"></div>
-                                                <span className="sidebar-session-title">Session Active</span>
+                                                <span className="sidebar-session-title">{t('navbar.sidebar.sessionActive')}</span>
                                             </div>
                                             <div className="sidebar-session-timer">
                                                 ⏱ {formatSessionTime ? formatSessionTime(sessionElapsed || 0) : '00:00'}
                                             </div>
                                             <button className="sidebar-session-end-btn" onClick={onEndSession}>
-                                                <FaStop size={12} /> End Class
+                                                <FaStop size={12} /> {t('navbar.sidebar.endClass')}
                                             </button>
                                         </div>
                                     ) : (
                                         <li className="sidebar-list-item sidebar-start-session" onClick={onStartSession}>
                                             <FaPlay size={14} />
-                                            <span>Start Session</span>
+                                            <span>{t('navbar.sidebar.startSession')}</span>
                                         </li>
                                     )}
                                 </>
@@ -760,7 +761,7 @@ const Navbar = ({
                                             <FiChevronDown size={16} /> :
                                             <FiChevronRight size={16} />
                                         }
-                                        <span>Creators ({Array.isArray(classroomMembers.creator) ? classroomMembers.creator.length : 1})</span>
+                                        <span>{t('navbar.sidebar.creators')} ({Array.isArray(classroomMembers.creator) ? classroomMembers.creator.length : 1})</span>
                                     </li>
                                     {/* ✨ แก้ไข: แสดงผล creator ให้รองรับทั้ง Object และ Array */}
                                     {isCreatorsExpanded && (Array.isArray(classroomMembers.creator) ? classroomMembers.creator : [classroomMembers.creator]).map(c => (
@@ -809,7 +810,7 @@ const Navbar = ({
                                                         <FiChevronDown size={16} /> :
                                                         <FiChevronRight size={16} />
                                                     }
-                                                    <span>Participants ({participantsOnly.length})</span>
+                                                    <span>{t('navbar.sidebar.participants')} ({participantsOnly.length})</span>
                                                 </li>
                                                 {isParticipantsExpanded && classroomMembers.participants
                                                     .filter(p => !creatorIds.includes(p._id))
@@ -856,17 +857,16 @@ const Navbar = ({
                                     }}
                                     onClick={onLeaveSeat}
                                 >
-                                    Leave Seat
+                                    {t('navbar.sidebar.leaveSeat')}
                                 </button>
                             )}
                         </>
                     ) : (
                         <>
-                            {/* ✨ การแก้ไข: เพิ่มการตรวจสอบ user ก่อนแสดงส่วนนี้เพื่อป้องกัน error */}
                             {user && (
                                 <li className="sidebar-list-item sidebar-create-class" onClick={onClassActionClick}>
                                     <FiPlus size={18} />
-                                    <span>Class</span>
+                                    <span>{t('navbar.sidebar.class')}</span>
                                 </li>
                             )}
                             <hr style={{ border: "none", height: "1px", backgroundColor: "#dadce0", margin: "8px 0" }} />
@@ -894,7 +894,7 @@ const Navbar = ({
                                                         <FiChevronDown size={16} /> :
                                                         <FiChevronRight size={16} />
                                                     }
-                                                    <span>Created by me ({createdByMe.length})</span>
+                                                    <span>{t('navbar.sidebar.createdByMe')} ({createdByMe.length})</span>
                                                 </li>
                                                 {isCreatedByMeExpanded && createdByMe.map((room) => (
                                                     <li
@@ -925,7 +925,7 @@ const Navbar = ({
                                                         <FiChevronDown size={16} /> :
                                                         <FiChevronRight size={16} />
                                                     }
-                                                    <span>Joined ({joinedRooms.length})</span>
+                                                    <span>{t('navbar.sidebar.joined')} ({joinedRooms.length})</span>
                                                 </li>
                                                 {isJoinedExpanded && joinedRooms.map((room) => (
                                                     <li
@@ -948,7 +948,7 @@ const Navbar = ({
                                         {/* แสดงข้อความเมื่อไม่มีห้องเรียน */}
                                         {classrooms.length === 0 && (
                                             <li className="sidebar-no-class-text">
-                                                No classes joined.
+                                                {t('navbar.sidebar.noClassesJoined')}
                                             </li>
                                         )}
                                     </>

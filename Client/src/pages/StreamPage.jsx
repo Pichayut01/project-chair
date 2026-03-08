@@ -16,12 +16,14 @@ import '../CSS/ClassroomPage.css';
 import '../CSS/Navbar.css';
 import '../CSS/Main.css';
 import '../CSS/StreamPage.css';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
 const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     const { classId } = useParams();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [classroom, setClassroom] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -92,9 +94,9 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
             setLoading(false);
         } catch (err) {
             if (err.response?.status === 403 && err.response?.data?.requiresInvitation) {
-                setError('This classroom is private and requires an invitation to access.');
+                setError(t('streamPage.privateClassError') || 'This classroom is private and requires an invitation to access.');
             } else {
-                setError('Failed to load classroom details.');
+                setError(t('streamPage.loadError') || 'Failed to load classroom details.');
             }
             setLoading(false);
             console.error("Error fetching classroom details:", err);
@@ -188,13 +190,21 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
                                     <h1 className="sp-hero-title">{classroom?.name}</h1>
                                     {classroom?.subname && <p className="sp-hero-subtitle">{classroom.subname}</p>}
                                     {classroom?.classCode && (
-                                        <span className="sp-hero-code">
+                                        <span 
+                                            className="sp-hero-code"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(classroom.classCode);
+                                                // Ideally use Swal here instead of alert, but alert is fine for now
+                                            }}
+                                            title={t('streamPage.copyCodeTitle') || "Click to copy class code"}
+                                            style={{ cursor: 'pointer' }}
+                                        >
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                                             {classroom.classCode}
                                         </span>
                                     )}
                                 </div>
-                                <button className="sp-hero-collapse-btn" onClick={() => setIsBannerCollapsed(true)} title="Collapse banner">
+                                <button className="sp-hero-collapse-btn" onClick={() => setIsBannerCollapsed(true)} title={t('streamPage.collapseBannerTitle') || "Collapse banner"}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
                                 </button>
                             </div>
@@ -206,7 +216,7 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
                                     onClick={() => setIsBannerCollapsed(false)}
                                 >
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                                    Show banner
+                                    {t('streamPage.showBannerBtn') || 'Show banner'}
                                 </button>
                             </div>
                         )}
@@ -222,12 +232,12 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
                                     {posts.length === 0 ? (
                                         <div className="sp-empty-state">
                                             <div className="sp-empty-icon">
-                                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0aa158" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                                                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                                                 </svg>
                                             </div>
-                                            <h3>No posts yet</h3>
-                                            <p>Announcements, assignments, and materials posted by your teacher will appear here.</p>
+                                            <h3>{t('streamPage.noPostsTitle') || 'No posts yet'}</h3>
+                                            <p>{t('streamPage.noPostsText') || 'Announcements, assignments, and materials posted by your teacher will appear here.'}</p>
                                         </div>
                                     ) : (
                                         posts.map(post => (
@@ -260,9 +270,9 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
                                     />
                                 </div>
                                 <div className="sp-sidebar-card sp-about-card">
-                                    <h4 className="sp-about-title">About This Class</h4>
+                                    <h4 className="sp-about-title">{t('streamPage.aboutClassTitle') || 'About This Class'}</h4>
                                     <p className="sp-about-text">
-                                        Announcements, assignments, and class materials shared by your teacher appear in the stream.
+                                        {t('streamPage.aboutClassText') || 'Announcements, assignments, and class materials shared by your teacher appear in the stream.'}
                                     </p>
                                 </div>
                             </div>
@@ -300,7 +310,7 @@ const StreamPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     }
 
     if (!classroom) {
-        return <div className="error">Classroom not found.</div>;
+        return <div className="error">{t('streamPage.notFoundError') || 'Classroom not found.'}</div>;
     }
 
     return (

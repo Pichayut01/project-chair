@@ -7,8 +7,11 @@ import '../CSS/AppSettings.css';
 import '../CSS/Main.css';
 import { FiSettings, FiDatabase, FiShield, FiBell, FiUsers, FiGlobe, FiHelpCircle } from 'react-icons/fi';
 
+import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
+
 const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSidebar }) => {
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation(); // ✨ Apply hook
     const [user, setUser] = useState(propUser);
     const [activeSection, setActiveSection] = useState('general');
 
@@ -54,28 +57,36 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
             case 'general':
                 return (
                     <div className="settings-content">
-                        <h2>General Settings</h2>
+                        <h2>{t('settings.general.title')}</h2>
                         <div className="settings-section">
-                            <h3>Application Preferences</h3>
+                            <h3>{t('settings.general.appPreferences')}</h3>
                             <div className="setting-item">
-                                <label>Language</label>
-                                <select className="setting-select">
-                                    <option value="en">English</option>
-                                    <option value="th">ไทย</option>
+                                <label>{t('settings.general.language')}</label>
+                                <select 
+                                    className="setting-select"
+                                    value={i18n.language}
+                                    onChange={(e) => {
+                                        const newLang = e.target.value;
+                                        i18n.changeLanguage(newLang);
+                                        localStorage.setItem('appLanguage', newLang);
+                                    }}
+                                >
+                                    <option value="en">{t('settings.english')}</option>
+                                    <option value="th">{t('settings.thai')}</option>
                                 </select>
                             </div>
                             <div className="setting-item">
-                                <label>Theme</label>
+                                <label>{t('settings.general.theme')}</label>
                                 <select className="setting-select">
-                                    <option value="light">Light</option>
-                                    <option value="dark">Dark</option>
-                                    <option value="auto">Auto</option>
+                                    <option value="light">{t('settings.general.themeLight')}</option>
+                                    <option value="dark">{t('settings.general.themeDark')}</option>
+                                    <option value="auto">{t('settings.general.themeAuto')}</option>
                                 </select>
                             </div>
                             <div className="setting-item">
                                 <label>
                                     <input type="checkbox" className="setting-checkbox" />
-                                    Enable sound effects
+                                    {t('settings.general.enableSound')}
                                 </label>
                             </div>
                         </div>
@@ -84,20 +95,20 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
             case 'data':
                 return (
                     <div className="settings-content">
-                        <h2>Data Management</h2>
+                        <h2>{t('settings.data.title')}</h2>
                         <div className="settings-section">
-                            <h3>Storage & Backup</h3>
+                            <h3>{t('settings.data.storageBackup')}</h3>
                             <div className="setting-item">
-                                <label>Auto-save interval</label>
+                                <label>{t('settings.data.autoSave')}</label>
                                 <select className="setting-select">
-                                    <option value="30">30 seconds</option>
-                                    <option value="60">1 minute</option>
-                                    <option value="300">5 minutes</option>
+                                    <option value="30">{t('settings.data.sec30')}</option>
+                                    <option value="60">{t('settings.data.min1')}</option>
+                                    <option value="300">{t('settings.data.min5')}</option>
                                 </select>
                             </div>
                             <div className="setting-item">
-                                <button className="setting-button">Export Data</button>
-                                <button className="setting-button secondary">Import Data</button>
+                                <button className="setting-button">{t('settings.data.exportData')}</button>
+                                <button className="setting-button secondary">{t('settings.data.importData')}</button>
                             </div>
                         </div>
                     </div>
@@ -105,22 +116,22 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
             case 'security':
                 return (
                     <div className="settings-content">
-                        <h2>Security Settings</h2>
+                        <h2>{t('settings.security.title')}</h2>
                         <div className="settings-section">
-                            <h3>Access Control</h3>
+                            <h3>{t('settings.security.accessControl')}</h3>
                             <div className="setting-item">
                                 <label>
                                     <input type="checkbox" className="setting-checkbox" />
-                                    Require authentication for sensitive actions
+                                    {t('settings.security.requireAuth')}
                                 </label>
                             </div>
                             <div className="setting-item">
-                                <label>Session timeout</label>
+                                <label>{t('settings.security.sessionTimeout')}</label>
                                 <select className="setting-select">
-                                    <option value="30">30 minutes</option>
-                                    <option value="60">1 hour</option>
-                                    <option value="480">8 hours</option>
-                                    <option value="never">Never</option>
+                                    <option value="30">{t('settings.security.min30')}</option>
+                                    <option value="60">{t('settings.security.hr1')}</option>
+                                    <option value="480">{t('settings.security.hr8')}</option>
+                                    <option value="never">{t('settings.security.never')}</option>
                                 </select>
                             </div>
                         </div>
@@ -129,25 +140,25 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
             case 'notifications':
                 return (
                     <div className="settings-content">
-                        <h2>Notification Settings</h2>
+                        <h2>{t('settings.notifications.title')}</h2>
                         <div className="settings-section">
-                            <h3>System Notifications</h3>
+                            <h3>{t('settings.notifications.sysNotif')}</h3>
                             <div className="setting-item">
                                 <label>
                                     <input type="checkbox" className="setting-checkbox" defaultChecked />
-                                    Enable desktop notifications
+                                    {t('settings.notifications.desktopNotif')}
                                 </label>
                             </div>
                             <div className="setting-item">
                                 <label>
                                     <input type="checkbox" className="setting-checkbox" defaultChecked />
-                                    Email notifications
+                                    {t('settings.notifications.emailNotif')}
                                 </label>
                             </div>
                             <div className="setting-item">
                                 <label>
                                     <input type="checkbox" className="setting-checkbox" />
-                                    Sound notifications
+                                    {t('settings.notifications.soundNotif')}
                                 </label>
                             </div>
                         </div>
@@ -156,20 +167,20 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
             case 'users':
                 return (
                     <div className="settings-content">
-                        <h2>User Management</h2>
+                        <h2>{t('settings.users.title')}</h2>
                         <div className="settings-section">
-                            <h3>Default User Settings</h3>
+                            <h3>{t('settings.users.defaultSettings')}</h3>
                             <div className="setting-item">
-                                <label>Default user role</label>
+                                <label>{t('settings.users.defaultRole')}</label>
                                 <select className="setting-select">
-                                    <option value="participant">Participant</option>
-                                    <option value="moderator">Moderator</option>
+                                    <option value="participant">{t('login.roleParticipant')}</option>
+                                    <option value="moderator">{t('login.roleCreator')}</option>
                                 </select>
                             </div>
                             <div className="setting-item">
                                 <label>
                                     <input type="checkbox" className="setting-checkbox" />
-                                    Allow guest users
+                                    {t('settings.users.allowGuest')}
                                 </label>
                             </div>
                         </div>
@@ -178,21 +189,21 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
             case 'integration':
                 return (
                     <div className="settings-content">
-                        <h2>Integration Settings</h2>
+                        <h2>{t('settings.integration.title')}</h2>
                         <div className="settings-section">
-                            <h3>External Services</h3>
+                            <h3>{t('settings.integration.extServices')}</h3>
                             <div className="setting-item">
                                 <label>
                                     <input type="checkbox" className="setting-checkbox" />
-                                    Enable Google integration
+                                    {t('settings.integration.enableGoogle')}
                                 </label>
                             </div>
                             <div className="setting-item">
-                                <label>API Rate Limit</label>
+                                <label>{t('settings.integration.apiRateLimit')}</label>
                                 <select className="setting-select">
-                                    <option value="100">100 requests/hour</option>
-                                    <option value="500">500 requests/hour</option>
-                                    <option value="1000">1000 requests/hour</option>
+                                    <option value="100">{t('settings.integration.req100')}</option>
+                                    <option value="500">{t('settings.integration.req500')}</option>
+                                    <option value="1000">{t('settings.integration.req1000')}</option>
                                 </select>
                             </div>
                         </div>
@@ -201,33 +212,33 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
             case 'help':
                 return (
                     <div className="settings-content">
-                        <h2>Help & Support</h2>
+                        <h2>{t('settings.help.title')}</h2>
                         <div className="settings-section">
-                            <h3>Documentation</h3>
+                            <h3>{t('settings.help.documentation')}</h3>
                             <div className="setting-item">
-                                <button className="setting-button">View User Guide</button>
+                                <button className="setting-button">{t('settings.help.userGuide')}</button>
                             </div>
                             <div className="setting-item">
-                                <button className="setting-button">Contact Support</button>
+                                <button className="setting-button">{t('settings.help.contactSupport')}</button>
                             </div>
                             <div className="setting-item">
-                                <button className="setting-button">Report Bug</button>
+                                <button className="setting-button">{t('settings.help.reportBug')}</button>
                             </div>
                         </div>
                         <div className="settings-section">
-                            <h3>About</h3>
-                            <p>EChair App Version 1.0.0</p>
-                            <p>© 2024 EChair Team</p>
+                            <h3>{t('settings.help.about') || 'About'}</h3>
+                            <p>{t('settings.help.version') || 'EChair App Version 1.0.0'}</p>
+                            <p>{t('settings.help.copyright') || '© 2024 EChair Team'}</p>
                         </div>
                     </div>
                 );
             default:
-                return <div>Select a setting category</div>;
+                return <div>{t('settings.selectCategory')}</div>;
         }
     };
 
     if (!user) {
-        return <div>Loading...</div>;
+        return <div>{t('common.loading')}</div>;
     }
 
     return (

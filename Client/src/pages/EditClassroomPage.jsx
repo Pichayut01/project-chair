@@ -14,6 +14,7 @@ import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/pro
 import Chair from '../components/Chair';
 import ChairPresets from '../components/ChairPresets';
 import { FaPalette, FaUsers, FaEllipsisH, FaChair, FaTh, FaRandom, FaBars, FaThLarge, FaArrowUp, FaArrowDown, FaUserSlash, FaCopy, FaCheck, FaCrown, FaUserGraduate, FaSpinner, FaSave } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
@@ -23,6 +24,7 @@ const DEBOUNCE_DELAY = 800;
 const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     const { classId } = useParams();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [classroom, setClassroom] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeSection, setActiveSection] = useState('theme');
@@ -118,7 +120,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
             setLoading(false);
         } catch (err) {
             console.error("Error fetching classroom details:", err);
-            Swal.fire('Error', 'Failed to load classroom details.', 'error');
+            Swal.fire(t('common.error') || 'Error', t('editClassroomPage.loadError') || 'Failed to load classroom details.', 'error');
             setLoading(false);
         }
     };
@@ -216,14 +218,14 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
     const handlePromoteMember = async (memberId, memberName) => {
         try {
             const result = await Swal.fire({
-                title: `Promote ${memberName} to Creator?`,
-                text: "This user will gain the same permissions as the classroom owner.",
+                title: t('classroomPage.swal.promoteTitle', { memberName }) || `Promote ${memberName} to Creator?`,
+                text: t('classroomPage.swal.promoteText') || "This user will gain the same permissions as the classroom owner.",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Promote',
-                cancelButtonText: 'Cancel'
+                confirmButtonText: t('classroomPage.swal.promoteBtn') || 'Promote',
+                cancelButtonText: t('common.cancel') || 'Cancel'
             });
             if (result.isConfirmed) {
                 await axios.put(
@@ -231,25 +233,25 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                     { userId: memberId },
                     { headers: { 'x-auth-token': user.token } }
                 );
-                Swal.fire('Success', `${memberName} has been promoted to Creator.`, 'success');
+                Swal.fire(t('common.success') || 'Success', t('classroomPage.swal.promoteSuccess', { memberName }) || `${memberName} has been promoted to Creator.`, 'success');
                 fetchClassroomDetails();
             }
         } catch (err) {
-            Swal.fire('Error', 'Could not promote the member.', 'error');
+            Swal.fire(t('common.error') || 'Error', t('classroomPage.swal.promoteError') || 'Could not promote the member.', 'error');
         }
     };
 
     const handleDemoteMember = async (memberId, memberName) => {
         try {
             const result = await Swal.fire({
-                title: `Demote ${memberName}?`,
-                text: "This user will lose their Creator permissions.",
+                title: t('classroomPage.swal.demoteTitle', { memberName }) || `Demote ${memberName}?`,
+                text: t('classroomPage.swal.demoteText') || "This user will lose their Creator permissions.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#e74c3c',
                 cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Demote',
-                cancelButtonText: 'Cancel'
+                confirmButtonText: t('classroomPage.swal.demoteBtn') || 'Demote',
+                cancelButtonText: t('common.cancel') || 'Cancel'
             });
             if (result.isConfirmed) {
                 await axios.put(
@@ -257,22 +259,22 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                     { userId: memberId },
                     { headers: { 'x-auth-token': user.token } }
                 );
-                Swal.fire('Success', `${memberName} has been demoted to a participant.`, 'success');
+                Swal.fire(t('common.success') || 'Success', t('classroomPage.swal.demoteSuccess', { memberName }) || `${memberName} has been demoted to a participant.`, 'success');
                 fetchClassroomDetails();
             }
         } catch (err) {
-            Swal.fire('Error', err.response?.data?.msg || 'Could not demote the member.', 'error');
+            Swal.fire(t('common.error') || 'Error', err.response?.data?.msg || t('classroomPage.swal.demoteError') || 'Could not demote the member.', 'error');
         }
     };
 
     const handleKickMember = async (memberId, memberName) => {
         const result = await Swal.fire({
-            title: `Kick ${memberName} from the classroom?`,
-            text: "This user will be removed from the classroom.",
+            title: t('classroomPage.swal.kickTitle', { memberName }) || `Kick ${memberName} from the classroom?`,
+            text: t('classroomPage.swal.kickText') || "This user will be removed from the classroom.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Kick',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: t('classroomPage.swal.kickBtn') || 'Kick',
+            cancelButtonText: t('common.cancel') || 'Cancel',
             confirmButtonColor: '#e74c3c'
         });
         if (result.isConfirmed) {
@@ -282,10 +284,10 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                     { userId: memberId },
                     { headers: { 'x-auth-token': user.token } }
                 );
-                Swal.fire('Success', `${memberName} has been kicked from the classroom.`, 'success');
+                Swal.fire(t('common.success') || 'Success', t('classroomPage.swal.kickSuccess', { memberName }) || `${memberName} has been kicked from the classroom.`, 'success');
                 fetchClassroomDetails();
             } catch (err) {
-                Swal.fire('Error', 'Could not kick the member.', 'error');
+                Swal.fire(t('common.error') || 'Error', t('classroomPage.swal.kickError') || 'Could not kick the member.', 'error');
             }
         }
     };
@@ -312,19 +314,19 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
         const chairCount = Object.keys(currentChairPositions).length;
 
         if (chairCount === 0) {
-            Swal.fire('No Chairs', 'Please add some chairs first before applying presets.', 'info');
+            Swal.fire(t('editClassroomPage.seatingSection.noChairsTitle') || 'No Chairs', t('editClassroomPage.seatingSection.noChairsText') || 'Please add some chairs first before applying presets.', 'info');
             return;
         }
 
         const result = await Swal.fire({
-            title: `Apply ${presetType.charAt(0).toUpperCase() + presetType.slice(1)} Layout?`,
-            text: "This will rearrange all chairs according to the selected preset.",
+            title: t('classroomPage.swal.applyLayoutTitle', { presetName: presetType.charAt(0).toUpperCase() + presetType.slice(1) }) || `Apply ${presetType.charAt(0).toUpperCase() + presetType.slice(1)} Layout?`,
+            text: t('classroomPage.swal.applyLayoutText') || "This will rearrange all chairs according to the selected preset.",
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Apply Layout',
-            cancelButtonText: 'Cancel'
+            confirmButtonText: t('classroomPage.swal.applyLayoutBtn') || 'Apply Layout',
+            cancelButtonText: t('common.cancel') || 'Cancel'
         });
 
         if (result.isConfirmed) {
@@ -349,7 +351,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
             });
 
             setCurrentChairPositions(updatedPositions);
-            Swal.fire('Success', `${presetType.charAt(0).toUpperCase() + presetType.slice(1)} layout applied!`, 'success');
+            Swal.fire(t('common.success') || 'Success', t('classroomPage.swal.applyLayoutSuccess', { presetName: presetType.charAt(0).toUpperCase() + presetType.slice(1) }) || `${presetType.charAt(0).toUpperCase() + presetType.slice(1)} layout applied!`, 'success');
         }
     };
 
@@ -358,13 +360,13 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
         if (file) {
             // Check file type
             if (!file.type.startsWith('image/')) {
-                Swal.fire('Error', 'Please select an image file.', 'error');
+                Swal.fire(t('common.error') || 'Error', t('editClassroomPage.themeSection.imageError') || 'Please select an image file.', 'error');
                 return;
             }
 
             // Check file size (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
-                Swal.fire('Error', 'Image size must be less than 5MB.', 'error');
+                Swal.fire(t('common.error') || 'Error', t('editClassroomPage.themeSection.imageSizeError') || 'Image size must be less than 5MB.', 'error');
                 return;
             }
 
@@ -395,10 +397,10 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
             });
             setSeatingPositions(currentChairPositions);
             setIsSeatingEditing(false);
-            Swal.fire('Saved!', 'Seating arrangement updated successfully.', 'success');
+            Swal.fire(t('editClassroomPage.seatingSection.savedTitle') || 'Saved!', t('editClassroomPage.seatingSection.savedText') || 'Seating arrangement updated successfully.', 'success');
         } catch (error) {
             console.error('Failed to save seating positions:', error);
-            Swal.fire('Error', 'Failed to save seating arrangement.', 'error');
+            Swal.fire(t('common.error') || 'Error', t('editClassroomPage.seatingSection.saveError') || 'Failed to save seating arrangement.', 'error');
         }
     };
 
@@ -491,21 +493,21 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
         <div className="edit-section">
             <h2 className="section-title">
                 <FaPalette className="section-icon" />
-                Theme Settings
+                {t('editClassroomPage.themeSection.title') || 'Theme Settings'}
             </h2>
 
             <div className="theme-settings-container">
                 {/* Classroom Name */}
                 <div className="setting-item">
                     <div className="setting-header">
-                        <span className="setting-title">Classroom Name</span>
+                        <span className="setting-title">{t('editClassroomPage.themeSection.nameTitle') || 'Classroom Name'}</span>
                     </div>
-                    <p className="setting-description">The display name for your classroom.</p>
+                    <p className="setting-description">{t('editClassroomPage.themeSection.nameDesc') || 'The display name for your classroom.'}</p>
                     <input
                         type="text"
                         value={themeData.name}
                         onChange={(e) => handleThemeChange({ ...themeData, name: e.target.value })}
-                        placeholder="Enter classroom name"
+                        placeholder={t('editClassroomPage.themeSection.namePlaceholder') || 'Enter classroom name'}
                         className="theme-input"
                     />
                 </div>
@@ -513,14 +515,14 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 {/* Description */}
                 <div className="setting-item">
                     <div className="setting-header">
-                        <span className="setting-title">Description</span>
+                        <span className="setting-title">{t('editClassroomPage.themeSection.descTitle') || 'Description'}</span>
                     </div>
-                    <p className="setting-description">A brief description of your classroom (e.g., subject, section).</p>
+                    <p className="setting-description">{t('editClassroomPage.themeSection.descDesc') || 'A brief description of your classroom (e.g., subject, section).'}</p>
                     <input
                         type="text"
                         value={themeData.subname}
                         onChange={(e) => handleThemeChange({ ...themeData, subname: e.target.value })}
-                        placeholder="Enter description"
+                        placeholder={t('editClassroomPage.themeSection.descPlaceholder') || 'Enter description'}
                         className="theme-input"
                     />
                 </div>
@@ -528,9 +530,9 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 {/* Theme Color */}
                 <div className="setting-item">
                     <div className="setting-header">
-                        <span className="setting-title">Theme Color</span>
+                        <span className="setting-title">{t('editClassroomPage.themeSection.colorTitle') || 'Theme Color'}</span>
                     </div>
-                    <p className="setting-description">Choose a color to personalize your classroom.</p>
+                    <p className="setting-description">{t('editClassroomPage.themeSection.colorDesc') || 'Choose a color to personalize your classroom.'}</p>
                     <div className="color-picker-container">
                         <input
                             type="color"
@@ -551,13 +553,13 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
         <div className="edit-section">
             <h2 className="section-title">
                 <FaUsers className="section-icon" />
-                Role Management
+                {t('editClassroomPage.roleSection.title') || 'Role Management'}
             </h2>
 
             <div className="role-section">
                 <h3>
                     <FaCrown style={{ color: '#4CAF50' }} />
-                    Creators
+                    {t('editClassroomPage.roleSection.creators') || 'Creators'}
                     <span className="role-count">{classroomMembers.creator.length}</span>
                 </h3>
                 <div className="members-list">
@@ -568,7 +570,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                                 <span className="member-name">{creator.displayName}</span>
                                 {creator.email && <span className="member-email">{creator.email}</span>}
                                 <span className="role-badge creator-badge">
-                                    <FaCrown size={10} /> Creator
+                                    <FaCrown size={10} /> {t('editClassroomPage.roleSection.creatorBadge') || 'Creator'}
                                 </span>
                             </div>
                             {user.id !== creator._id && (
@@ -576,7 +578,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                                     <button
                                         className="action-btn demote-btn"
                                         onClick={() => handleDemoteMember(creator._id, creator.displayName)}
-                                        title="Demote to participant"
+                                        title={t('editClassroomPage.roleSection.demoteBtn') || "Demote to participant"}
                                     >
                                         <FaArrowDown />
                                     </button>
@@ -590,13 +592,13 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
             <div className="role-section">
                 <h3>
                     <FaUserGraduate style={{ color: '#2196F3' }} />
-                    Participants
+                    {t('editClassroomPage.roleSection.participants') || 'Participants'}
                     <span className="role-count">{classroomMembers.participants.length}</span>
                 </h3>
                 <div className="members-list">
                     {classroomMembers.participants.length === 0 ? (
                         <div style={{ padding: '20px', textAlign: 'center', color: '#888', fontStyle: 'italic', width: '100%' }}>
-                            No participants yet
+                            {t('editClassroomPage.roleSection.noParticipants') || 'No participants yet'}
                         </div>
                     ) : (
                         classroomMembers.participants.map(participant => (
@@ -606,21 +608,21 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                                     <span className="member-name">{participant.displayName}</span>
                                     {participant.email && <span className="member-email">{participant.email}</span>}
                                     <span className="role-badge participant-badge">
-                                        <FaUserGraduate size={10} /> Student
+                                        <FaUserGraduate size={10} /> {t('editClassroomPage.roleSection.studentBadge') || 'Student'}
                                     </span>
                                 </div>
                                 <div className="member-actions">
                                     <button
                                         className="action-btn promote-btn"
                                         onClick={() => handlePromoteMember(participant._id, participant.displayName)}
-                                        title="Promote to creator"
+                                        title={t('editClassroomPage.roleSection.promoteBtn') || "Promote to creator"}
                                     >
                                         <FaArrowUp />
                                     </button>
                                     <button
                                         className="action-btn kick-btn"
                                         onClick={() => handleKickMember(participant._id, participant.displayName)}
-                                        title="Kick from classroom"
+                                        title={t('editClassroomPage.roleSection.kickBtn') || "Kick from classroom"}
                                     >
                                         <FaUserSlash />
                                     </button>
@@ -637,16 +639,16 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
         <div className="edit-section">
             <h2 className="section-title">
                 <FaEllipsisH className="section-icon" />
-                Other Settings
+                {t('editClassroomPage.otherSection.title') || 'Other Settings'}
             </h2>
 
             <div className="other-settings-section">
                 {/* Class Code */}
                 <div className="setting-item">
                     <div className="setting-header">
-                        <span className="setting-title">Class Code</span>
+                        <span className="setting-title">{t('editClassroomPage.otherSection.classCodeTitle') || 'Class Code'}</span>
                     </div>
-                    <p className="setting-description">Share this code with students so they can join your classroom.</p>
+                    <p className="setting-description">{t('editClassroomPage.otherSection.classCodeDesc') || 'Share this code with students so they can join your classroom.'}</p>
                     <div className="class-code-display" style={{ marginTop: '12px' }}>
                         <input
                             type="text"
@@ -660,8 +662,8 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                                 navigator.clipboard.writeText(otherSettings.classCode);
                                 Swal.fire({
                                     icon: 'success',
-                                    title: 'Copied!',
-                                    text: 'Class code copied to clipboard.',
+                                    title: t('editClassroomPage.otherSection.copiedTitle') || 'Copied!',
+                                    text: t('editClassroomPage.otherSection.copiedText') || 'Class code copied to clipboard.',
                                     timer: 1500,
                                     showConfirmButton: false,
                                     toast: true,
@@ -669,7 +671,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                                 });
                             }}
                         >
-                            <FaCopy /> Copy
+                            <FaCopy /> {t('editClassroomPage.otherSection.copyBtn') || 'Copy'}
                         </button>
                     </div>
                 </div>
@@ -678,8 +680,8 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 <div className="setting-item">
                     <div className="setting-header">
                         <div>
-                            <span className="setting-title">Public Classroom</span>
-                            <p className="setting-description">Allow anyone to view this classroom without joining.</p>
+                            <span className="setting-title">{t('editClassroomPage.otherSection.publicTitle') || 'Public Classroom'}</span>
+                            <p className="setting-description">{t('editClassroomPage.otherSection.publicDesc') || 'Allow anyone to view this classroom without joining.'}</p>
                         </div>
                         <label className="toggle-switch">
                             <input
@@ -696,8 +698,8 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 <div className="setting-item">
                     <div className="setting-header">
                         <div>
-                            <span className="setting-title">Allow Self Join</span>
-                            <p className="setting-description">Students can join using the class code without approval.</p>
+                            <span className="setting-title">{t('editClassroomPage.otherSection.selfJoinTitle') || 'Allow Self Join'}</span>
+                            <p className="setting-description">{t('editClassroomPage.otherSection.selfJoinDesc') || 'Students can join using the class code without approval.'}</p>
                         </div>
                         <label className="toggle-switch">
                             <input
@@ -717,13 +719,13 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
         <div className="edit-section">
             <h2 className="section-title">
                 <FaChair className="section-icon" />
-                Seating Management
+                {t('editClassroomPage.seatingSection.title') || 'Seating Management'}
             </h2>
 
             <div className="seating-preview">
                 {Object.keys(seatingPositions).length === 0 ? (
                     <div className="no-seating-chart">
-                        No seating chart available. Click "Edit Seating" to start creating one.
+                        {t('editClassroomPage.seatingSection.noChart') || 'No seating chart available. Click "Edit Seating" to start creating one.'}
                     </div>
                 ) : (
                     <div className="seating-container-wrapper" style={{
@@ -773,10 +775,10 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 <div className="seating-edit-footer">
                     <button className="save-btn" onClick={handleSaveSeating}>
                         <FaSave />
-                        Save Seating
+                        {t('editClassroomPage.seatingSection.saveBtn') || 'Save Seating'}
                     </button>
                     <button className="cancel-btn" onClick={handleCancelSeatingEdit}>
-                        Cancel
+                        {t('common.cancel') || 'Cancel'}
                     </button>
                 </div>
             )}
@@ -789,7 +791,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
     }
 
     if (!classroom) {
-        return <div className="error">Classroom not found.</div>;
+        return <div className="error">{t('editClassroomPage.notFoundError') || 'Classroom not found.'}</div>;
     }
 
     const isCreator = user && classroom?.creator && (
@@ -797,7 +799,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
     );
 
     if (!isCreator) {
-        return <div className="error">You don't have permission to edit this classroom.</div>;
+        return <div className="error">{t('editClassroomPage.noPermissionError') || 'You don\'t have permission to edit this classroom.'}</div>;
     }
 
     return (
@@ -819,21 +821,21 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
             <main className={`main__content ${isSidebarOpen ? 'shift' : ''}`}>
                 <div className="edit-classroom-container">
                     <div className="edit-header">
-                        <h1>Edit Classroom Settings</h1>
+                        <h1>{t('editClassroomPage.pageTitle') || 'Edit Classroom Settings'}</h1>
                         <div className="save-status-indicator">
                             {saveStatus === 'saving' && (
                                 <span className="status-saving">
-                                    <FaSpinner className="fa-spin" /> Saving...
+                                    <FaSpinner className="fa-spin" /> {t('editClassroomPage.saveStatus.saving') || 'Saving...'}
                                 </span>
                             )}
                             {saveStatus === 'saved' && (
                                 <span className="status-saved">
-                                    <FaCheck /> Saved
+                                    <FaCheck /> {t('editClassroomPage.saveStatus.saved') || 'Saved'}
                                 </span>
                             )}
                             {saveStatus === 'error' && (
                                 <span className="status-error">
-                                    Error Saving
+                                    {t('editClassroomPage.saveStatus.error') || 'Error Saving'}
                                 </span>
                             )}
                         </div>

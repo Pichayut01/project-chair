@@ -5,6 +5,7 @@ import '../CSS/Navbar.css';
 import '../CSS/Main.css';
 import '../CSS/ErrorPage.css';
 import { FiAlertTriangle, FiRefreshCw, FiHome, FiMenu } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 const ErrorPage = ({ 
     user, 
@@ -16,6 +17,7 @@ const ErrorPage = ({
     onGoHome,
     classrooms = []
 }) => {
+    const { t } = useTranslation();
     // Generate error code based on error type or timestamp
     const generateErrorCode = () => {
         if (error?.name) {
@@ -50,24 +52,24 @@ const ErrorPage = ({
                             <FiAlertTriangle size={64} />
                         </div>
                         
-                        <h1 className="error-title">Something went wrong</h1>
+                        
+                        <h1 className="error-title">{t('errorPage.title') || 'Something went wrong'}</h1>
                         
                         <p className="error-description">
-                            We're sorry, but an unexpected error occurred. 
-                            Our team has been notified and is working to fix this issue.
+                            {t('errorPage.description') || "We're sorry, but an unexpected error occurred. Our team has been notified and is working to fix this issue."}
                         </p>
                         
                         <div className="error-code-container">
-                            <span className="error-code-label">Error Code:</span>
+                            <span className="error-code-label">{t('errorPage.errorCode') || 'Error Code:'}</span>
                             <code className="error-code">{errorCode}</code>
                         </div>
                         
                         {process.env.NODE_ENV === 'development' && error && (
                             <details className="error-details">
-                                <summary>Technical Details (Development Only)</summary>
+                                <summary>{t('errorPage.technicalDetails') || 'Technical Details (Development Only)'}</summary>
                                 <pre className="error-stack">
                                     {error.toString()}
-                                    {error.stack && `\n\nStack Trace:\n${error.stack}`}
+                                    {error.stack && `\n\n${t('errorPage.stackTrace') || 'Stack Trace:'}\n${error.stack}`}
                                 </pre>
                             </details>
                         )}
@@ -78,7 +80,7 @@ const ErrorPage = ({
                                 onClick={handleRetryClick}
                             >
                                 <FiRefreshCw />
-                                Try Again
+                                {t('errorPage.tryAgain') || 'Try Again'}
                             </button>
                             
                             <button 
@@ -86,12 +88,12 @@ const ErrorPage = ({
                                 onClick={handleHomeClick}
                             >
                                 <FiHome />
-                                Go to Dashboard
+                                {t('errorPage.goHome') || 'Go to Dashboard'}
                             </button>
                         </div>
                         
                         <div className="error-help">
-                            <p>If this problem persists, please contact our support team with the error code above.</p>
+                            <p>{t('errorPage.helpText') || 'If this problem persists, please contact our support team with the error code above.'}</p>
                         </div>
                     </div>
                 </div>

@@ -17,14 +17,18 @@
 
 /* กรอบ Modal */
 .modal-content {
-    background-color: #ffffff;
-    padding: 30px 40px;
-    border-radius: 16px; /* Slightly larger radius */
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.02); /* Softer shadow */
-    position: relative;
-    width: 90%;
-    max-width: 500px;
-    animation: fadeInScale 0.3s ease-out;
+  background-color: #ffffff;
+  padding: 30px 40px;
+  border-radius: 16px; /* Slightly larger radius */
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.02); /* Softer shadow */
+  position: relative;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: fadeInScale 0.3s ease-out;
 }
 
 @keyframes fadeInScale {
@@ -57,11 +61,11 @@
 
 /* หัวข้อ */
 .modal-content h2 {
-    text-align: center;
-    margin-bottom: 30px; /* More space */
-    font-size: 1.7em; /* Slightly smaller */
-    color: #222;
-    font-weight: 600;
+  text-align: center;
+  margin-bottom: 30px; /* More space */
+  font-size: 1.7em; /* Slightly smaller */
+  color: #222;
+  font-weight: 600;
 }
 
 /* กลุ่ม Form */
@@ -83,7 +87,10 @@
   border-radius: 8px;
   font-size: 1em;
   background-color: #f9f9f9; /* Light background for input */
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .form-group input:focus {
@@ -94,22 +101,24 @@
 
 /* ปุ่มหลักใน Modal */
 .modal-action-button {
-    width: 100%;
-    padding: 15px; /* Taller button */
-    background-color: #55a67c; /* Main theme color */
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 1.1em;
-    font-weight: 600;
-    margin-top: 20px;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+  width: 100%;
+  padding: 15px; /* Taller button */
+  background-color: #55a67c; /* Main theme color */
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-top: 20px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
 }
 
 .modal-action-button:hover {
-    background-color: #4a946c; /* Darker shade on hover */
-    transform: translateY(-2px);
+  background-color: #4a946c; /* Darker shade on hover */
+  transform: translateY(-2px);
 }
 
 /* ตัวเลือกใน ClassActionModal */
@@ -130,7 +139,10 @@
   font-size: 1.1em;
   color: #444;
   cursor: pointer;
-  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.2s ease;
 }
 
 .modal-option-button:hover {
@@ -178,15 +190,15 @@
 
 /* เพิ่ม CSS สำหรับกลุ่ม input แนวนอน */
 .form-group-inline {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
 .form-group-inline .form-group {
-    flex-grow: 1;
-    margin-bottom: 0;
+  flex-grow: 1;
+  margin-bottom: 0;
 }
 
 /* src/CSS/Modal.css */
@@ -215,51 +227,53 @@
   position: relative;
   width: 90%;
   max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
   animation: fadeInScale 0.3s ease-out;
 }
 
 /* CSS สำหรับ Compact Preview Modal */
 .modal-content.compact-preview-modal {
-    width: fit-content !important;
-    height: fit-content !important;
-    max-width: 90vw;
-    max-height: 90vh;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  width: fit-content !important;
+  height: fit-content !important;
+  max-width: 90vw;
+  max-height: 90vh;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Seating area specific styling */
 .seating-area {
-    flex: 1;
-    min-height: 0; /* Allow flex item to shrink */
+  flex: 1;
+  min-height: 0; /* Allow flex item to shrink */
 }
 
 /* Enhanced seating grid styling */
 .seating-grid {
-    transition: all 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .seating-grid:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 /* Responsive adjustments for compact preview modal */
 @media (max-width: 768px) {
-    .modal-content.compact-preview-modal {
-        max-width: 95vw;
-        max-height: 95vh;
-        padding: 15px;
-    }
+  .modal-content.compact-preview-modal {
+    max-width: 95vw;
+    max-height: 95vh;
+    padding: 15px;
+  }
 }
 
 @media (max-width: 480px) {
-    .modal-content.compact-preview-modal {
-        max-width: 98vw;
-        max-height: 98vh;
-        padding: 10px;
-    }
+  .modal-content.compact-preview-modal {
+    max-width: 98vw;
+    max-height: 98vh;
+    padding: 10px;
+  }
 }
 
 @keyframes fadeInScale {
@@ -366,54 +380,56 @@
 
 /* เพิ่ม CSS สำหรับกลุ่ม input แนวนอน */
 .form-group-inline {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
 .form-group-inline .form-group {
-    flex-grow: 1;
-    margin-bottom: 0;
+  flex-grow: 1;
+  margin-bottom: 0;
 }
 
 /* เพิ่ม CSS สำหรับปุ่ม Preview */
 .modal-preview-button {
-    width: 100%;
-    padding: 15px;
-    background-color: #f0f2f5;
-    color: #444;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1.1em;
-    font-weight: 500;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    margin-top: 5px;
+  width: 100%;
+  padding: 15px;
+  background-color: #f0f2f5;
+  color: #444;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1.1em;
+  font-weight: 500;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+  margin-top: 5px;
 }
 
 .modal-preview-button:hover {
-    background-color: #e8eaed;
-    transform: translateY(-1px);
+  background-color: #e8eaed;
+  transform: translateY(-1px);
 }
 
 /* ปุ่ม Action หลัก */
 .modal-action-button {
-    width: 100%;
-    padding: 12px 15px;
-    background-color: #7ec282;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    transition: background-color 0.2s ease-in-out;
-    margin-top: 20px;
+  width: 100%;
+  padding: 12px 15px;
+  background-color: #7ec282;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.2s ease-in-out;
+  margin-top: 20px;
 }
 
 .modal-action-button:hover {
-    background-color: #6bb36f;
+  background-color: #6bb36f;
 }
 
 /* --- Responsive Design for smaller screens --- */
@@ -437,20 +453,20 @@
 
 /* Additional utility classes for seating preview */
 .seating-preview-info {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    text-align: center;
-    font-weight: 500;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .chair-count-badge {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.9em;
-    margin-left: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.9em;
+  margin-left: 8px;
 }

@@ -14,8 +14,12 @@ import {
     Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { FiPrinter } from 'react-icons/fi';
 import '../CSS/Summary.css';
+import '../CSS/Print.css';
 import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
+import SummaryPrintLayout from './SummaryPrintLayout';
+import { useTranslation } from 'react-i18next';
 
 ChartJS.register(
     CategoryScale,
@@ -67,6 +71,7 @@ const SvgAward = () => (
 
 
 const Summary = ({ classId, user, classroom, onUpdateScores }) => {
+    const { t } = useTranslation();
     const [summaryData, setSummaryData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -175,12 +180,16 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
     }, [classroom]);
 
     const processClassroomData = (classroomData) => {
-        const students = classroomData.participants || [];
+        const creatorIds = (classroomData.creator || []).map(c => c._id || c.id || c);
+        const allParticipants = classroomData.participants || [];
+        const students = allParticipants.filter(p => !creatorIds.includes(p._id || p.id));
         const studentScores = classroomData.studentScores || {};
-        const events = classroomData.events || [];
+        const attendanceMap = classroomData.attendance || {};
+        const attendanceDaysCount = classroomData.attendanceDays || 20;
 
         const studentData = students.map(student => {
-            const scores = studentScores[student._id] || studentScores[student.id] || {};
+            const studentId = student._id || student.id;
+            const scores = studentScores[studentId] || {};
             const scoreValues = Object.values(scores).filter(score => score !== null && score !== undefined && typeof score === 'number');
             const totalScore = scoreValues.reduce((sum, score) => sum + score, 0);
             const avgScore = scoreValues.length > 0 ? totalScore / scoreValues.length : 0;
@@ -189,9 +198,23 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
             const scoreVariance = scoreValues.length > 1 ? scoreValues.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / (scoreValues.length - 1) : 0;
             const consistency = scoreValues.length > 1 ? Math.sqrt(scoreVariance) : 0;
 
-            const attendedEvents = events.filter(event => event.attendees && event.attendees.includes(student._id || student.id)).length;
-            const totalEvents = events.length;
-            const attendanceRate = totalEvents > 0 ? attendedEvents / totalEvents : 0;
+            const studentRecord = attendanceMap[studentId] || {};
+            let presentCount = 0;
+            let trackedCount = 0;
+
+            for (let i = 1; i <= attendanceDaysCount; i++) {
+                const state = studentRecord[i] || 'none';
+                if (state !== 'none') {
+                    trackedCount++;
+                    if (state === 'present' || state === 'late') {
+                        presentCount++;
+                    }
+                }
+            }
+
+            const attendanceRate = trackedCount > 0 ? presentCount / trackedCount : 0;
+            const attendedEvents = presentCount;
+            const totalEvents = trackedCount;
 
             return {
                 id: student._id || student.id,
@@ -229,7 +252,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
 
         return {
             totalStudents: students.length,
-            totalEvents: events.length,
+            totalEvents: attendanceDaysCount,
             studentData,
             statistics: {
                 mean, stdDev,
@@ -372,7 +395,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
             <div className="bento-summary-container">
                 <div className="bento-loading">
                     <div className="bento-loading-spinner"></div>
-                    <p>Loading comprehensive analysis...</p>
+                    <p>{t('summary.loading') || 'Loading comprehensive analysis...'}</p>
                 </div>
             </div>
         );
@@ -392,54 +415,84 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
     // ─── RENDER ───
     return (
         <div className="bento-summary-container">
+            {/* Hidden Formal Print Document */}
+            {summaryData && (
+                <SummaryPrintLayout 
+                    classroom={classroom}
+                    summaryData={summaryData}
+                    scoreStats={scoreStats}
+                    scoreCategories={scoreCategories}
+                    scoresTable={scoresTable}
+                    selectedStudent={selectedStudent}
+                    studentRank={studentRank}
+                />
+            )}
+
             {/* ═══ Header ═══ */}
             <div className="bento-header">
                 <div className="bento-header-left">
                     <div className="bento-header-icon"><SvgAward /></div>
                     <div>
-                        <h1>Class Summary</h1>
-                        <p>Comprehensive performance analytics &amp; scoreboard</p>
+                        <h1>{t('summary.title') || 'Class Summary'}</h1>
+                        <p>{t('summary.subtitle') || 'Comprehensive performance analytics & scoreboard'}</p>
                     </div>
                 </div>
-                <div className="bento-select-container">
-                    <div className={`bento-select-display ${isDropdownOpen ? 'open' : ''}`} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                        {selectedStudentId === 'overview' ? (
-                            <span className="bento-select-text">📊 Class Overview</span>
-                        ) : (() => {
-                            const s = summaryData?.studentData.find(st => st.id === selectedStudentId);
-                            return s ? (
-                                <div className="bento-select-student">
-                                    <img src={getProfileImageSrc(s.photoURL, isGoogleUser(s.user))} alt={s.name} onError={handleImageError} />
-                                    <span>{s.name}</span>
+                <div className="bento-header-right">
+                    <div className="bento-select-container">
+                        <div className={`bento-select-display ${isDropdownOpen ? 'open' : ''}`} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                            {selectedStudentId === 'overview' ? (
+                                <span className="bento-select-text">{t('summary.classOverview') || '📊 Class Overview'}</span>
+                            ) : (() => {
+                                const s = summaryData?.studentData.find(st => st.id === selectedStudentId);
+                                return s ? (
+                                    <div className="bento-select-student">
+                                        <img src={getProfileImageSrc(s.photoURL, isGoogleUser(s.user))} alt={s.name} onError={handleImageError} />
+                                        <span>{s.name}</span>
+                                    </div>
+                                ) : <span className="bento-select-text">{t('summary.select') || 'Select...'}</span>;
+                            })()}
+                            <svg className="bento-select-arrow" width="12" height="12" viewBox="0 0 12 12"><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                        </div>
+                        {isDropdownOpen && (
+                            <div className="bento-select-dropdown">
+                                <div className={`bento-select-option ${selectedStudentId === 'overview' ? 'active' : ''}`} onClick={() => { setSelectedStudentId('overview'); setIsDropdownOpen(false); }}>
+                                    <span>{t('summary.classOverview') || '📊 Class Overview'}</span>
                                 </div>
-                            ) : <span>Select...</span>;
-                        })()}
-                        <svg className="bento-select-arrow" width="12" height="12" viewBox="0 0 12 12"><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                    </div>
-                    {isDropdownOpen && (
-                        <div className="bento-select-dropdown">
-                            <div className={`bento-select-option ${selectedStudentId === 'overview' ? 'active' : ''}`} onClick={() => { setSelectedStudentId('overview'); setIsDropdownOpen(false); }}>
-                                <span>📊 Class Overview</span>
+                                {summaryData?.studentData.map(student => (
+                                    <div key={student.id} className={`bento-select-option ${selectedStudentId === student.id ? 'active' : ''}`} onClick={() => { setSelectedStudentId(student.id); setIsDropdownOpen(false); }}>
+                                        <img src={getProfileImageSrc(student.photoURL, isGoogleUser(student.user))} alt={student.name} onError={handleImageError} />
+                                        <span>{student.name}</span>
+                                    </div>
+                                ))}
                             </div>
-                            {summaryData?.studentData.map(student => (
-                                <div key={student.id} className={`bento-select-option ${selectedStudentId === student.id ? 'active' : ''}`} onClick={() => { setSelectedStudentId(student.id); setIsDropdownOpen(false); }}>
-                                    <img src={getProfileImageSrc(student.photoURL, isGoogleUser(student.user))} alt={student.name} onError={handleImageError} />
-                                    <span>{student.name}</span>
+                        )}
+                    </div>
+
+                    <div className="bento-header-divider"></div>
+
+                    {isCreator && (
+                        <div className="bento-status-toggle">
+                            <label className="status-toggle-label">
+                                <span className="status-toggle-text"><span className="hide-on-mobile">{t('summary.showStudentStatus') || 'Show Student Status'}</span><span className="show-on-mobile" style={{ display: 'none' }}>{t('summary.showStudentStatusMobile') || 'Status'}</span></span>
+                                <div className={`status-toggle-switch ${showStudentStatus ? 'active' : ''}`} onClick={handleToggleStudentStatus}>
+                                    <div className="status-toggle-knob"></div>
                                 </div>
-                            ))}
+                            </label>
                         </div>
                     )}
-                </div>
-                {isCreator && (
-                    <div className="bento-status-toggle">
-                        <label className="status-toggle-label">
-                            <span className="status-toggle-text">Show Student Status</span>
-                            <div className={`status-toggle-switch ${showStudentStatus ? 'active' : ''}`} onClick={handleToggleStudentStatus}>
-                                <div className="status-toggle-knob"></div>
-                            </div>
-                        </label>
+                    
+                    {/* Print PDF Button */}
+                    <div className="bento-print-action">
+                        <button 
+                            className="bento-print-btn" 
+                            onClick={() => window.print()}
+                            title={t('summary.printPdf') || 'Export as PDF'}
+                        >
+                            <FiPrinter size={18} />
+                            <span>{t('summary.printPdf') || 'Print PDF'}</span>
+                        </button>
                     </div>
-                )}
+                </div>
             </div>
 
             {summaryData && (
@@ -450,7 +503,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                         <div className="bento-tile bento-podium" style={{ '--delay': '0' }}>
                             <div className="bento-tile-header">
                                 <SvgTrophy />
-                                <h3>Top Performers</h3>
+                                <h3>{t('summary.topPerformers') || 'Top Performers'}</h3>
                             </div>
                             <div className="podium-wrap">
                                 {/* 2nd */}
@@ -459,10 +512,10 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                         <div className="podium-medal silver"><SvgMedal /></div>
                                         <img src={getProfileImageSrc(topStudents[1].student.photoURL, isGoogleUser(topStudents[1].student))} alt={topStudents[1].student.displayName} className="podium-img" />
                                         <div className="podium-bar">
-                                            <span className="podium-rank-num">2nd</span>
+                                            <span className="podium-rank-num">{t('summary.rank2nd') || '2nd'}</span>
                                         </div>
                                         <p className="podium-name">{topStudents[1].student.displayName}</p>
-                                        <span className="podium-pts">{topStudents[1].totalScore} pts</span>
+                                        <span className="podium-pts">{topStudents[1].totalScore} {t('summary.pts') || 'pts'}</span>
                                     </div>
                                 )}
                                 {/* 1st */}
@@ -471,10 +524,10 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                         <div className="podium-medal gold"><SvgCrown /></div>
                                         <img src={getProfileImageSrc(topStudents[0].student.photoURL, isGoogleUser(topStudents[0].student))} alt={topStudents[0].student.displayName} className="podium-img first-img" />
                                         <div className="podium-bar first-bar">
-                                            <span className="podium-rank-num">1st</span>
+                                            <span className="podium-rank-num">{t('summary.rank1st') || '1st'}</span>
                                         </div>
                                         <p className="podium-name">{topStudents[0].student.displayName}</p>
-                                        <span className="podium-pts">{topStudents[0].totalScore} pts</span>
+                                        <span className="podium-pts">{topStudents[0].totalScore} {t('summary.pts') || 'pts'}</span>
                                     </div>
                                 )}
                                 {/* 3rd */}
@@ -483,10 +536,10 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                         <div className="podium-medal bronze"><SvgMedal /></div>
                                         <img src={getProfileImageSrc(topStudents[2].student.photoURL, isGoogleUser(topStudents[2].student))} alt={topStudents[2].student.displayName} className="podium-img" />
                                         <div className="podium-bar">
-                                            <span className="podium-rank-num">3rd</span>
+                                            <span className="podium-rank-num">{t('summary.rank3rd') || '3rd'}</span>
                                         </div>
                                         <p className="podium-name">{topStudents[2].student.displayName}</p>
-                                        <span className="podium-pts">{topStudents[2].totalScore} pts</span>
+                                        <span className="podium-pts">{topStudents[2].totalScore} {t('summary.pts') || 'pts'}</span>
                                     </div>
                                 )}
                             </div>
@@ -498,47 +551,49 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                         <div className="bento-tile bento-profile" style={{ '--delay': '0' }}>
                             <div className="bento-tile-header">
                                 <SvgTarget />
-                                <h3>Student Profile</h3>
+                                <h3>{t('summary.studentProfile') || 'Student Profile'}</h3>
                             </div>
                             <div className="profile-top">
                                 <img src={getProfileImageSrc(selectedStudent.photoURL, isGoogleUser(selectedStudent.user))} alt={selectedStudent.name} onError={handleImageError} className="profile-avatar" />
                                 <div className="profile-info">
                                     <h4>{selectedStudent.name}</h4>
-                                    <span className="profile-group-badge">Group {selectedStudent.group}</span>
+                                    <span className="profile-group-badge">{t('summary.group', { group: selectedStudent.group }) || `Group ${selectedStudent.group}`}</span>
                                 </div>
                             </div>
                             <div className="profile-metrics">
                                 <div className="pm-item accent">
-                                    <label>Rank</label>
+                                    <label>{t('summary.rank') || 'Rank'}</label>
                                     <span className="pm-val">#{studentRank} <small>/ {summaryData.totalStudents}</small></span>
                                 </div>
                                 <div className="pm-item">
-                                    <label>Total Score</label>
+                                    <label>{t('summary.totalScore') || 'Total Score'}</label>
                                     <span className="pm-val">{selectedStudent.combinedScore.toFixed(1)}</span>
                                 </div>
                                 <div className="pm-item">
-                                    <label>Percentile</label>
+                                    <label>{t('summary.percentile') || 'Percentile'}</label>
                                     <span className="pm-val">{selectedStudent.percentile.toFixed(1)}%</span>
                                 </div>
                                 <div className="pm-item">
-                                    <label>Grade</label>
+                                    <label>{t('summary.grade') || 'Grade'}</label>
                                     <span className={`pm-val pm-grade pm-grade-${selectedStudent.grade.substring(0, 1).toLowerCase()}`}>{selectedStudent.grade}</span>
                                 </div>
                                 <div className="pm-item">
-                                    <label>Z-Score</label>
+                                    <label>{t('summary.zScore') || 'Z-Score'}</label>
                                     <span className="pm-val">{selectedStudent.zScore > 0 ? '+' : ''}{selectedStudent.zScore.toFixed(2)}</span>
                                 </div>
                                 <div className="pm-item">
-                                    <label>Attendance</label>
+                                    <label>{t('summary.attendance') || 'Attendance'}</label>
                                     <span className="pm-val">{(selectedStudent.attendanceRate * 100).toFixed(0)}%</span>
                                 </div>
                             </div>
                             <div className="profile-analysis">
-                                <h5>📝 Performance Analysis</h5>
+                                <h5>{t('summary.performanceAnalysis') || '📝 Performance Analysis'}</h5>
                                 <p>
-                                    {selectedStudent.name} is performing in the <strong>Top {Math.max(1, 100 - Math.round(selectedStudent.percentile))}%</strong> of the class.
-                                    With a total score of <strong>{selectedStudent.combinedScore.toFixed(1)}</strong>, they are {Math.abs(selectedStudent.zScore).toFixed(2)} standard deviations {selectedStudent.zScore >= 0 ? 'above' : 'below'} the class average.
-                                    Their attendance rate is <strong>{(selectedStudent.attendanceRate * 100).toFixed(0)}%</strong>.
+                                    {t('summary.analysisP1', { name: selectedStudent.name, percent: Math.max(1, 100 - Math.round(selectedStudent.percentile)) }) || `${selectedStudent.name} is performing in the Top ${Math.max(1, 100 - Math.round(selectedStudent.percentile))}% of the class.`}
+                                    {' '}
+                                    {t('summary.analysisP2', { score: selectedStudent.combinedScore.toFixed(1), sd: Math.abs(selectedStudent.zScore).toFixed(2), direction: selectedStudent.zScore >= 0 ? t('summary.above') : t('summary.below') }) || `With a total score of ${selectedStudent.combinedScore.toFixed(1)}, they are ${Math.abs(selectedStudent.zScore).toFixed(2)} standard deviations ${selectedStudent.zScore >= 0 ? 'above' : 'below'} the class average.`}
+                                    {' '}
+                                    {t('summary.analysisP3', { rate: (selectedStudent.attendanceRate * 100).toFixed(0) }) || `Their attendance rate is ${(selectedStudent.attendanceRate * 100).toFixed(0)}%.`}
                                 </p>
                             </div>
                         </div>
@@ -549,32 +604,32 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                         <div className="bento-tile bento-stats-grid" style={{ '--delay': '1' }}>
                             <div className="bento-tile-header">
                                 <SvgBarChart />
-                                <h3>Class Statistics</h3>
+                                <h3>{t('summary.classStats') || 'Class Statistics'}</h3>
                             </div>
                             <div className="stats-mini-grid">
                                 <div className="stat-mini students">
                                     <div className="stat-mini-icon"><SvgUsers /></div>
-                                    <div><h4>Total Students</h4><p>{summaryData.totalStudents}</p></div>
+                                    <div><h4>{t('summary.totalStudents') || 'Total Students'}</h4><p>{summaryData.totalStudents}</p></div>
                                 </div>
                                 <div className="stat-mini average">
                                     <div className="stat-mini-icon"><SvgTrendUp /></div>
-                                    <div><h4>Class Average (μ)</h4><p>{summaryData.statistics.mean.toFixed(2)}</p></div>
+                                    <div><h4>{t('summary.classAverage') || 'Class Average (μ)'}</h4><p>{summaryData.statistics.mean.toFixed(2)}</p></div>
                                 </div>
                                 <div className="stat-mini highest">
                                     <div className="stat-mini-icon"><SvgStar /></div>
-                                    <div><h4>Highest Score</h4><p>{summaryData.statistics.max.toFixed(2)}</p></div>
+                                    <div><h4>{t('summary.highestScore') || 'Highest Score'}</h4><p>{summaryData.statistics.max.toFixed(2)}</p></div>
                                 </div>
                                 <div className="stat-mini lowest">
                                     <div className="stat-mini-icon"><SvgBarChart /></div>
-                                    <div><h4>Lowest Score</h4><p>{summaryData.statistics.min.toFixed(2)}</p></div>
+                                    <div><h4>{t('summary.lowestScore') || 'Lowest Score'}</h4><p>{summaryData.statistics.min.toFixed(2)}</p></div>
                                 </div>
                                 <div className="stat-mini median">
                                     <div className="stat-mini-icon"><SvgTarget /></div>
-                                    <div><h4>Median</h4><p>{summaryData.statistics.median.toFixed(2)}</p></div>
+                                    <div><h4>{t('summary.median') || 'Median'}</h4><p>{summaryData.statistics.median.toFixed(2)}</p></div>
                                 </div>
                                 <div className="stat-mini stddev">
                                     <div className="stat-mini-icon"><SvgBellCurve /></div>
-                                    <div><h4>Std Dev (σ)</h4><p>{summaryData.statistics.stdDev.toFixed(2)}</p></div>
+                                    <div><h4>{t('summary.stdDev') || 'Std Dev (σ)'}</h4><p>{summaryData.statistics.stdDev.toFixed(2)}</p></div>
                                 </div>
                             </div>
                         </div>
@@ -584,19 +639,19 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                     <div className={`bento-tile bento-chart ${(!scoreStats || Object.keys(scoreStats.categoryAverages).length === 0) ? 'full-width' : ''}`} style={{ '--delay': '2' }}>
                         <div className="bento-tile-header">
                             <SvgBellCurve />
-                            <h3>Normal Distribution (Bell Curve)</h3>
+                            <h3>{t('summary.bellCurve') || 'Normal Distribution (Bell Curve)'}</h3>
                         </div>
                         <div className="bento-chart-wrap">
                             {chartData ? (
                                 <Line data={chartData} options={chartOptions} />
                             ) : (
-                                <div className="bento-no-data">Insufficient data to generate curve</div>
+                                <div className="bento-no-data">{t('summary.insufficientData') || 'Insufficient data to generate curve'}</div>
                             )}
                         </div>
                         <div className="bento-chart-note">
                             <p>
-                                Distribution peaks at the class average ({summaryData.statistics.mean.toFixed(1)}).
-                                {selectedStudent && <span className="bento-highlight-dot"> The red dot indicates {selectedStudent.name}'s position.</span>}
+                                {t('summary.distributionPeak', { mean: summaryData.statistics.mean.toFixed(1) }) || `Distribution peaks at the class average (${summaryData.statistics.mean.toFixed(1)}).`}
+                                {selectedStudent && <span className="bento-highlight-dot"> {t('summary.redDotIndicates', { name: selectedStudent.name }) || `The red dot indicates ${selectedStudent.name}'s position.`}</span>}
                             </p>
                         </div>
                     </div>
@@ -606,7 +661,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                         <div className="bento-tile bento-categories" style={{ '--delay': '3' }}>
                             <div className="bento-tile-header">
                                 <SvgBarChart />
-                                <h3>Category Breakdown</h3>
+                                <h3>{t('summary.categoryBreakdown') || 'Category Breakdown'}</h3>
                             </div>
                             <div className="category-bars">
                                 {Object.entries(scoreStats.categoryAverages).map(([category, average]) => {
@@ -635,17 +690,17 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                         <div className="bento-tile bento-score-table" style={{ '--delay': '4' }}>
                             <div className="bento-tile-header">
                                 <SvgEdit />
-                                <h3>Detailed Scores</h3>
-                                <span className="bento-tile-badge">Click to edit</span>
+                                <h3>{t('summary.tableTitle') || 'Detailed Scores'}</h3>
+                                <span className="bento-tile-badge">{t('summary.clickToEdit') || 'Click to edit'}</span>
                             </div>
                             <div className="bento-table-scroll">
                                 <table className="bento-table">
                                     <thead>
                                         <tr>
-                                            <th>Rank</th>
-                                            <th>Student</th>
+                                            <th>{t('summary.rankHeader') || 'Rank'}</th>
+                                            <th>{t('summary.studentHeader') || 'Student'}</th>
                                             {scoreCategories.map(cat => <th key={cat}>{cat}</th>)}
-                                            <th>Total</th>
+                                            <th>{t('summary.totalHeader') || 'Total'}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -686,19 +741,19 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                         <div className="bento-tile bento-rankings" style={{ '--delay': '5' }}>
                             <div className="bento-tile-header">
                                 <SvgAward />
-                                <h3>Class Rankings</h3>
+                                <h3>{t('summary.classRankings') || 'Class Rankings'}</h3>
                             </div>
                             <div className="bento-table-scroll">
                                 <table className="bento-table bento-ranking-table">
                                     <thead>
                                         <tr>
-                                            <th>Rank</th>
-                                            <th>Student</th>
-                                            <th>Group</th>
-                                            <th>Total Score</th>
-                                            <th>Z-Score</th>
-                                            <th>Percentile</th>
-                                            <th>Grade</th>
+                                            <th>{t('summary.rankHeader') || 'Rank'}</th>
+                                            <th>{t('summary.studentHeader') || 'Student'}</th>
+                                            <th>{t('summary.groupHeader') || 'Group'}</th>
+                                            <th>{t('summary.totalScore') || 'Total Score'}</th>
+                                            <th>{t('summary.zScoreHeader') || 'Z-Score'}</th>
+                                            <th>{t('summary.percentileHeader') || 'Percentile'}</th>
+                                            <th>{t('summary.gradeHeader') || 'Grade'}</th>
                                         </tr>
                                     </thead>
                                     <tbody>

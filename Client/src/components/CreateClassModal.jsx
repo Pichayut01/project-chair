@@ -4,8 +4,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import '../CSS/Modal.css';
 import '../CSS/Chair.css';
 import Chair from './Chair';
+import { useTranslation } from 'react-i18next';
+import Swal from 'sweetalert2';
 
 const SeatingPreviewModal = ({ rows, cols, onClose, onSavePositions, initialSavedPositions }) => {
+    const { t } = useTranslation();
     const [currentChairPositions, setCurrentChairPositions] = useState({});
     const containerRef = useRef(null);
     
@@ -87,7 +90,7 @@ const SeatingPreviewModal = ({ rows, cols, onClose, onSavePositions, initialSave
                     marginBottom: '15px',
                     textAlign: 'center',
                     margin: '0 0 15px 0'
-                }}>Preview {rows}×{cols} ({rows * cols} chairs)</h3>
+                }}>{t('createClassModal.previewTitle', { rows, cols, total: rows * cols }) || `Preview ${rows}×${cols} (${rows * cols} chairs)`}</h3>
                 
                 <div style={{
                     flex: 1,
@@ -126,7 +129,7 @@ const SeatingPreviewModal = ({ rows, cols, onClose, onSavePositions, initialSave
                         fontSize: '1em'
                     }}
                 >
-                    Save Arrangement
+                    {t('createClassModal.saveArrangement') || 'Save Arrangement'}
                 </button>
             </div>
         </div>
@@ -134,6 +137,7 @@ const SeatingPreviewModal = ({ rows, cols, onClose, onSavePositions, initialSave
 };
 
 const CreateClassModal = ({ onClose, onClassCreated, user }) => {
+    const { t } = useTranslation();
     const [name, setName] = useState('');
     const [subname, setSubname] = useState('');
     const [color, setColor] = useState('#4CAF50');
@@ -168,12 +172,12 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
 
         if (!user || !user.token) {
             console.error("User or token is not available. Cannot create class.");
-            alert("Please log in to create a class.");
+            Swal.fire(t('common.error') || 'Error', t('createClassModal.notLoggedIn') || "Please log in to create a class.", 'error');
             return;
         }
 
         if (rows < 0 || rows > 10 || cols < 0 || cols > 10) {
-            alert("Rows and columns must be between 0 and 10.");
+            Swal.fire(t('common.error') || 'Error', t('createClassModal.invalidRowsCols') || "Rows and columns must be between 0 and 10.", 'error');
             return;
         }
 
@@ -203,7 +207,7 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.msg || 'Failed to create class');
+                throw new Error(errorData.msg || t('createClassModal.createFailed') || 'Failed to create class');
             }
 
             const data = await response.json();
@@ -211,7 +215,7 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
 
             onClassCreated(data.class.name); // ✨ ส่งชื่อห้องกลับไป
         } catch (error) {
-            alert(error.message);
+            Swal.fire(t('common.error') || 'Error', error.message, 'error');
         }
     };
 
@@ -220,7 +224,7 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
         if (rows > 0 && cols > 0 && rows <= 10 && cols <= 10) {
             setShowPreview(true);
         } else {
-            alert("Please enter valid numbers for rows and columns (1-10) to preview.");
+            Swal.fire(t('common.error') || 'Error', t('createClassModal.invalidPreview') || "Please enter valid numbers for rows and columns (1-10) to preview.", 'warning');
         }
     };
 
@@ -234,10 +238,10 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
             <div className="modal-backdrop">
                 <div className="modal-content">
                     <button className="modal-close-button" onClick={onClose}>&times;</button>
-                    <h2>Create New Class</h2>
+                    <h2>{t('createClassModal.title') || 'Create New Class'}</h2>
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label>Class Name</label>
+                            <label>{t('createClassModal.className') || 'Class Name'}</label>
                             <input
                                 type="text"
                                 value={name}
@@ -246,7 +250,7 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
                             />
                         </div>
                         <div className="form-group">
-                            <label>Description</label>
+                            <label>{t('createClassModal.description') || 'Description'}</label>
                             <input
                                 type="text"
                                 value={subname}
@@ -254,7 +258,7 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
                             />
                         </div>
                         <div className="form-group">
-                            <label>Class Color</label>
+                            <label>{t('createClassModal.classColor') || 'Class Color'}</label>
                             <input
                                 type="color"
                                 value={color}
@@ -263,7 +267,7 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
                         </div>
                         <div className="form-group-inline">
                             <div className="form-group">
-                                <label>Rows (1-10)</label>
+                                <label>{t('createClassModal.rowsLabel') || 'Rows (1-10)'}</label>
                                 <input
                                     type="number"
                                     min="0"
@@ -273,7 +277,7 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Columns (1-10)</label>
+                                <label>{t('createClassModal.colsLabel') || 'Columns (1-10)'}</label>
                                 <input
                                     type="number"
                                     min="0"
@@ -285,10 +289,10 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
                         </div>
                         <div className="form-group">
                             <button type="button" className="modal-preview-button" onClick={handlePreviewClick}>
-                                Preview Seating
+                                {t('createClassModal.previewBtn') || 'Preview Seating'}
                             </button>
                         </div>
-                        <button type="submit" className="modal-action-button">Create Class</button>
+                        <button type="submit" className="modal-action-button">{t('createClassModal.createBtn') || 'Create Class'}</button>
                     </form>
                 </div>
             </div>

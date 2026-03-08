@@ -7,10 +7,12 @@ import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/pro
 import { FiShare2, FiUserPlus } from "react-icons/fi";
 import { FaThumbtack } from "react-icons/fa";
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
 const API_BASE_URL = 'http://localhost:5000';
 
 const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMenu, handleLeaveClassroom, onClassActionClick }) => {
+    const { t } = useTranslation(); // ✨ Apply hook
     const [openDropdownId, setOpenDropdownId] = useState(null);
     const navigate = useNavigate(); // 
 
@@ -25,21 +27,21 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
         setOpenDropdownId(null);
         
         Swal.fire({
-            title: 'Class Code',
+            title: t('dashboard.shareCode'),
             html: `
                 <div style="background-color: #eaf6ea; border: 1px solid #d4ecd4; border-radius: 4px; padding: 12px 15px; font-size: 24px; font-weight: bold; color: #388e3c; word-break: break-all; margin: 15px 0;">
                     ${classCode}
                 </div>`,
             showCancelButton: true,
-            confirmButtonText: 'Copy Code',
-            cancelButtonText: 'Close',
+            confirmButtonText: t('common.copyCode') === 'Copy Code' ? 'Copy Code' : 'คัดลอกรหัส', // Simplified translation mapping
+            cancelButtonText: t('common.close'),
             customClass: {
                 confirmButton: 'swal2-confirm',
             },
         }).then((result) => {
             if (result.isConfirmed) {
                 navigator.clipboard.writeText(classCode);
-                Swal.fire('Copied!', 'Class code has been copied to clipboard.', 'success');
+                Swal.fire(t('common.copied') === 'Copied!' ? 'Copied!' : 'คัดลอกแล้ว!', t('common.copiedDesc') === 'Copied to clipboard' ? 'Class code has been copied to clipboard.' : 'คัดลอกรหัสชั้นเรียนไปยังคลิปบอร์ดแล้ว', 'success');
             }
         });
     };
@@ -95,11 +97,11 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
                                         <div className="dropdown-menu" onClick={e => e.stopPropagation()}>
                                             <div className="dropdown-item" onClick={() => onPinClass(room._id)}>
                                                 <FaThumbtack size={16} />
-                                                <span>{isPinned ? 'Unpin class' : 'Pin class'}</span>
+                                                <span>{isPinned ? t('dashboard.unpinClass') : t('dashboard.pinClass')}</span>
                                             </div>
                                             <div className="dropdown-item" onClick={(e) => handleShareClick(room.classCode, e)}>
                                                 <FiShare2 size={16} />
-                                                <span>Share Class Code</span>
+                                                <span>{t('dashboard.shareCode')}</span>
                                             </div>
                                             <div
                                                 className="dropdown-item"
@@ -110,7 +112,7 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
                                                     setOpenDropdownId(null);
                                                 }}
                                             >
-                                                <span>Exit & Remove</span>
+                                                <span>{t('dashboard.exitRemove')}</span>
                                             </div>
                                         </div>
                                     )}
@@ -127,7 +129,7 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
                                         onError={handleImageError}
                                     />
                                     <div className="card-creator-details">
-                                        <span className="card-creator-label">Created by</span>
+                                        <span className="card-creator-label">{t('dashboard.createdByLabel') || 'Created by'}</span>
                                         <span className="card-creator-name">{creator.displayName}</span>
                                     </div>
                                 </div>
@@ -146,7 +148,7 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
                                     <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                                 </svg>
-                                <span>Members ({totalMembers})</span>
+                                <span>{t('dashboard.members')} ({totalMembers})</span>
                             </div>
                             <div className="card-avatar-group">
                                 {extraMembers > 0 && (
@@ -180,22 +182,22 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
                 {!hasAnyClassrooms ? (
                     <div className="no-classrooms-container">
                         <div className="no-classrooms-message">
-                            <h2>Welcome to Your Dashboard!</h2>
-                            <p>You don't have any classrooms yet. Create your first classroom or join an existing one to get started.</p>
+                            <h2>{t('dashboard.empty.title')}</h2>
+                            <p>{t('dashboard.empty.message')}</p>
                             <div className="welcome-buttons">
                                 <button 
                                     className="welcome-btn create-btn"
                                     onClick={() => onClassActionClick('create')}
                                 >
                                     <FiShare2 />
-                                    Create Classroom
+                                    {t('dashboard.empty.createBtn')}
                                 </button>
                                 <button 
                                     className="welcome-btn join-btn"
                                     onClick={() => onClassActionClick('join')}
                                 >
                                     <FiUserPlus />
-                                    Join Classroom
+                                    {t('dashboard.empty.joinBtn')}
                                 </button>
                             </div>
                         </div>
@@ -204,7 +206,7 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
                     <>
                         {pinnedClasses.length > 0 && (
                             <>
-                                <h2 className="section-title">Pinned Classrooms ({pinnedClasses.length})</h2>
+                                <h2 className="section-title">{t('dashboard.sections.pinned')} ({pinnedClasses.length})</h2>
                                 {renderClassroomCards(pinnedClasses)}
                                 {(createdClasses.length > 0 || joinedClasses.length > 0) && <hr className="section-divider" />}
                             </>
@@ -212,7 +214,7 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
 
                         {createdClasses.length > 0 && (
                             <>
-                                <h2 className="section-title">Created by You ({createdClasses.length})</h2>
+                                <h2 className="section-title">{t('dashboard.sections.created')} ({createdClasses.length})</h2>
                                 {renderClassroomCards(createdClasses)}
                                 {joinedClasses.length > 0 && <hr className="section-divider" />}
                             </>
@@ -220,7 +222,7 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
 
                         {joinedClasses.length > 0 && (
                             <>
-                                <h2 className="section-title">Joined Classrooms ({joinedClasses.length})</h2>
+                                <h2 className="section-title">{t('dashboard.sections.joined')} ({joinedClasses.length})</h2>
                                 {renderClassroomCards(joinedClasses)}
                             </>
                         )}

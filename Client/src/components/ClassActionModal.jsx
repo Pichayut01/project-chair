@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import '../CSS/Modal.css';
 import CreateClassModal from './CreateClassModal';
 import JoinClassModal from './JoinClassModal';
+import { useTranslation } from 'react-i18next';
 
 const ClassActionModal = ({ onClose, onClassCreated, onClassJoined, user, initialMode = null }) => {
+    const { t } = useTranslation();
     const [mode, setMode] = useState(initialMode);
 
     const handleCreateClick = () => {
@@ -31,11 +33,11 @@ const ClassActionModal = ({ onClose, onClassCreated, onClassJoined, user, initia
                 <div className="modal-options">
                     <button className="modal-option-button" onClick={handleCreateClick}>
                         <i className="fa-solid fa-plus icon"></i>
-                        <span>Create class</span>
+                        <span>{t('classActionModal.createClassBtn') || 'Create class'}</span>
                     </button>
                     <button className="modal-option-button" onClick={handleJoinClick}>
                         <i className="fa-solid fa-user-plus icon"></i>
-                        <span>Join class</span>
+                        <span>{t('classActionModal.joinClassBtn') || 'Join class'}</span>
                     </button>
                 </div>
             </div>

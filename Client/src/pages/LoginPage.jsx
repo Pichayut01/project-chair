@@ -9,6 +9,7 @@ import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
+import { useTranslation } from "react-i18next"; // ✨ Add useTranslation hook
 
 const backendUrl = "http://localhost:5000/api/auth";
 const MySwal = withReactContent(Swal);
@@ -100,6 +101,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation(); // ✨ Apply hook
 
   useEffect(() => {
     setPasswordsMatch(password === confirmPassword && confirmPassword !== "");
@@ -122,10 +124,10 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
 
   const getStrengthText = () => {
     if (passwordValidation.score === 0) return '';
-    if (passwordValidation.score <= 1) return 'รหัสผ่านคาดเดาง่าย (Weak)';
-    if (passwordValidation.score <= 2) return 'รหัสผ่านปลอดภัยปานกลาง (Fair)';
-    if (passwordValidation.score <= 3) return 'รหัสผ่านปลอดภัยดี (Good)';
-    return 'รหัสผ่านปลอดภัยสูง (Strong)';
+    if (passwordValidation.score <= 1) return t('login.pwdStrength.weak') || 'รหัสผ่านคาดเดาง่าย (Weak)';
+    if (passwordValidation.score <= 2) return t('login.pwdStrength.fair') || 'รหัสผ่านปลอดภัยปานกลาง (Fair)';
+    if (passwordValidation.score <= 3) return t('login.pwdStrength.good') || 'รหัสผ่านปลอดภัยดี (Good)';
+    return t('login.pwdStrength.strong') || 'รหัสผ่านปลอดภัยสูง (Strong)';
   };
 
   /* ===== Auth Handlers (ไม่เปลี่ยน Logic เดิม) ===== */
@@ -147,8 +149,8 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
       }
 
       MySwal.fire({
-        title: "Success!",
-        text: isNewUser ? "Account created and logged in with Google successfully!" : "Login with Google successful.",
+        title: t('common.success') || "Success!",
+        text: isNewUser ? (t('login.success.googleNew') || "Account created and logged in with Google successfully!") : (t('login.success.google') || "Login with Google successful."),
         icon: "success",
         timer: 2000,
         showConfirmButton: false,
@@ -157,20 +159,20 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
       });
     } catch (error) {
       console.error("Login with Google error:", error);
-      const errorMessage = error.response?.data?.msg || "Failed to login with Google. Please try again.";
-      MySwal.fire({ title: "Error!", text: errorMessage, icon: "error" });
+      const errorMessage = error.response?.data?.msg || t('login.error.googleFail') || "Failed to login with Google. Please try again.";
+      MySwal.fire({ title: t('common.error') || "Error!", text: errorMessage, icon: "error" });
     }
   };
 
   const handleManualLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      MySwal.fire({ title: "Error!", text: "Please enter both email and password.", icon: "error" });
+      MySwal.fire({ title: t('common.error') || "Error!", text: t('login.error.missingCreds') || "Please enter both email and password.", icon: "error" });
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      MySwal.fire({ title: "Error!", text: "Please enter a valid email address.", icon: "error" });
+      MySwal.fire({ title: t('common.error') || "Error!", text: t('login.error.invalidEmail') || "Please enter a valid email address.", icon: "error" });
       return;
     }
 
@@ -196,8 +198,8 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
       }
 
       MySwal.fire({
-        title: "Success!",
-        text: "Login successful.",
+        title: t('common.success') || "Success!",
+        text: t('login.success.login') || "Login successful.",
         icon: "success",
         timer: 1500,
         showConfirmButton: false,
@@ -206,8 +208,8 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
       });
     } catch (error) {
       console.error("Manual login error:", error);
-      const errorMessage = error.response?.data?.msg || "Invalid email or password.";
-      MySwal.fire({ title: "Login Failed", text: errorMessage, icon: "error" });
+      const errorMessage = error.response?.data?.msg || t('login.error.invalidCreds') || "Invalid email or password.";
+      MySwal.fire({ title: t('login.error.loginFailed') || "Login Failed", text: errorMessage, icon: "error" });
     } finally {
       setIsLoginLoading(false);
     }
@@ -217,19 +219,19 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
     e.preventDefault();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      MySwal.fire({ icon: 'error', title: 'Invalid Email', text: 'Please enter a valid email address.' });
+      MySwal.fire({ icon: 'error', title: t('login.error.invalidEmailTitle') || 'Invalid Email', text: t('login.error.invalidEmail') || 'Please enter a valid email address.' });
       return;
     }
     if (password.length < 6) {
-      MySwal.fire({ icon: 'error', title: 'Password Too Short', text: 'Password must be at least 6 characters long.' });
+      MySwal.fire({ icon: 'error', title: t('login.error.pwdShortTitle') || 'Password Too Short', text: t('login.error.pwdShort') || 'Password must be at least 6 characters long.' });
       return;
     }
     if (!passwordsMatch) {
-      MySwal.fire({ icon: 'error', title: 'Password Mismatch', text: 'Passwords do not match.' });
+      MySwal.fire({ icon: 'error', title: t('login.error.pwdMismatchTitle') || 'Password Mismatch', text: t('login.error.pwdMismatch') || 'Passwords do not match.' });
       return;
     }
     if (!acceptTerms) {
-      MySwal.fire({ icon: 'error', title: 'Terms and Conditions', text: 'Please accept the Terms and Conditions to continue.' });
+      MySwal.fire({ icon: 'error', title: t('login.error.termsTitle') || 'Terms and Conditions', text: t('login.error.termsRequired') || 'Please accept the Terms and Conditions to continue.' });
       return;
     }
 
@@ -249,8 +251,8 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
       }
 
       MySwal.fire({
-        title: "Success!",
-        text: "Registration successful. You are now logged in.",
+        title: t('common.success') || "Success!",
+        text: t('login.success.register') || "Registration successful. You are now logged in.",
         icon: "success",
         timer: 2000,
         showConfirmButton: false,
@@ -259,8 +261,8 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
       });
     } catch (error) {
       console.error("Manual registration error:", error);
-      const errorMessage = error.response?.data?.msg || "Registration failed. Please try again.";
-      MySwal.fire({ title: "Registration Failed", text: errorMessage, icon: "error" });
+      const errorMessage = error.response?.data?.msg || t('login.error.registerFail') || "Registration failed. Please try again.";
+      MySwal.fire({ title: t('login.error.registerFailedTitle') || "Registration Failed", text: errorMessage, icon: "error" });
     } finally {
       setIsRegisterLoading(false);
     }
@@ -269,26 +271,26 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     if (!forgotPasswordEmail) {
-      MySwal.fire({ icon: "error", title: "Missing Email", text: "Please enter your email address.", confirmButtonColor: "#10b981" });
+      MySwal.fire({ icon: "error", title: t('login.forgotPwd.missingEmailTitle') || "Missing Email", text: t('login.forgotPwd.missingEmail') || "Please enter your email address.", confirmButtonColor: "#10b981" });
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(forgotPasswordEmail)) {
-      MySwal.fire({ icon: "error", title: "Invalid Email", text: "Please enter a valid email address.", confirmButtonColor: "#10b981" });
+      MySwal.fire({ icon: "error", title: t('login.error.invalidEmailTitle') || "Invalid Email", text: t('login.error.invalidEmail') || "Please enter a valid email address.", confirmButtonColor: "#10b981" });
       return;
     }
 
     setIsForgotPasswordLoading(true);
     try {
       const response = await axios.post(`${backendUrl}/forgot-password`, { email: forgotPasswordEmail });
-      MySwal.fire({ icon: "success", title: "Email Sent!", text: response.data.msg, confirmButtonColor: "#10b981", timer: 5000, timerProgressBar: true });
+      MySwal.fire({ icon: "success", title: t('login.forgotPwd.emailSent') || "Email Sent!", text: response.data.msg, confirmButtonColor: "#10b981", timer: 5000, timerProgressBar: true });
       setShowForgotPasswordModal(false);
       setForgotPasswordEmail("");
     } catch (error) {
       console.error("Forgot password error:", error);
-      let errorMessage = "An error occurred while sending the reset email.";
+      let errorMessage = t('login.forgotPwd.error') || "An error occurred while sending the reset email.";
       if (error.response?.data?.msg) errorMessage = error.response.data.msg;
-      MySwal.fire({ icon: "error", title: "Error", text: errorMessage, confirmButtonColor: "#10b981" });
+      MySwal.fire({ icon: "error", title: t('common.error') || "Error", text: errorMessage, confirmButtonColor: "#10b981" });
     } finally {
       setIsForgotPasswordLoading(false);
     }
@@ -311,11 +313,11 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
           <div className="panel-overlay"></div>
           <div className="panel-content">
             <h2 className="panel-title">
-              Smart<br />
-              <span className="highlight">Classroom</span>
+              {t('login.smart')} <br />
+              <span className="highlight">{t('login.classroom')}</span>
             </h2>
             <p className="panel-desc">
-              EChair is a smart classroom management system that helps teachers manage seating charts, attendance, and student activities efficiently.
+              {t('login.description')}
             </p>
           </div>
         </div>
@@ -336,10 +338,10 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
           <div className="login-toggle-tabs">
             <div className={`tab-slider ${isRegisterMode ? 'tab-register' : 'tab-login'}`}></div>
             <button onClick={() => setIsRegisterMode(false)} className={!isRegisterMode ? 'active' : ''}>
-              Login
+              {t('login.tabLogin') || 'Login'}
             </button>
             <button onClick={() => setIsRegisterMode(true)} className={isRegisterMode ? 'active' : ''}>
-              Register
+              {t('login.tabRegister') || 'Register'}
             </button>
           </div>
 
@@ -358,7 +360,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="Your Email"
+                  placeholder={t('login.emailPlaceholder') || "Your Email"}
                 />
               </div>
 
@@ -370,7 +372,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="Password"
+                  placeholder={t('login.passwordPlaceholder') || "Password"}
                 />
                 <button
                   type="button"
@@ -388,12 +390,12 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   onClick={() => setShowForgotPasswordModal(true)}
                   className="forgot-password-btn"
                 >
-                  Forgot password?
+                  {t('login.forgotPassword') || "Forgot password?"}
                 </button>
               </div>
 
               <button type="submit" className="submit-button btn-login" disabled={isLoginLoading}>
-                <span>{isLoginLoading ? "Logging in..." : "Login"}</span>
+                <span>{isLoginLoading ? (t('login.loggingIn') || "Logging in...") : (t('login.btnLogin') || "Login")}</span>
                 {!isLoginLoading && <span className="btn-arrow"><ArrowRightIcon /></span>}
               </button>
             </form>
@@ -411,7 +413,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
-                  placeholder="Display name"
+                  placeholder={t('login.displayNamePlaceholder') || "Display name"}
                 />
               </div>
 
@@ -423,7 +425,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="Your Email"
+                  placeholder={t('login.emailPlaceholder') || "Your Email"}
                 />
               </div>
 
@@ -435,7 +437,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="Create password"
+                  placeholder={t('login.createPasswordPlaceholder') || "Create password"}
                 />
                 <button
                   type="button"
@@ -471,7 +473,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  placeholder="Confirm password"
+                  placeholder={t('login.confirmPasswordPlaceholder') || "Confirm password"}
                 />
                 <button
                   type="button"
@@ -498,34 +500,34 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
                   onChange={(e) => setAcceptTerms(e.target.checked)}
                 />
                 <label htmlFor="terms">
-                  I agree to the{' '}
+                  {t('login.agreeTo') || "I agree to the"}{' '}
                   <button type="button" className="terms-link" onClick={() => setShowTermsModal(true)}>
-                    Terms of Service
+                    {t('login.terms') || "Terms of Service"}
                   </button>
-                  {' '}and{' '}
+                  {' '}{t('login.and') || "and"}{' '}
                   <button type="button" className="terms-link" onClick={() => setShowTermsModal(true)}>
-                    Privacy Policy
+                    {t('login.privacy') || "Privacy Policy"}
                   </button>
-                  {' '}of EChair
+                  {' '}{t('login.ofEchair') || "of EChair"}
                 </label>
               </div>
 
               <button type="submit" className="submit-button btn-register" disabled={!acceptTerms || isRegisterLoading}>
-                {isRegisterLoading ? "Creating account..." : "Create Account"}
+                {isRegisterLoading ? (t('login.creatingAccount') || "Creating account...") : (t('login.btnCreate') || "Create Account")}
               </button>
             </form>
           </div>
 
           {/* Divider */}
           <div className="login-divider">
-            <span>or continue with</span>
+            <span>{t('login.orContinue') || "or continue with"}</span>
           </div>
 
           {/* Google Login */}
           <div className="google-login-section">
             <button onClick={handleGoogleSignIn} className="google-login-button">
               <GoogleIcon />
-              <span>Continue with Google</span>
+              <span>{t('login.googleContinue') || "Continue with Google"}</span>
             </button>
           </div>
         </div>

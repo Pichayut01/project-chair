@@ -48,6 +48,7 @@ const classSchema = new mongoose.Schema({
             config: { type: mongoose.Schema.Types.Mixed }, // Store event config
             results: { type: mongoose.Schema.Types.Mixed }, // Store results
             status: { type: String, default: 'idle' },
+            startTime: { type: Number },
             createdAt: { type: Number },
             updatedAt: { type: Number }
         }],
@@ -62,6 +63,7 @@ const classSchema = new mongoose.Schema({
             config: { type: mongoose.Schema.Types.Mixed },
             results: { type: mongoose.Schema.Types.Mixed },
             status: { type: String },
+            startTime: { type: Number },
             createdAt: { type: Number },
             updatedAt: { type: Number },
             deletedAt: { type: Number }

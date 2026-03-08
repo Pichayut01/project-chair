@@ -5,8 +5,10 @@ import Loader from './Loader';
 import '../CSS/Scoreboard.css';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 import { FaTrophy, FaMedal, FaCrown, FaUserGraduate, FaChartLine, FaStar, FaChartBar } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 const Scoreboard = ({ classroom, user, onUpdateScores }) => {
+    const { t } = useTranslation();
     const [scores, setScores] = useState([]);
     const [scoreCategories, setScoreCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -140,8 +142,8 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
     return (
         <div className="scoreboard-container">
             <div className="scoreboard-header">
-                <h1><FaTrophy className="header-icon" /> Class Scoreboard</h1>
-                <p>Overview of student performance and engagement</p>
+                <h1><FaTrophy className="header-icon" /> {t('scoreboard.title') || 'Class Scoreboard'}</h1>
+                <p>{t('scoreboard.subtitle') || 'Overview of student performance and engagement'}</p>
             </div>
 
             {stats && (scores.length > 0) && (
@@ -150,7 +152,7 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
                     <div className="dashboard-left">
                         {topStudents.length > 0 ? (
                             <div className="podium-section">
-                                <h2 className="section-title">Top Performers</h2>
+                                <h2 className="section-title">{t('scoreboard.topPerformers') || 'Top Performers'}</h2>
                                 <div className="podium-container">
                                     {/* 2nd Place */}
                                     {topStudents[1] && (
@@ -161,9 +163,9 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
                                                 alt={topStudents[1].student.displayName}
                                                 className="podium-avatar"
                                             />
-                                            <div className="podium-rank">2nd</div>
+                                            <div className="podium-rank">{t('scoreboard.rank2nd') || '2nd'}</div>
                                             <div className="podium-name">{topStudents[1].student.displayName}</div>
-                                            <div className="podium-score">{topStudents[1].totalScore} pts</div>
+                                            <div className="podium-score">{topStudents[1].totalScore} {t('scoreboard.points') || 'pts'}</div>
                                         </div>
                                     )}
 
@@ -176,9 +178,9 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
                                                 alt={topStudents[0].student.displayName}
                                                 className="podium-avatar"
                                             />
-                                            <div className="podium-rank">1st</div>
+                                            <div className="podium-rank">{t('scoreboard.rank1st') || '1st'}</div>
                                             <div className="podium-name">{topStudents[0].student.displayName}</div>
-                                            <div className="podium-score">{topStudents[0].totalScore} pts</div>
+                                            <div className="podium-score">{topStudents[0].totalScore} {t('scoreboard.points') || 'pts'}</div>
                                         </div>
                                     )}
 
@@ -191,9 +193,9 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
                                                 alt={topStudents[2].student.displayName}
                                                 className="podium-avatar"
                                             />
-                                            <div className="podium-rank">3rd</div>
+                                            <div className="podium-rank">{t('scoreboard.rank3rd') || '3rd'}</div>
                                             <div className="podium-name">{topStudents[2].student.displayName}</div>
-                                            <div className="podium-score">{topStudents[2].totalScore} pts</div>
+                                            <div className="podium-score">{topStudents[2].totalScore} {t('scoreboard.points') || 'pts'}</div>
                                         </div>
                                     )}
                                 </div>
@@ -201,7 +203,7 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
                         ) : (
                             <div className="empty-state-podium">
                                 <FaTrophy size={48} color="#ccc" />
-                                <p>No scores yet. Start assigning points!</p>
+                                <p>{t('scoreboard.noScores') || 'No scores yet. Start assigning points!'}</p>
                             </div>
                         )}
                     </div>
@@ -213,28 +215,28 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
                             <div className="stat-card students">
                                 <div className="stat-icon"><FaUserGraduate /></div>
                                 <div className="stat-info">
-                                    <h3>Active Students</h3>
+                                    <h3>{t('scoreboard.activeStudents') || 'Active Students'}</h3>
                                     <p>{stats.totalStudents}</p>
                                 </div>
                             </div>
                             <div className="stat-card average">
                                 <div className="stat-icon"><FaChartLine /></div>
                                 <div className="stat-info">
-                                    <h3>Class Average</h3>
+                                    <h3>{t('scoreboard.classAverage') || 'Class Average'}</h3>
                                     <p>{stats.overallAverage}</p>
                                 </div>
                             </div>
                             <div className="stat-card highest">
                                 <div className="stat-icon"><FaStar /></div>
                                 <div className="stat-info">
-                                    <h3>Highest Score</h3>
+                                    <h3>{t('scoreboard.highestScore') || 'Highest Score'}</h3>
                                     <p>{stats.highestScore}</p>
                                 </div>
                             </div>
                             <div className="stat-card lowest">
                                 <div className="stat-icon"><FaChartBar /></div>
                                 <div className="stat-info">
-                                    <h3>Lowest Score</h3>
+                                    <h3>{t('scoreboard.lowestScore') || 'Lowest Score'}</h3>
                                     <p>{stats.lowestScore}</p>
                                 </div>
                             </div>
@@ -242,7 +244,7 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
 
                         {/* Category Chart */}
                         <div className="chart-section">
-                            <h2 className="section-title">Category Breakdown</h2>
+                            <h2 className="section-title">{t('scoreboard.categoryBreakdown') || 'Category Breakdown'}</h2>
                             <div className="bar-chart-container">
                                 {Object.entries(stats.categoryAverages).map(([category, average]) => {
                                     // Calculate percentage based on max average (absolute)
@@ -275,17 +277,17 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
             )}
 
             <div className="table-section">
-                <h2 className="section-title">Detailed Scores</h2>
+                <h2 className="section-title">{t('scoreboard.detailedScores') || 'Detailed Scores'}</h2>
                 <div className="table-responsive">
                     <table className="scoreboard-table">
                         <thead>
                             <tr>
-                                <th>Rank</th>
-                                <th>Student</th>
+                                <th>{t('scoreboard.rankHeader') || 'Rank'}</th>
+                                <th>{t('scoreboard.studentHeader') || 'Student'}</th>
                                 {scoreCategories.map(category => (
                                     <th key={category}>{category}</th>
                                 ))}
-                                <th>Total</th>
+                                <th>{t('scoreboard.totalHeader') || 'Total'}</th>
                             </tr>
                         </thead>
                         <tbody>

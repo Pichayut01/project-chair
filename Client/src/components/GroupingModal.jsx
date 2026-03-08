@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaPlus, FaTimes, FaUsers } from 'react-icons/fa';
 import '../CSS/GroupingModal.css';
+import { useTranslation } from 'react-i18next';
 
 const RANDOM_COLORS = [
     '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
@@ -18,14 +19,15 @@ const getRandomColor = (usedColors = []) => {
 const generateId = () => crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2);
 
 const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, onCancelGrouping }) => {
+    const { t } = useTranslation();
     const [groups, setGroups] = useState(() => {
         const c1 = getRandomColor([]);
         const c2 = getRandomColor([c1]);
         const c3 = getRandomColor([c1, c2]);
         return [
-            { id: generateId(), name: 'Group 1', color: c1, maxMembers: 5 },
-            { id: generateId(), name: 'Group 2', color: c2, maxMembers: 5 },
-            { id: generateId(), name: 'Group 3', color: c3, maxMembers: 5 },
+            { id: generateId(), name: t('groupingModal.defaultGroupName', { number: 1 }) || 'Group 1', color: c1, maxMembers: 5 },
+            { id: generateId(), name: t('groupingModal.defaultGroupName', { number: 2 }) || 'Group 2', color: c2, maxMembers: 5 },
+            { id: generateId(), name: t('groupingModal.defaultGroupName', { number: 3 }) || 'Group 3', color: c3, maxMembers: 5 },
         ];
     });
 
@@ -33,7 +35,7 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
         const usedColors = groups.map(g => g.color);
         setGroups(prev => [
             ...prev,
-            { id: generateId(), name: `Group ${prev.length + 1}`, color: getRandomColor(usedColors), maxMembers: 5 }
+            { id: generateId(), name: t('groupingModal.defaultGroupName', { number: prev.length + 1 }) || `Group ${prev.length + 1}`, color: getRandomColor(usedColors), maxMembers: 5 }
         ]);
     };
 
@@ -65,9 +67,9 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
         const c2 = getRandomColor([c1]);
         const c3 = getRandomColor([c1, c2]);
         setGroups([
-            { id: generateId(), name: 'Group 1', color: c1, maxMembers: 5 },
-            { id: generateId(), name: 'Group 2', color: c2, maxMembers: 5 },
-            { id: generateId(), name: 'Group 3', color: c3, maxMembers: 5 },
+            { id: generateId(), name: t('groupingModal.defaultGroupName', { number: 1 }) || 'Group 1', color: c1, maxMembers: 5 },
+            { id: generateId(), name: t('groupingModal.defaultGroupName', { number: 2 }) || 'Group 2', color: c2, maxMembers: 5 },
+            { id: generateId(), name: t('groupingModal.defaultGroupName', { number: 3 }) || 'Group 3', color: c3, maxMembers: 5 },
         ]);
     };
 
@@ -84,7 +86,7 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
                     <div className="grouping-modal-header">
                         <div className="grouping-modal-title">
                             <FaUsers className="grouping-modal-icon" />
-                            <h2>Current Groups</h2>
+                            <h2>{t('groupingModal.currentGroupsTitle') || 'Current Groups'}</h2>
                         </div>
                         <button className="grouping-modal-close" onClick={onClose}>
                             <FaTimes />
@@ -93,7 +95,7 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
 
                     <div className="grouping-modal-body">
                         <p className="grouping-modal-desc">
-                            A grouping session is currently active. Students are joining these groups.
+                            {t('groupingModal.activeSessionDesc') || 'A grouping session is currently active. Students are joining these groups.'}
                         </p>
 
                         <div className="grouping-groups-list active-groups-list" style={{ marginTop: '15px' }}>
@@ -133,7 +135,7 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div style={{ fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic' }}>No members yet</div>
+                                            <div style={{ fontSize: '0.85rem', color: '#9ca3af', fontStyle: 'italic' }}>{t('groupingModal.noMembers') || 'No members yet'}</div>
                                         )}
                                     </div>
                                 );
@@ -143,15 +145,15 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
 
                     <div className="grouping-modal-footer" style={{ justifyContent: 'space-between' }}>
                         <button className="grouping-cancel-btn" onClick={onClose}>
-                            Close
+                            {t('groupingModal.closeBtn') || 'Close'}
                         </button>
                         <button className="grouping-create-btn" style={{ background: '#ef4444' }} onClick={() => {
-                            if (window.confirm('Are you sure you want to cancel the current grouping session?')) {
+                            if (window.confirm(t('groupingModal.confirmCancel') || 'Are you sure you want to cancel the current grouping session?')) {
                                 onCancelGrouping(activeGroupingEvent);
                                 onClose();
                             }
                         }}>
-                            Cancel Grouping
+                            {t('groupingModal.cancelGroupingBtn') || 'Cancel Grouping'}
                         </button>
                     </div>
                 </div>
@@ -166,7 +168,7 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
                 <div className="grouping-modal-header">
                     <div className="grouping-modal-title">
                         <FaUsers className="grouping-modal-icon" />
-                        <h2>Create Student Groups</h2>
+                        <h2>{t('groupingModal.createGroupsTitle') || 'Create Student Groups'}</h2>
                     </div>
                     <button className="grouping-modal-close" onClick={onClose}>
                         <FaTimes />
@@ -176,7 +178,7 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
                 {/* Body */}
                 <div className="grouping-modal-body">
                     <p className="grouping-modal-desc">
-                        Set up groups for students to join. Students will be able to choose their group.
+                        {t('groupingModal.createGroupsDesc') || 'Set up groups for students to join. Students will be able to choose their group.'}
                     </p>
 
                     <div className="grouping-groups-list">
@@ -199,11 +201,11 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
                                     value={group.name}
                                     onChange={(e) => handleNameChange(index, e.target.value)}
                                     className="grouping-name-input"
-                                    placeholder="Group name..."
+                                    placeholder={t('groupingModal.groupNamePlaceholder') || 'Group name...'}
                                     maxLength={30}
                                 />
                                 <div className="grouping-max-wrapper">
-                                    <span className="grouping-max-label">Max</span>
+                                    <span className="grouping-max-label">{t('groupingModal.maxMembers') || 'Max'}</span>
                                     <input
                                         type="number"
                                         value={group.maxMembers}
@@ -217,7 +219,7 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
                                     <button
                                         className="grouping-remove-btn"
                                         onClick={() => handleRemoveGroup(index)}
-                                        title="Remove group"
+                                        title={t('groupingModal.removeGroupTitle') || 'Remove group'}
                                     >
                                         <FaTimes />
                                     </button>
@@ -227,17 +229,17 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
                     </div>
 
                     <button className="grouping-add-btn" onClick={handleAddGroup}>
-                        <FaPlus /> Add Group
+                        <FaPlus /> {t('groupingModal.addGroupBtn') || 'Add Group'}
                     </button>
                 </div>
 
                 {/* Footer */}
                 <div className="grouping-modal-footer">
                     <button className="grouping-cancel-btn" onClick={onClose}>
-                        Cancel
+                        {t('groupingModal.cancelBtn') || 'Cancel'}
                     </button>
                     <button className="grouping-create-btn" onClick={handleSubmit}>
-                        <FaUsers /> Create Groups
+                        <FaUsers /> {t('groupingModal.createGroupsBtn') || 'Create Groups'}
                     </button>
                 </div>
             </div>

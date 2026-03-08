@@ -3,12 +3,14 @@ import ReactDOM from 'react-dom';
 import axios from 'axios';
 import '../CSS/ClassroomEvent.css';
 import WordCloudViz from './events/WordCloudViz';
-import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaClipboardList, FaTrophy, FaUser, FaUndo, FaMagic, FaUsers, FaChevronRight, FaFlagCheckered, FaStar } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaClipboardList, FaTrophy, FaUser, FaUndo, FaMagic, FaUsers, FaChevronRight, FaFlagCheckered, FaStar, FaCrown } from 'react-icons/fa';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
 const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, onDeleteEvent, onSubmitAnswer, onEndEvent, onPublishDraftEvent, candidates = [], currentUser, zoomScale = 1 }) => {
+    const { t } = useTranslation();
     const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
     const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [selectedConfigType, setSelectedConfigType] = useState(null);
@@ -46,7 +48,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             setSelectedImage(res.data.url);
         } catch (err) {
             console.error('Upload failed:', err);
-            setConfigError('Failed to upload image.');
+            setConfigError(t('classroomEvent.errorUploadImage') || 'Failed to upload image.');
         } finally {
             setIsUploading(false);
             // Reset file input value?
@@ -112,11 +114,11 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             const max = candidates.length > 0 ? candidates.length : 1;
 
             if (isNaN(count) || count < 1) {
-                setConfigError('Please enter a valid number (minimum 1).');
+                setConfigError(t('classroomEvent.errorInvalidNumber') || 'Please enter a valid number (minimum 1).');
                 return;
             }
             if (count > max) {
-                setConfigError(`Cannot select more than ${max} student(s).`);
+                setConfigError(t('classroomEvent.errorMaxStudents', { max }) || `Cannot select more than ${max} student(s).`);
                 return;
             }
 
@@ -124,7 +126,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             setIsConfigModalOpen(false);
         } else if (selectedConfigType === 'question') {
             if (!questionTextInput.trim()) {
-                setConfigError('Please enter a question.');
+                setConfigError(t('classroomEvent.errorEmptyQuestion') || 'Please enter a question.');
                 return;
             }
 
@@ -133,17 +135,17 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
         } else if (selectedConfigType === 'poll') {
             const validOptions = pollOptions.filter(opt => opt.trim() !== '');
             if (!questionTextInput.trim()) {
-                setConfigError('Please enter a question.');
+                setConfigError(t('classroomEvent.errorEmptyQuestion') || 'Please enter a question.');
                 return;
             }
             if (validOptions.length < 2) {
-                setConfigError('Please provide at least 2 options.');
+                setConfigError(t('classroomEvent.errorMinOptions') || 'Please provide at least 2 options.');
                 return;
             }
             // ✨ Prevent duplicate option text
             const uniqueOptions = new Set(validOptions.map(o => o.trim().toLowerCase()));
             if (uniqueOptions.size !== validOptions.length) {
-                setConfigError('Each option must have unique text. Please remove duplicates.');
+                setConfigError(t('classroomEvent.errorDuplicateOptions') || 'Each option must have unique text. Please remove duplicates.');
                 return;
             }
 
@@ -162,7 +164,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                 .filter(opt => opt.text.trim() !== '');
 
             if (validOptionsWithScores.length < 2) {
-                setConfigError('Please provide at least 2 options.');
+                setConfigError(t('classroomEvent.errorMinOptions') || 'Please provide at least 2 options.');
                 return;
             }
 
@@ -187,7 +189,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             setIsConfigModalOpen(false);
         } else if (selectedConfigType === 'wordcloud') {
             if (!cloudTopic.trim()) {
-                setConfigError('Please enter a topic.');
+                setConfigError(t('classroomEvent.errorEmptyQuestion') || 'Please enter a topic.');
                 return;
             }
             handleSelectEvent({
@@ -250,8 +252,8 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
             {events.length === 0 ? (
                 <div className="empty-event-state">
                     <div className="event-placeholder">
-                        <h3>No events yet</h3>
-                        <p>Create an event to engage with your students!</p>
+                        <h3>{t('classroomEvent.noEventsTitle') || 'No events yet'}</h3>
+                        <p>{t('classroomEvent.noEventsDesc') || 'Create an event to engage with your students!'}</p>
                         <div className="event-illustration">
                              <FaClipboardList style={{ fontSize: '4rem', color: '#cbd5e1' }} />
                         </div>
@@ -261,7 +263,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                             <div className="add-event-card-icon">
                                 <FaPlus />
                             </div>
-                            <span>Add Event</span>
+                            <span>{t('classroomEvent.addEvent') || 'Add Event'}</span>
                         </div>
                     )}
                 </div>
@@ -289,7 +291,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                         <div className="add-event-card-icon">
                                             <FaPlus />
                                         </div>
-                                        <span>Add Event</span>
+                                        <span>{t('classroomEvent.addEvent') || 'Add Event'}</span>
                                     </div>
                                 </div>
                             );
@@ -351,9 +353,9 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                     {/* ✨ Draft Overlay for Creator */}
                                     {isDraft && isCreator && (
                                         <div className="draft-overlay">
-                                            <div className="draft-badge">Draft</div>
+                                            <div className="draft-badge">{t('classroomEvent.draftBadge') || 'Draft'}</div>
                                             <button className="draft-post-btn" onClick={() => onPublishDraftEvent && onPublishDraftEvent(event)}>
-                                                Post Event
+                                                {t('classroomEvent.postEvent') || 'Post Event'}
                                             </button>
                                         </div>
                                     )}
@@ -369,8 +371,8 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                 <div className="modal-overlay-new" onClick={() => setIsAddEventModalOpen(false)}>
                     <div className="modal-card-new" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header-new" style={{ background: 'linear-gradient(to right, #10b981, #059669)' }}>
-                            <h3><FaMagic style={{ marginRight: '8px' }} /> Create New Event</h3>
-                            <p>Choose an activity for your classroom</p>
+                            <h3><FaMagic style={{ marginRight: '8px' }} /> {t('classroomEvent.createNewEvent') || 'Create New Event'}</h3>
+                            <p>{t('classroomEvent.chooseActivityDesc') || 'Choose an activity for your classroom'}</p>
                             <button className="modal-close-x" onClick={() => setIsAddEventModalOpen(false)}><FaTimes /></button>
                         </div>
                         <div className="modal-body-new">
@@ -378,40 +380,40 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                 <div className="event-type-card" onClick={() => openConfigModal('random')} style={{ '--card-accent': '#10b981' }}>
                                     <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}><FaDice /></div>
                                     <div className="etc-info">
-                                        <span className="etc-name">Random Student</span>
-                                        <span className="etc-desc">Randomly select students</span>
+                                        <span className="etc-name">{t('classroomEvent.typeRandomTitle') || 'Random Student'}</span>
+                                        <span className="etc-desc">{t('classroomEvent.typeRandomDesc') || 'Randomly select students'}</span>
                                     </div>
                                     <FaChevronRight className="etc-arrow" />
                                 </div>
                                 <div className="event-type-card" onClick={() => openConfigModal('question')} style={{ '--card-accent': '#3b82f6' }}>
                                     <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}><FaQuestionCircle /></div>
                                     <div className="etc-info">
-                                        <span className="etc-name">Ask Question</span>
-                                        <span className="etc-desc">Get open-ended answers</span>
+                                        <span className="etc-name">{t('classroomEvent.typeQuestionTitle') || 'Ask Question'}</span>
+                                        <span className="etc-desc">{t('classroomEvent.typeQuestionDesc') || 'Get open-ended answers'}</span>
                                     </div>
                                     <FaChevronRight className="etc-arrow" />
                                 </div>
                                 <div className="event-type-card" onClick={() => openConfigModal('poll')} style={{ '--card-accent': '#f59e0b' }}>
                                     <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}><FaPoll /></div>
                                     <div className="etc-info">
-                                        <span className="etc-name">Multiple Choice</span>
-                                        <span className="etc-desc">Create a poll with options</span>
+                                        <span className="etc-name">{t('classroomEvent.typePollTitle') || 'Multiple Choice'}</span>
+                                        <span className="etc-desc">{t('classroomEvent.typePollDesc') || 'Create a poll with options'}</span>
                                     </div>
                                     <FaChevronRight className="etc-arrow" />
                                 </div>
                                 <div className="event-type-card" onClick={() => openConfigModal('wordcloud')} style={{ '--card-accent': '#10b981' }}>
                                     <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}><FaCloud /></div>
                                     <div className="etc-info">
-                                        <span className="etc-name">Word Cloud</span>
-                                        <span className="etc-desc">Collect words visually</span>
+                                        <span className="etc-name">{t('classroomEvent.typeWordCloudTitle') || 'Word Cloud'}</span>
+                                        <span className="etc-desc">{t('classroomEvent.typeWordCloudDesc') || 'Collect words visually'}</span>
                                     </div>
                                     <FaChevronRight className="etc-arrow" />
                                 </div>
                                 <div className="event-type-card" onClick={() => openConfigModal('buzz')} style={{ '--card-accent': '#ef4444' }}>
                                     <div className="etc-icon" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}><FaBullhorn /></div>
                                     <div className="etc-info">
-                                        <span className="etc-name">Buzz Button</span>
-                                        <span className="etc-desc">First to buzz wins!</span>
+                                        <span className="etc-name">{t('classroomEvent.typeBuzzTitle') || 'Buzz Button'}</span>
+                                        <span className="etc-desc">{t('classroomEvent.typeBuzzDesc') || 'First to buzz wins!'}</span>
                                     </div>
                                     <FaChevronRight className="etc-arrow" />
                                 </div>
@@ -434,20 +436,20 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                 : 'linear-gradient(to right, #10b981, #059669)'
                         }}>
                             <h3>
-                                {selectedConfigType === 'random' && <><FaDice style={{ marginRight: '10px' }} /> Random Students</>}
-                                {selectedConfigType === 'question' && <><FaQuestionCircle style={{ marginRight: '10px' }} /> Ask Question</>}
-                                {selectedConfigType === 'poll' && <><FaPoll style={{ marginRight: '10px' }} /> Multiple Choice</>}
-                                {selectedConfigType === 'wordcloud' && <><FaCloud style={{ marginRight: '10px' }} /> Word Cloud</>}
-                                {selectedConfigType === 'buzz' && <><FaBullhorn style={{ marginRight: '10px' }} /> Buzz Button</>}
+                                {selectedConfigType === 'random' && <><FaDice style={{ marginRight: '10px' }} /> {t('classroomEvent.configRandomTitle') || 'Random Students'}</>}
+                                {selectedConfigType === 'question' && <><FaQuestionCircle style={{ marginRight: '10px' }} /> {t('classroomEvent.configQuestionTitle') || 'Ask Question'}</>}
+                                {selectedConfigType === 'poll' && <><FaPoll style={{ marginRight: '10px' }} /> {t('classroomEvent.configPollTitle') || 'Multiple Choice'}</>}
+                                {selectedConfigType === 'wordcloud' && <><FaCloud style={{ marginRight: '10px' }} /> {t('classroomEvent.configWordCloudTitle') || 'Word Cloud'}</>}
+                                {selectedConfigType === 'buzz' && <><FaBullhorn style={{ marginRight: '10px' }} /> {t('classroomEvent.configBuzzTitle') || 'Buzz Button'}</>}
                             </h3>
-                            <p>Configure your event settings</p>
+                            <p>{t('classroomEvent.configDesc') || 'Configure your event settings'}</p>
                             <button className="modal-close-x" onClick={() => setIsConfigModalOpen(false)}><FaTimes /></button>
                         </div>
 
                         <div className="modal-body-new">
                             {selectedConfigType === 'random' && (
                                 <div className="cfg-group">
-                                    <label className="cfg-label">Number of students to select</label>
+                                    <label className="cfg-label">{t('classroomEvent.configNumStudents') || 'Number of students to select'}</label>
                                     <div className="cfg-number-wrapper">
                                         <button className="cfg-num-btn" onClick={() => setStudentCountInput(prev => Math.max(1, prev - 1))}>−</button>
                                         <input
@@ -460,28 +462,28 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                         />
                                         <button className="cfg-num-btn" onClick={() => setStudentCountInput(prev => Math.min(candidates.length, prev + 1))}>+</button>
                                     </div>
-                                    <p className="cfg-helper">Max available: {candidates.length}</p>
+                                    <p className="cfg-helper">{t('classroomEvent.configMaxAvailable', { max: candidates.length }) || `Max available: ${candidates.length}`}</p>
                                 </div>
                             )}
 
                             {selectedConfigType === 'question' && (
                                 <>
                                     <div className="cfg-group">
-                                        <label className="cfg-label">Your Question</label>
+                                        <label className="cfg-label">{t('classroomEvent.configYourQuestion') || 'Your Question'}</label>
                                         <textarea
                                             className="cfg-textarea"
                                             value={questionTextInput}
                                             onChange={(e) => setQuestionTextInput(e.target.value)}
-                                            placeholder="Type your question here..."
+                                            placeholder={t('classroomEvent.configQuestionPlaceholder') || 'Type your question here...'}
                                             rows="3"
                                         />
                                     </div>
                                     <div className="cfg-group">
-                                        <label className="cfg-label">Attachment (Optional)</label>
+                                        <label className="cfg-label">{t('classroomEvent.configAttachment') || 'Attachment (Optional)'}</label>
                                         <div className="cfg-upload-area">
                                             <input type="file" accept="image/*" onChange={handleImageUpload} id="question-image-upload" style={{ display: 'none' }} />
                                             <label htmlFor="question-image-upload" className="cfg-upload-btn">
-                                                {isUploading ? 'Uploading...' : <><FaImage style={{ marginRight: '6px' }} /> Add Image</>}
+                                                {isUploading ? (t('classroomEvent.uploading') || 'Uploading...') : <><FaImage style={{ marginRight: '6px' }} /> {t('classroomEvent.addImage') || 'Add Image'}</>}
                                             </label>
                                             {selectedImage && (
                                                 <div className="cfg-image-preview">
@@ -496,13 +498,13 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
 
                             {selectedConfigType === 'wordcloud' && (
                                 <div className="cfg-group">
-                                    <label className="cfg-label">Topic / Question</label>
+                                    <label className="cfg-label">{t('classroomEvent.configTopic') || 'Topic / Question'}</label>
                                     <input
                                         type="text"
                                         className="cfg-input"
                                         value={cloudTopic}
                                         onChange={(e) => setCloudTopic(e.target.value)}
-                                        placeholder="e.g. Describe your feeling in one word..."
+                                        placeholder={t('classroomEvent.configTopicPlaceholder') || 'e.g. Describe your feeling in one word...'}
                                     />
                                 </div>
                             )}
@@ -510,21 +512,21 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                             {selectedConfigType === 'poll' && (
                                 <>
                                     <div className="cfg-group">
-                                        <label className="cfg-label">Question</label>
+                                        <label className="cfg-label">{t('classroomEvent.configQuestion') || 'Question'}</label>
                                         <textarea
                                             className="cfg-textarea"
                                             value={questionTextInput}
                                             onChange={(e) => setQuestionTextInput(e.target.value)}
-                                            placeholder="e.g., Which topic should we review?"
+                                            placeholder={t('classroomEvent.configPollPlaceholder') || 'e.g., Which topic should we review?'}
                                             rows="2"
                                         />
                                     </div>
                                     <div className="cfg-group">
-                                        <label className="cfg-label">Attachment (Optional)</label>
+                                        <label className="cfg-label">{t('classroomEvent.configAttachment') || 'Attachment (Optional)'}</label>
                                         <div className="cfg-upload-area">
                                             <input type="file" accept="image/*" onChange={handleImageUpload} id="poll-image-upload" style={{ display: 'none' }} />
                                             <label htmlFor="poll-image-upload" className="cfg-upload-btn">
-                                                {isUploading ? 'Uploading...' : <><FaImage style={{ marginRight: '6px' }} /> Add Image</>}
+                                                {isUploading ? (t('classroomEvent.uploading') || 'Uploading...') : <><FaImage style={{ marginRight: '6px' }} /> {t('classroomEvent.addImage') || 'Add Image'}</>}
                                             </label>
                                             {selectedImage && (
                                                 <div className="cfg-image-preview">
@@ -535,7 +537,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                         </div>
                                     </div>
                                     <div className="cfg-group">
-                                        <label className="cfg-label">Options</label>
+                                        <label className="cfg-label">{t('classroomEvent.configOptions') || 'Options'}</label>
                                         <div className="cfg-options-list">
                                             {pollOptions.map((opt, idx) => (
                                                 <div key={idx} className="cfg-option-row">
@@ -545,7 +547,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                                         className="cfg-opt-input"
                                                         value={opt}
                                                         onChange={(e) => handleOptionChange(idx, e.target.value)}
-                                                        placeholder={`Option ${idx + 1}`}
+                                                        placeholder={t('classroomEvent.configOptionPlaceholder', { num: idx + 1 }) || `Option ${idx + 1}`}
                                                     />
                                                     {isScored && (
                                                         <div className="cfg-score-mini">
@@ -554,7 +556,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                                                 className="cfg-score-pts"
                                                                 value={optionScores[idx]?.points || 0}
                                                                 onChange={(e) => handleScoreChange(idx, 'points', e.target.value)}
-                                                                placeholder="Pts"
+                                                                placeholder={t('classroomEvent.configPts') || 'Pts'}
                                                                 min="0"
                                                             />
                                                             <select
@@ -572,13 +574,13 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                                     )}
                                                 </div>
                                             ))}
-                                            <button className="cfg-add-opt" onClick={handleAddOption}>+ Add Option</button>
+                                            <button className="cfg-add-opt" onClick={handleAddOption}>{t('classroomEvent.addOption') || '+ Add Option'}</button>
                                         </div>
                                     </div>
                                     <div className="cfg-group">
                                         <label className="cfg-toggle">
                                             <input type="checkbox" checked={isScored} onChange={(e) => setIsScored(e.target.checked)} />
-                                            <span>Enable Scoring (Per Option)</span>
+                                            <span>{t('classroomEvent.enableScoringPerOption') || 'Enable Scoring (Per Option)'}</span>
                                         </label>
                                     </div>
                                 </>
@@ -589,11 +591,11 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                             <div className="cfg-group cfg-scoring-section">
                                 <label className="cfg-toggle">
                                     <input type="checkbox" checked={eventScoreEnabled} onChange={(e) => setEventScoreEnabled(e.target.checked)} />
-                                    <span><FaStar style={{ color: '#f59e0b', marginRight: '4px' }} /> Enable Event Scoring</span>
+                                    <span><FaStar style={{ color: '#f59e0b', marginRight: '4px' }} /> {t('classroomEvent.enableEventScoring') || 'Enable Event Scoring'}</span>
                                 </label>
                                 {eventScoreEnabled && (
                                     <div className="cfg-score-config" style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: '#fffbeb', borderRadius: '10px', border: '1px solid #fde68a' }}>
-                                        <span style={{ fontWeight: 600, color: '#92400e', fontSize: '0.9rem' }}>Points per participant:</span>
+                                        <span style={{ fontWeight: 600, color: '#92400e', fontSize: '0.9rem' }}>{t('classroomEvent.pointsPerParticipant') || 'Points per participant:'}</span>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             <button className="cfg-num-btn" onClick={() => setEventScorePoints(prev => Math.max(1, prev - 1))}>−</button>
                                             <input
@@ -615,16 +617,16 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                         </div>
 
                         <div className="modal-footer-new">
-                            <button className="cfg-cancel-btn" onClick={() => setIsConfigModalOpen(false)}>Back</button>
+                            <button className="cfg-cancel-btn" onClick={() => setIsConfigModalOpen(false)}>{t('classroomEvent.btnBack') || 'Back'}</button>
                             <div style={{ display: 'flex', gap: '10px' }}>
                                 <button className="cfg-draft-btn" onClick={() => handleConfigSubmit(true)} style={{
                                     backgroundColor: '#e2e8f0', color: '#475569', padding: '10px 16px', borderRadius: '8px',
                                     border: '1px solid #cbd5e1', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', transition: 'all 0.2s'
                                 }} onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#cbd5e1'; e.currentTarget.style.color = '#334155'; }} onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#e2e8f0'; e.currentTarget.style.color = '#475569'; }}>
-                                    Save as Draft
+                                    {t('classroomEvent.btnSaveDraft') || 'Save as Draft'}
                                 </button>
                                 <button className="cfg-create-btn" onClick={() => handleConfigSubmit(false)}>
-                                    <FaPlus style={{ marginRight: '6px' }} /> Create Event
+                                    <FaPlus style={{ marginRight: '6px' }} /> {t('classroomEvent.btnCreateEvent') || 'Create Event'}
                                 </button>
                             </div>
                         </div>
@@ -638,6 +640,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
 
 /* Helper Component for Event Card Content */
 const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEvent, candidates = [], currentUser, onDeleteEvent }) => {
+    const { t } = useTranslation();
     const [displayNames, setDisplayNames] = useState([]);
     const [isAnimating, setIsAnimating] = useState(false);
     const [animationPhase, setAnimationPhase] = useState('idle'); // idle | spinning | slowing | reveal
@@ -649,9 +652,9 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
     useEffect(() => {
         if (currentUser && event.results) {
             const hasAnswered = event.results.some(r => r.userId === currentUser.id);
-            if (hasAnswered) {
-                setIsSubmitted(true);
-            }
+            setIsSubmitted(hasAnswered);
+        } else {
+            setIsSubmitted(false);
         }
     }, [currentUser, event.results]);
 
@@ -691,11 +694,6 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                 setIsAnimating(false);
                 setShowResults(true);
             }
-            
-            // For Buzz: If we have a winner, stop countdown if any
-            if (event.type === 'buzz') {
-                setCountdown(null);
-            }
         }
     }, [event.results, event.updatedAt, event.type, event.status]);
 
@@ -707,7 +705,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
             if (event.status === 'idle') {
                 setIsSubmitted(false);
                 setCountdown(null);
-            } else if (event.status === 'active' && !event.results?.length) {
+            } else if (event.status === 'active') { // Let countdown be 0 even if results exist so late joiners can buzz
                 if (event.startTime) {
                     const now = Date.now();
                     // 3 seconds delay from startTime
@@ -831,9 +829,9 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             </button>
                         )}
                         <h2 className="random-header-title">
-                            <FaMagic style={{ color: '#d1fae5' }} /> Random Student <FaMagic style={{ color: '#d1fae5' }} />
+                            <FaMagic style={{ color: '#d1fae5' }} /> {t('classroomEvent.typeRandomTitle') || 'Random Student'} <FaMagic style={{ color: '#d1fae5' }} />
                         </h2>
-                        <p className="random-header-subtitle">Random student x{event.config?.count || 1}</p>
+                        <p className="random-header-subtitle">{t('classroomEvent.randomStudentSubtitle', { count: event.config?.count || 1 }) || `Random student x${event.config?.count || 1}`}</p>
                     </div>
 
                     <div className="random-body-new">
@@ -841,7 +839,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         <div className={`random-display-area ${isAnimating ? 'spinning' : ''} ${(showResults && event.results?.length > 0) ? 'winner' : ''} ${(!isAnimating && !showResults) ? 'idle' : ''} ${animationPhase}`}>
                             
                             {!isAnimating && !showResults && (
-                                <h3 className="random-idle-text">Click to start!</h3>
+                                <h3 className="random-idle-text">{t('classroomEvent.clickToStart') || 'Click to start!'}</h3>
                             )}
 
                             {isAnimating && !showResults && (
@@ -880,10 +878,10 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
 
                             {showResults && event.results && event.results.length > 0 && (
                                 <div className="random-winners-container">
-                                    <span className="winner-label" style={{color: '#16a34a'}}><FaTrophy size={14} /> {event.results.length > 1 ? 'Winners' : 'Winner'}</span>
+                                    <span className="winner-label" style={{color: '#16a34a'}}><FaTrophy size={14} /> {event.results.length > 1 ? (t('classroomEvent.winnersLabel') || 'Winners') : (t('classroomEvent.winnerLabel') || 'Winner')}</span>
                                     <div className="random-winners-cluster">
                                         {event.results.map((r, i) => (
-                                            <div key={i} className="random-winner-bubble" title={r.userName || 'Unknown'}>
+                                            <div key={i} className="random-winner-bubble" title={r.userName || t('classroomEvent.unknown') || 'Unknown'}>
                                                 {r.photoSrc ? (
                                                     <img src={r.photoSrc} alt={r.userName} className="winner-bubble-img" />
                                                 ) : (
@@ -891,7 +889,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                                         <FaUser />
                                                     </div>
                                                 )}
-                                                <span className="winner-bubble-tooltip">{r.userName || 'Unknown'}</span>
+                                                <span className="winner-bubble-tooltip">{r.userName || t('classroomEvent.unknown') || 'Unknown'}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -903,9 +901,9 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         <div className="random-participant-count">
                             <div className="rpc-left">
                                 <FaUsers />
-                                <span>Total Participants</span>
+                                <span>{t('classroomEvent.totalParticipants') || 'Total Participants'}</span>
                             </div>
-                            <span className="rpc-right">{candidates.length} students</span>
+                            <span className="rpc-right">{t('classroomEvent.studentsCountLabel', { count: candidates.length }) || `${candidates.length} students`}</span>
                         </div>
 
                         {/* Creator Action Button */}
@@ -917,11 +915,11 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             >
                                 {isAnimating ? (
                                     <>
-                                        <FaDice className="spin-icon" /> Rolling...
+                                        <FaDice className="spin-icon" /> {t('classroomEvent.rolling') || 'Rolling...'}
                                     </>
                                 ) : (
                                     <>
-                                        <FaDice /> {event.status === 'ended' ? '✅ Ended' : event.results ? 'Roll Again!' : 'Roll Now!'}
+                                        <FaDice /> {event.status === 'ended' ? (t('classroomEvent.ended') || '✅ Ended') : event.results ? (t('classroomEvent.rollAgain') || 'Roll Again!') : (t('classroomEvent.rollNow') || 'Roll Now!')}
                                     </>
                                 )}
                             </button>
@@ -949,16 +947,16 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             </button>
                         )}
                         <h2 className="ev-header-title">
-                            <FaQuestionCircle style={{ color: '#bfdbfe' }} /> Question
+                            <FaQuestionCircle style={{ color: '#bfdbfe' }} /> {t('classroomEvent.openQuestion') || 'Open Question'}
                         </h2>
-                        <p className="ev-header-subtitle">Open-ended question</p>
+                        <p className="ev-header-subtitle">{t('classroomEvent.typeQuestionSubtitle') || 'Open-ended question'}</p>
                     </div>
 
                     <div className="ev-body-new">
                         {/* Featured Question Text */}
                         <div className="ev-featured-question">
                             <span className="ev-fq-icon">Q</span>
-                            <p className="ev-fq-text">{event.config?.questionText || 'Open Question'}</p>
+                            <p className="ev-fq-text">{event.config?.questionText || t('classroomEvent.openQuestion') || 'Open Question'}</p>
                         </div>
                         {/* Image if present */}
                         {event.config?.imageUrl && (
@@ -975,7 +973,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         {isCreator ? (
                             <div className="ev-answers-section">
                                 <div className="ev-answers-header">
-                                    <span>Answers</span>
+                                    <span>{t('classroomEvent.answers') || 'Answers'}</span>
                                     <span className="ev-answers-count">{event.results ? event.results.length : 0}</span>
                                 </div>
                                 <div className="ev-answers-list">
@@ -991,8 +989,8 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                                         onError={(e) => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(ans.userName || 'U') + '&background=random'; }}
                                                     />
                                                     <div className="ev-answer-user-info">
-                                                        <span className="ev-answer-username">{ans.userName || 'Anonymous'}</span>
-                                                        <span className="ev-answer-time">Just now</span>
+                                                        <span className="ev-answer-username">{ans.userName || t('classroomEvent.anonymous') || 'Anonymous'}</span>
+                                                        <span className="ev-answer-time">{t('classroomEvent.justNow') || 'Just now'}</span>
                                                     </div>
                                                 </div>
                                                 <div className="ev-answer-body">{ans.text}</div>
@@ -1002,7 +1000,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                     {(!event.results || event.results.length === 0) && (
                                         <div className="ev-empty-state">
                                             <FaQuestionCircle style={{ fontSize: '2rem', opacity: 0.2, marginBottom: '8px' }} />
-                                            <p>Waiting for students to answer...</p>
+                                            <p>{t('classroomEvent.waitingForAnswers') || 'Waiting for students to answer...'}</p>
                                         </div>
                                     )}
                                 </div>
@@ -1014,7 +1012,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                     <>
                                         <textarea
                                             className="ev-textarea"
-                                            placeholder="Type your answer..."
+                                            placeholder={t('classroomEvent.typeYourAnswer') || 'Type your answer...'}
                                             value={answerInput}
                                             onChange={(e) => setAnswerInput(e.target.value)}
                                             rows="3"
@@ -1025,13 +1023,13 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                             onClick={handleAnswerSubmit}
                                             disabled={!answerInput.trim()}
                                         >
-                                            Submit Answer
+                                            {t('classroomEvent.submitAnswer') || 'Submit Answer'}
                                         </button>
                                     </>
                                 ) : (
                                     <div className="ev-submitted-msg" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
-                                        <span style={{ color: '#1d4ed8' }}>Answer Submitted! ✅</span>
-                                        <p style={{ color: '#1e40af' }}>Waiting for other students...</p>
+                                        <span style={{ color: '#1d4ed8' }}>{t('classroomEvent.answerSubmitted') || 'Answer Submitted! ✅'}</span>
+                                        <p style={{ color: '#1e40af' }}>{t('classroomEvent.waitingForOthers') || 'Waiting for other students...'}</p>
                                     </div>
                                 )}
                             </div>
@@ -1059,16 +1057,16 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             </button>
                         )}
                         <h2 className="ev-header-title">
-                            <FaPoll style={{ color: '#fef3c7' }} /> Poll
+                            <FaPoll style={{ color: '#fef3c7' }} /> {t('classroomEvent.typePollTitle') || 'Poll'}
                         </h2>
-                        <p className="ev-header-subtitle">Vote for your choice</p>
+                        <p className="ev-header-subtitle">{t('classroomEvent.typePollSubtitle') || 'Vote for your choice'}</p>
                     </div>
 
                     <div className="ev-body-new">
                         {/* Featured Question Text */}
                         <div className="ev-featured-question">
                             <span className="ev-fq-icon" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>Q</span>
-                            <p className="ev-fq-text">{event.config?.questionText || 'Vote now!'}</p>
+                            <p className="ev-fq-text">{event.config?.questionText || t('classroomEvent.voteNow') || 'Vote now!'}</p>
                         </div>
                         {/* Image if present */}
                         {event.config?.imageUrl && (
@@ -1105,7 +1103,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                     );
                                 })}
                                 <div className="ev-poll-total">
-                                    Total: {event.results?.length || 0} votes {event.results?.length > 0 && <span className="ev-poll-live-badge">● LIVE</span>}
+                                    {t('classroomEvent.totalVotes', { count: event.results?.length || 0 }) || `Total: ${event.results?.length || 0} votes`} {event.results?.length > 0 && <span className="ev-poll-live-badge">{t('classroomEvent.liveBadge') || '● LIVE'}</span>}
                                 </div>
                             </div>
                         ) : (
@@ -1130,8 +1128,8 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                     </div>
                                 ) : (
                                     <div className="ev-submitted-msg" style={{ background: '#fffbeb', borderColor: '#fde68a' }}>
-                                        <span style={{ color: '#b45309' }}>Vote Submitted! 📊</span>
-                                        <p style={{ color: '#92400e' }}>Waiting for results...</p>
+                                        <span style={{ color: '#b45309' }}>{t('classroomEvent.voteSubmitted') || 'Vote Submitted! 📊'}</span>
+                                        <p style={{ color: '#92400e' }}>{t('classroomEvent.waitingForResults') || 'Waiting for results...'}</p>
                                     </div>
                                 )}
                             </div>
@@ -1159,9 +1157,9 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             </button>
                         )}
                         <h2 className="ev-header-title">
-                            <FaUsers style={{ color: '#d1fae5' }} /> Student Groups
+                            <FaUsers style={{ color: '#d1fae5' }} /> {t('classroomEvent.typeGroupingTitle') || 'Student Groups'}
                         </h2>
-                        <p className="ev-header-subtitle">Choose your group</p>
+                        <p className="ev-header-subtitle">{t('classroomEvent.typeGroupingSubtitle') || 'Choose your group'}</p>
                     </div>
 
                     <div className="ev-body-new">
@@ -1180,7 +1178,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                                 <span className="grouping-result-name">{group.name}</span>
                                                 <span className="grouping-result-count">
                                                     {members.length}/{maxMembers}
-                                                    {isFull && <span className="grouping-full-badge">FULL</span>}
+                                                    {isFull && <span className="grouping-full-badge">{t('classroomEvent.fullBadge') || 'FULL'}</span>}
                                                 </span>
                                             </div>
                                             {/* Avatar stack */}
@@ -1281,8 +1279,8 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                     </div>
                                 ) : (
                                     <div className="ev-submitted-msg" style={{ background: '#ecfdf5', borderColor: '#a7f3d0' }}>
-                                        <span style={{ color: '#065f46' }}>Group Joined! ✅</span>
-                                        <p style={{ color: '#047857' }}>You're in the group. Wait for the teacher to proceed.</p>
+                                        <span style={{ color: '#065f46' }}>{t('classroomEvent.groupJoined') || 'Group Joined! ✅'}</span>
+                                        <p style={{ color: '#047857' }}>{t('classroomEvent.waitingForTeacher') || "You're in the group. Wait for the teacher to proceed."}</p>
                                     </div>
                                 )}
                             </div>
@@ -1310,17 +1308,17 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             </button>
                         )}
                         <h2 className="ev-header-title">
-                            <FaBullhorn style={{ color: '#fecaca' }} /> Buzz Button
+                            <FaBullhorn style={{ color: '#fecaca' }} /> {t('classroomEvent.typeBuzzTitle') || 'Buzz Button'}
                         </h2>
-                        <p className="ev-header-subtitle">First to buzz wins!</p>
+                        <p className="ev-header-subtitle">{t('classroomEvent.typeBuzzSubtitle') || 'First to buzz wins!'}</p>
                     </div>
 
                     <div className="ev-body-new">
                         {/* Status */}
                         <div className={`ev-buzz-status ${event.status === 'active' && countdown === 0 ? 'go' : ''} ${event.status === 'active' && countdown > 0 ? 'ready' : ''}`}>
                             {event.status === 'active' 
-                                ? (countdown > 0 ? `Ready... ${countdown}` : '🖐️ GO!') 
-                                : '🔴 Waiting...'}
+                                ? (countdown > 0 ? (t('classroomEvent.readyCount', { count: countdown }) || `Ready... ${countdown}`) : (t('classroomEvent.goBuzz') || '🖐️ GO!')) 
+                                : (t('classroomEvent.waitingBuzz') || '🔴 Waiting...')}
                         </div>
 
                         {isCreator ? (
@@ -1331,32 +1329,65 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                         onClick={() => onTrigger(event, { status: 'active', startTime: Date.now(), results: [] })}
                                         disabled={event.status === 'active'}
                                     >
-                                        Start Countdown
+                                        {t('classroomEvent.startCountdown') || 'Start Countdown'}
                                     </button>
                                     <button 
                                         className="ev-buzz-reset-btn"
                                         onClick={() => onTrigger(event, { status: 'idle', results: [] })}
                                     >
-                                        <FaUndo style={{ marginRight: '6px' }} /> Reset
+                                        <FaUndo style={{ marginRight: '6px' }} /> {t('classroomEvent.reset') || 'Reset'}
                                     </button>
                                 </div>
                                 
-                                {/* Winner Display */}
+                                {/* Winners Display */}
                                 {event.results && event.results.length > 0 && (
-                                    <div className="ev-buzz-winner">
-                                        <h4><FaTrophy style={{ color: '#f59e0b', marginRight: '6px' }} /> Winner!</h4>
-                                        <div className="ev-buzz-winner-card">
-                                            <img 
-                                                src={getProfileImageSrc(event.results[0].photoURL, isGoogleUser(event.results[0]))} 
-                                                alt="winner" 
-                                                className="ev-buzz-winner-avatar"
-                                            />
-                                            <div className="ev-buzz-winner-info">
-                                                <span className="ev-buzz-winner-name">{event.results[0].userName}</span>
-                                                <span className="ev-buzz-winner-time">
-                                                    {((event.results[0].timestamp - (event.startTime || event.results[0].timestamp)) / 1000).toFixed(2)}s
-                                                </span>
-                                            </div>
+                                    <div className="ev-buzz-winners-list">
+                                        <h4 style={{ color: '#475569', fontSize: '1rem', fontWeight: 'bold', marginBottom: '12px', textAlign: 'left', display: 'flex', alignItems: 'center' }}>
+                                            <FaTrophy style={{ color: '#f59e0b', marginRight: '8px', fontSize: '1.2rem' }} /> 
+                                            {t('classroomEvent.buzzResults') || 'Buzz Results'}
+                                        </h4>
+                                        <div className="ev-buzz-results-container" style={{ maxHeight: '220px', overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            {event.results.map((result, idx) => {
+                                                const rank = idx + 1;
+                                                let badgeStyle = {};
+                                                let cardStyle = {
+                                                    display: 'flex', alignItems: 'center', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', transition: 'all 0.2s', gap: '12px'
+                                                };
+                                                let rankIcon = null;
+
+                                                if (rank === 1) {
+                                                    badgeStyle = { background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', color: 'white', boxShadow: '0 2px 4px rgba(245, 158, 11, 0.2)' };
+                                                    cardStyle = { ...cardStyle, background: 'linear-gradient(to right, #fffbeb, #ffffff)', border: '2px solid #fde68a', boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.1)' };
+                                                    rankIcon = <FaCrown style={{ marginRight: '4px' }} />;
+                                                } else if (rank === 2) {
+                                                    badgeStyle = { background: 'linear-gradient(135deg, #cbd5e1, #94a3b8)', color: 'white', boxShadow: '0 2px 4px rgba(148, 163, 184, 0.2)' };
+                                                    cardStyle = { ...cardStyle, background: 'linear-gradient(to right, #f8fafc, #ffffff)', border: '1px solid #cbd5e1' };
+                                                } else if (rank === 3) {
+                                                    badgeStyle = { background: 'linear-gradient(135deg, #d97706, #b45309)', color: 'white', boxShadow: '0 2px 4px rgba(180, 83, 9, 0.2)' };
+                                                    cardStyle = { ...cardStyle, background: 'linear-gradient(to right, #fff7ed, #ffffff)', border: '1px solid #fed7aa' };
+                                                } else {
+                                                    badgeStyle = { background: '#e2e8f0', color: '#64748b' };
+                                                }
+
+                                                return (
+                                                    <div key={idx} style={cardStyle}>
+                                                        <div style={{ ...badgeStyle, padding: '4px 8px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', minWidth: '48px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                            {rankIcon}{rank === 1 ? '1st' : (rank === 2 ? '2nd' : (rank === 3 ? '3rd' : `${rank}th`))}
+                                                        </div>
+                                                        <img 
+                                                            src={getProfileImageSrc(result.photoURL, isGoogleUser(result))} 
+                                                            alt={result.userName} 
+                                                            style={{ width: rank === 1 ? '40px' : '36px', height: rank === 1 ? '40px' : '36px', borderRadius: '50%', objectFit: 'cover', border: rank === 1 ? '2px solid #f59e0b' : (rank === 2 ? '2px solid #94a3b8' : (rank === 3 ? '2px solid #d97706' : '1px solid #e2e8f0')) }}
+                                                        />
+                                                        <span style={{ fontWeight: rank <= 3 ? '700' : '600', color: rank === 1 ? '#92400e' : '#334155', flex: 1, textAlign: 'left', fontSize: rank === 1 ? '1.05rem' : '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                            {result.userName}
+                                                        </span>
+                                                        <span style={{ fontSize: '0.9rem', color: rank === 1 ? '#10b981' : '#64748b', fontFamily: 'monospace', background: rank === 1 ? '#ecfdf5' : '#f1f5f9', padding: '4px 8px', borderRadius: '6px', fontWeight: 'bold' }}>
+                                                            {((result.timestamp - (event.startTime || result.timestamp)) / 1000).toFixed(2)}s
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -1408,16 +1439,16 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             </button>
                         )}
                         <h2 className="wc-header-title">
-                            <FaMagic style={{ color: '#fef08a' }} /> Word Cloud <FaMagic style={{ color: '#fef08a' }} />
+                            <FaMagic style={{ color: '#fef08a' }} /> {t('classroomEvent.typeWordCloudTitle') || 'Word Cloud'} <FaMagic style={{ color: '#fef08a' }} />
                         </h2>
-                        <p className="wc-header-subtitle">{event.config?.topic || 'Share your words!'}</p>
+                        <p className="wc-header-subtitle">{event.config?.topic || t('classroomEvent.shareYourWords') || 'Share your words!'}</p>
                         {isCreator && (
                             <button
                                 className="wc-present-btn"
-                                title="Open Presentation Mode"
+                                title={t('classroomEvent.openPresentation') || 'Open Presentation Mode'}
                                 onClick={() => window.open(`/presentation/${window.location.pathname.split('/')[2]}/${event.id}`, '_blank')}
                             >
-                                <FaExternalLinkAlt style={{ marginRight: '6px' }} /> Present
+                                <FaExternalLinkAlt style={{ marginRight: '6px' }} /> {t('classroomEvent.present') || 'Present'}
                             </button>
                         )}
                     </div>
@@ -1428,7 +1459,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             {(!event.results || event.results.length === 0) ? (
                                 <div className="wc-empty-state">
                                     <FaCloud style={{ fontSize: '3rem', opacity: 0.2, marginBottom: '12px' }} />
-                                    <p>No words yet. Start typing!</p>
+                                    <p>{t('classroomEvent.noWordsYet') || 'No words yet. Start typing!'}</p>
                                 </div>
                             ) : (
                                 <WordCloudViz results={event.results || []} config={event.config} />
@@ -1443,7 +1474,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                         <input
                                             type="text"
                                             className="wc-text-input"
-                                            placeholder="Type your word here..."
+                                            placeholder={t('classroomEvent.typeYourWord') || 'Type your word here...'}
                                             value={answerInput}
                                             onChange={(e) => setAnswerInput(e.target.value)}
                                             maxLength={25}
@@ -1454,17 +1485,17 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                             onClick={handleAnswerSubmit}
                                             disabled={!answerInput.trim()}
                                         >
-                                            Send
+                                            {t('classroomEvent.send') || 'Send'}
                                         </button>
                                     </div>
                                 ) : (
                                     <div className="wc-submitted-msg">
-                                        <span>Sent! ☁️</span>
-                                        <p>Look at the board!</p>
+                                        <span>{t('classroomEvent.sentCloud') || 'Sent! ☁️'}</span>
+                                        <p>{t('classroomEvent.lookAtBoard') || 'Look at the board!'}</p>
                                     </div>
                                 )}
                                 <div className="wc-char-count">
-                                    {answerInput.length}/25 characters
+                                    {t('classroomEvent.charCountLimit', { count: answerInput.length }) || `${answerInput.length}/25 characters`}
                                 </div>
                             </div>
                         )}
@@ -1473,9 +1504,9 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         <div className="random-participant-count">
                             <div className="rpc-left">
                                 <FaCloud />
-                                <span>Total Words</span>
+                                <span>{t('classroomEvent.totalWords') || 'Total Words'}</span>
                             </div>
-                            <span className="rpc-right">{event.results?.length || 0} submitted</span>
+                            <span className="rpc-right">{t('classroomEvent.submittedCount', { count: event.results?.length || 0 }) || `${event.results?.length || 0} submitted`}</span>
                         </div>
                     </div>
                 </div>
@@ -1487,8 +1518,8 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
             {/* ✨ Student Ended Banner — compact inline bar */}
             {!isCreator && event.status === 'ended' && (
                 <div className="ev-ended-banner">
-                    <FaFlagCheckered /> <span>Event Ended</span>
-                    {event.config?.scoring?.enabled && <span className="ev-ended-pts"><FaStar /> Scored</span>}
+                    <FaFlagCheckered /> <span>{t('classroomEvent.eventEnded') || 'Event Ended'}</span>
+                    {event.config?.scoring?.enabled && <span className="ev-ended-pts"><FaStar /> {t('classroomEvent.scored') || 'Scored'}</span>}
                 </div>
             )}
 
@@ -1498,10 +1529,10 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                     <div className="ev-scoring-info">
                         <div className="ev-scoring-badge">
                             <FaStar style={{ color: '#f59e0b', marginRight: '4px' }} />
-                            <span>Scoring Enabled</span>
+                            <span>{t('classroomEvent.scoringEnabled') || 'Scoring Enabled'}</span>
                         </div>
                         <span className="ev-scoring-points">
-                            {event.type === 'poll' && event.config?.scoreConfig ? 'Per-option scoring' : `+${event.config.scoring.points} pts/participant`}
+                            {event.type === 'poll' && event.config?.scoreConfig ? (t('classroomEvent.perOptionScoring') || 'Per-option scoring') : (t('classroomEvent.ptsPerParticipant', { points: event.config.scoring.points }) || `+${event.config.scoring.points} pts/participant`)}
                         </span>
                     </div>
                     <button
@@ -1512,7 +1543,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         }}
                     >
                         <FaFlagCheckered style={{ marginRight: '6px' }} />
-                        End & Score
+                        {t('classroomEvent.endAndScore') || 'End & Score'}
                     </button>
                 </div>
             )}
@@ -1520,7 +1551,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
             {isCreator && event.status === 'ended' && event.config?.scoring?.enabled && (
                 <div className="ev-scored-badge">
                     <FaTrophy style={{ color: '#f59e0b', marginRight: '6px' }} /> 
-                    {event.type === 'poll' && event.config?.scoreConfig ? 'Scored — Per-option' : `Scored — +${event.config.scoring.points} pts`}
+                    {event.type === 'poll' && event.config?.scoreConfig ? (t('classroomEvent.scoredPerOptionBadge') || 'Scored — Per-option') : (t('classroomEvent.scoredPtsBadge', { points: event.config.scoring.points }) || `Scored — +${event.config.scoring.points} pts`)}
                 </div>
             )}
             {/* Creator End button for non-scoring events */}
@@ -1537,14 +1568,14 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         }}
                     >
                         <FaFlagCheckered style={{ marginRight: '6px' }} />
-                        End Event
+                        {t('classroomEvent.endEvent') || 'End Event'}
                     </button>
                 </div>
             )}
             {/* Non-scoring ended badge */}
             {event.status === 'ended' && !event.config?.scoring?.enabled && (
                 <div className="ev-scored-badge" style={{ background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)', color: '#475569', borderColor: '#cbd5e1' }}>
-                    <FaFlagCheckered style={{ color: '#6b7280', marginRight: '6px' }} /> Event Ended
+                    <FaFlagCheckered style={{ color: '#6b7280', marginRight: '6px' }} /> {t('classroomEvent.eventEnded') || 'Event Ended'}
                 </div>
             )}
         </div>

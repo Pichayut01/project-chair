@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import CreateAssignmentModal from './CreateAssignmentModal';
@@ -80,20 +81,21 @@ const SvgTrendUp = () => (
     </svg>
 );
 
-const FILTER_TABS = [
-    { key: 'all', label: 'All' },
-    { key: 'upcoming', label: 'Upcoming' },
-    { key: 'past', label: 'Past Due' },
-    { key: 'no-date', label: 'No Due Date' },
-];
-
 const ClassworkSection = ({ classId, user, isCreator }) => {
+    const { t } = useTranslation('translation', { keyPrefix: 'classworkSection' });
     const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingAssignment, setEditingAssignment] = useState(null);
     const [menuOpenId, setMenuOpenId] = useState(null);
+
+    const FILTER_TABS = useMemo(() => [
+        { key: 'all', label: t('filters.all') },
+        { key: 'upcoming', label: t('filters.upcoming') },
+        { key: 'past', label: t('filters.past') },
+        { key: 'no-date', label: t('filters.noDate') },
+    ], [t]);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
     
@@ -109,7 +111,7 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
             setLoading(false);
         } catch (err) {
             console.error('Error fetching assignments:', err);
-            setError('Failed to load assignments.');
+            setError(t('errorLoad'));
             setLoading(false);
         }
     }, [classId, user]);
@@ -147,7 +149,7 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
     const handleDeleteClick = async (e, assignmentId) => {
         e.stopPropagation();
         setMenuOpenId(null);
-        if (!window.confirm('Are you sure you want to delete this assignment?')) return;
+        if (!window.confirm(t('card.confirmDelete'))) return;
         
         try {
             await axios.delete(`${API_BASE_URL}/api/classwork/${classId}/${assignmentId}`, {
@@ -156,7 +158,7 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
             setAssignments(prev => prev.filter(a => a._id !== assignmentId));
         } catch (err) {
             console.error('Error deleting assignment:', err);
-            alert('Failed to delete assignment');
+            alert(t('card.errorDelete'));
         }
     };
 
@@ -211,7 +213,7 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
         return (
             <div className="cw-loader">
                 <div className="cw-loader-spinner"></div>
-                <span>Loading classwork...</span>
+                <span>{t('loading')}</span>
             </div>
         );
     }
@@ -225,13 +227,13 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
                 <div className="cw-header-left">
                     <div className="cw-header-icon"><SvgBookOpen /></div>
                     <div>
-                        <h2>Classwork</h2>
-                        <p className="cw-header-subtitle">Assignments, materials & resources</p>
+                        <h2>{t('title')}</h2>
+                        <p className="cw-header-subtitle">{t('subtitle')}</p>
                     </div>
                 </div>
                 {isCreator && (
                     <button className="cw-create-btn" onClick={() => setIsCreateModalOpen(true)}>
-                        <PlusIcon /> Create Assignment
+                        <PlusIcon /> {t('createBtnReal')}
                     </button>
                 )}
             </div>
@@ -243,28 +245,28 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
                         <div className="cw-stat-icon"><SvgBookOpen /></div>
                         <div className="cw-stat-info">
                             <span className="cw-stat-num">{quickStats.total}</span>
-                            <span className="cw-stat-label">Total</span>
+                            <span className="cw-stat-label">{t('stats.total')}</span>
                         </div>
                     </div>
                     <div className="cw-stat-tile cw-stat-upcoming" style={{ '--delay': '1' }}>
                         <div className="cw-stat-icon"><SvgTrendUp /></div>
                         <div className="cw-stat-info">
                             <span className="cw-stat-num">{quickStats.upcoming}</span>
-                            <span className="cw-stat-label">Upcoming</span>
+                            <span className="cw-stat-label">{t('stats.upcoming')}</span>
                         </div>
                     </div>
                     <div className="cw-stat-tile cw-stat-pastdue" style={{ '--delay': '2' }}>
                         <div className="cw-stat-icon"><SvgAlertTriangle /></div>
                         <div className="cw-stat-info">
                             <span className="cw-stat-num">{quickStats.pastDue}</span>
-                            <span className="cw-stat-label">Past Due</span>
+                            <span className="cw-stat-label">{t('stats.pastDue')}</span>
                         </div>
                     </div>
                     <div className="cw-stat-tile cw-stat-avg" style={{ '--delay': '3' }}>
                         <div className="cw-stat-icon"><SvgCheckCircle /></div>
                         <div className="cw-stat-info">
                             <span className="cw-stat-num">{quickStats.avgPoints}</span>
-                            <span className="cw-stat-label">Avg Points</span>
+                            <span className="cw-stat-label">{t('stats.avgPoints')}</span>
                         </div>
                     </div>
                 </div>
@@ -278,7 +280,7 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
                         <input
                             className="cw-search-input"
                             type="text"
-                            placeholder="Search assignments..."
+                            placeholder={t('searchHint')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -309,13 +311,13 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
                         <div className="cw-empty-icon">
                             <AssignmentIcon />
                         </div>
-                        <h3>{assignments.length === 0 ? 'No assignments yet' : 'No matching assignments'}</h3>
+                        <h3>{assignments.length === 0 ? t('empty.noAssignments') : t('empty.noMatching')}</h3>
                         <p>
                             {assignments.length === 0
                                 ? (isCreator 
-                                    ? 'Click "Create Assignment" to get started — it will also appear in the Stream.' 
-                                    : 'Your teacher hasn\'t posted any assignments yet. Check back later.')
-                                : 'Try adjusting your search or filter.'
+                                    ? t('empty.creatorHint')
+                                    : t('empty.studentHint'))
+                                : t('empty.adjustFilter')
                             }
                         </p>
                     </div>
@@ -327,28 +329,28 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
 
                         if (isStudent && assignment.submission) {
                             if (assignment.submission.status === 'graded') {
-                                statusText = `${assignment.submission.pointsAwarded}/${assignment.points} pts`;
+                                statusText = t('status.graded', { passed: assignment.submission.pointsAwarded, total: assignment.points });
                                 statusClass = 'cw-status--graded';
                             } else if (assignment.submission.status === 'late') {
-                                statusText = 'Late';
+                                statusText = t('status.late');
                                 statusClass = 'cw-status--late';
                             } else {
-                                statusText = 'Turned in';
+                                statusText = t('status.turnedIn');
                                 statusClass = 'cw-status--submitted';
                             }
                         } else if (isStudent) {
                             const isLate = assignment.dueDate && new Date() > new Date(assignment.dueDate);
-                            statusText = isLate ? 'Missing' : 'Assigned';
+                            statusText = isLate ? t('status.missing') : t('status.assigned');
                             statusClass = isLate ? 'cw-status--missing' : 'cw-status--assigned';
                         }
 
                         const isOverdue = assignment.dueDate && new Date() > new Date(assignment.dueDate);
                         const dueDateStr = assignment.dueDate 
-                            ? new Date(assignment.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                            ? new Date(assignment.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                             : null;
 
                         const postedDateStr = assignment.createdAt
-                            ? new Date(assignment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            ? new Date(assignment.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
                             : null;
 
                         // Submission progress for teacher
@@ -382,10 +384,10 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
                                             {menuOpenId === assignment._id && (
                                                 <div className="cw-card-menu">
                                                     <button className="cw-menu-item" onClick={(e) => handleEditClick(e, assignment)}>
-                                                        <EditIcon /> Edit
+                                                        <EditIcon /> {t('card.edit')}
                                                     </button>
                                                     <button className="cw-menu-item cw-menu-item--danger" onClick={(e) => handleDeleteClick(e, assignment._id)}>
-                                                        <TrashIcon /> Delete
+                                                        <TrashIcon /> {t('card.delete')}
                                                     </button>
                                                 </div>
                                             )}
@@ -402,7 +404,7 @@ const ClassworkSection = ({ classId, user, isCreator }) => {
 
                                 <div className="cw-card-footer">
                                     <div className="cw-card-meta">
-                                        <span className="cw-points-badge">{assignment.points} pts</span>
+                                        <span className="cw-points-badge">{assignment.points} {t('card.pts')}</span>
                                         {dueDateStr && (
                                             <span className={`cw-due-date ${isOverdue ? 'cw-due-date--overdue' : ''}`}>
                                                 <ClockIcon />

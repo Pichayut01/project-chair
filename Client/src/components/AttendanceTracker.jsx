@@ -4,6 +4,8 @@ import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/pro
 import Swal from 'sweetalert2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
+import { FaCalendarCheck } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import '../CSS/AttendanceTracker.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -11,6 +13,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const AttendanceTracker = ({ classroom, user }) => {
+    const { t } = useTranslation();
     const isCreator = classroom?.creator?.some(c => c === user.id || c._id === user.id || c.toString() === user.id);
     const [attendance, setAttendance] = useState(classroom?.attendance || {});
     const [attendanceDays, setAttendanceDays] = useState(classroom?.attendanceDays || 20);
@@ -100,8 +103,8 @@ const AttendanceTracker = ({ classroom, user }) => {
             }
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: 'Failed to save attendance.',
+                title: t('common.error') || 'Error',
+                text: t('attendanceTracker.errorSave') || 'Failed to save attendance.',
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
@@ -114,15 +117,15 @@ const AttendanceTracker = ({ classroom, user }) => {
 
     const renderCellContent = (state) => {
         switch (state) {
-            case 'present': return <span className="att-present" title="Present">/</span>;
-            case 'absent': return <span className="att-absent" title="Absent">X</span>;
-            case 'late': return <span className="att-late" title="Late">L</span>;
-            case 'leave': return <span className="att-leave" title="Leave">V</span>;
+            case 'present': return <span className="att-present" title={t('attendanceTracker.present') || "Present"}>/</span>;
+            case 'absent': return <span className="att-absent" title={t('attendanceTracker.absent') || "Absent"}>X</span>;
+            case 'late': return <span className="att-late" title={t('attendanceTracker.late') || "Late"}>L</span>;
+            case 'leave': return <span className="att-leave" title={t('attendanceTracker.leave') || "Leave"}>V</span>;
             default: return null;
         }
     };
 
-    if (!classroom) return <div>Loading...</div>;
+    if (!classroom) return <div>{t('attendanceTracker.loading') || 'Loading...'}</div>;
 
     const participants = (classroom.participants || []).filter(p => {
         const pId = p._id || p.id || p.toString();
@@ -164,7 +167,7 @@ const AttendanceTracker = ({ classroom, user }) => {
     });
 
     const chartData = {
-        labels: ['Present', 'Absent', 'Late', 'Leave'],
+        labels: [t('attendanceTracker.present') || 'Present', t('attendanceTracker.absent') || 'Absent', t('attendanceTracker.late') || 'Late', t('attendanceTracker.leave') || 'Leave'],
         datasets: [
             {
                 data: [globalStats.present, globalStats.absent, globalStats.late, globalStats.leave],
@@ -188,33 +191,39 @@ const AttendanceTracker = ({ classroom, user }) => {
     return (
         <div className="attendance-tracker-container">
             <div className="attendance-header">
-                <h2>Attendance</h2>
+                <div className="attendance-header-left">
+                    <FaCalendarCheck className="attendance-header-icon" />
+                    <div>
+                        <h2>{t('attendanceTracker.title') || 'Attendance'}</h2>
+                        <p>{t('attendanceTracker.studentsEnrolled', { count: participants.length, s: participants.length !== 1 ? 's' : '' }) || `${participants.length} student${participants.length !== 1 ? 's' : ''} enrolled`}</p>
+                    </div>
+                </div>
                 
                 <div className="attendance-tabs">
                     <button 
                         className={`tab-btn ${activeTab === 'tracking' ? 'active' : ''}`}
                         onClick={() => setActiveTab('tracking')}
                     >
-                        Tracking
+                        {t('attendanceTracker.tabTracking') || 'Tracking'}
                     </button>
                     <button 
                         className={`tab-btn ${activeTab === 'summary' ? 'active' : ''}`}
                         onClick={() => setActiveTab('summary')}
                     >
-                        Summary
+                        {t('attendanceTracker.tabSummary') || 'Summary'}
                     </button>
                 </div>
 
                 {isCreator && activeTab === 'tracking' && (
                     <div className="attendance-controls">
                         <button className="btn outline" onClick={handleRemoveDay} disabled={attendanceDays <= 1 || isSaving}>
-                            - Reduce Day
+                            {t('attendanceTracker.btnReduceDay') || '- Reduce Day'}
                         </button>
-                        <span className="days-label">Days: {attendanceDays}</span>
+                        <span className="days-label">{t('attendanceTracker.lblDays', { days: attendanceDays }) || `Days: ${attendanceDays}`}</span>
                         <button className="btn outline" onClick={handleAddDay} disabled={isSaving}>
-                            + Add Day
+                            {t('attendanceTracker.btnAddDay') || '+ Add Day'}
                         </button>
-                        {isSaving && <span className="saving-indicator">Saving...</span>}
+                        {isSaving && <span className="saving-indicator">{t('attendanceTracker.saving') || 'Saving...'}</span>}
                     </div>
                 )}
             </div>
@@ -225,13 +234,13 @@ const AttendanceTracker = ({ classroom, user }) => {
                         <table className="attendance-table">
                             <thead>
                                 <tr>
-                                    <th className="sticky-col name-col">Student</th>
+                                    <th className="sticky-col name-col">{t('attendanceTracker.colStudent') || 'Student'}</th>
                                     {daysArray.map(day => (
                                         <th 
                                             key={`header-day-${day}`} 
                                             className={`day-col ${isCreator ? 'clickable-header' : ''}`}
                                             onClick={() => isCreator && markAllPresent(day)}
-                                            title={isCreator ? "Mark all as present" : ""}
+                                            title={isCreator ? (t('attendanceTracker.markAllPresent') || "Mark all as present") : ""}
                                         >
                                             D{day}
                                         </th>
@@ -241,7 +250,7 @@ const AttendanceTracker = ({ classroom, user }) => {
                             <tbody>
                                 {participants.length === 0 ? (
                                     <tr>
-                                        <td colSpan={attendanceDays + 1} className="no-data">No students in this classroom yet.</td>
+                                        <td colSpan={attendanceDays + 1} className="no-data">{t('attendanceTracker.noStudentsTable') || 'No students in this classroom yet.'}</td>
                                     </tr>
                                 ) : (
                                     participants.map(student => (
@@ -274,27 +283,27 @@ const AttendanceTracker = ({ classroom, user }) => {
                     </div>
                     
                     <div className="attendance-legend">
-                        <div className="legend-item"><span className="legend-icon present">/</span> Present</div>
-                        <div className="legend-item"><span className="legend-icon absent">X</span> Absent</div>
-                        <div className="legend-item"><span className="legend-icon late">L</span> Late</div>
-                        <div className="legend-item"><span className="legend-icon leave">V</span> Leave</div>
-                        <div className="legend-item"><span className="legend-icon empty"></span> None</div>
+                        <div className="legend-item"><span className="legend-icon present">/</span> {t('attendanceTracker.present') || 'Present'}</div>
+                        <div className="legend-item"><span className="legend-icon absent">X</span> {t('attendanceTracker.absent') || 'Absent'}</div>
+                        <div className="legend-item"><span className="legend-icon late">L</span> {t('attendanceTracker.late') || 'Late'}</div>
+                        <div className="legend-item"><span className="legend-icon leave">V</span> {t('attendanceTracker.leave') || 'Leave'}</div>
+                        <div className="legend-item"><span className="legend-icon empty"></span> {t('attendanceTracker.none') || 'None'}</div>
                     </div>
                 </>
             ) : (
                 <div className="attendance-summary-view">
                     <div className="summary-layout">
                         <div className="summary-table-container">
-                            <h3>Individual Summary</h3>
+                            <h3>{t('attendanceTracker.individualSummary') || 'Individual Summary'}</h3>
                             <div className="summary-table-wrapper">
                                 <table className="summary-table">
                                     <thead>
                                         <tr>
-                                            <th>Student</th>
-                                            <th className="att-present">Present</th>
-                                            <th className="att-absent">Absent</th>
-                                            <th className="att-late">Late</th>
-                                            <th className="att-leave">Leave</th>
+                                            <th>{t('attendanceTracker.colStudent') || 'Student'}</th>
+                                            <th className="att-present">{t('attendanceTracker.present') || 'Present'}</th>
+                                            <th className="att-absent">{t('attendanceTracker.absent') || 'Absent'}</th>
+                                            <th className="att-late">{t('attendanceTracker.late') || 'Late'}</th>
+                                            <th className="att-leave">{t('attendanceTracker.leave') || 'Leave'}</th>
                                             <th>%</th>
                                         </tr>
                                     </thead>
@@ -323,7 +332,7 @@ const AttendanceTracker = ({ classroom, user }) => {
                                         ))}
                                         {studentStats.length === 0 && (
                                             <tr>
-                                                <td colSpan="6" className="no-data">No students to summarize.</td>
+                                                <td colSpan="6" className="no-data">{t('attendanceTracker.noStudentsSummary') || 'No students to summarize.'}</td>
                                             </tr>
                                         )}
                                     </tbody>
@@ -332,9 +341,9 @@ const AttendanceTracker = ({ classroom, user }) => {
                         </div>
 
                         <div className="summary-chart-container">
-                            <h3>Class Statistics</h3>
+                            <h3>{t('attendanceTracker.classStats') || 'Class Statistics'}</h3>
                             {globalStats.present === 0 && globalStats.absent === 0 && globalStats.late === 0 && globalStats.leave === 0 ? (
-                                <div className="no-chart-data">No attendance data recorded yet.</div>
+                                <div className="no-chart-data">{t('attendanceTracker.noChartData') || 'No attendance data recorded yet.'}</div>
                             ) : (
                                 <div className="chart-wrapper">
                                     <Doughnut 

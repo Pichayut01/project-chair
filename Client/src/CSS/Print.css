@@ -1,0 +1,242 @@
+/* ============================= */
+/* Hide print layout on screen   */
+/* ============================= */
+
+.print-container {
+  display: none;
+}
+
+/* ============================= */
+/* PRINT MODE                    */
+/* ============================= */
+
+@media print {
+  /* Reset browser spacing */
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  /* Hide everything */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only print container */
+  .print-container,
+  .print-container * {
+    visibility: visible;
+  }
+
+  /* Fix container position */
+  .print-container {
+    display: block !important;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* ============================= */
+  /* A4 Page Settings              */
+  /* ============================= */
+
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm;
+  }
+
+  /* ============================= */
+  /* Page Layout                   */
+  /* ============================= */
+
+  .print-page {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    color: #000;
+    line-height: 1.4;
+  }
+
+  /* ============================= */
+  /* Header                        */
+  /* ============================= */
+
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  .print-school-info h1 {
+    font-size: 16pt;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .print-school-info h2 {
+    font-size: 11pt;
+    margin: 2px 0 0 0;
+    color: #444;
+  }
+
+  .print-date {
+    font-size: 10pt;
+    color: #666;
+  }
+
+  /* ============================= */
+  /* Sections                      */
+  /* ============================= */
+
+  .print-section {
+    margin-bottom: 25px;
+  }
+
+  .print-section h4 {
+    font-size: 13pt;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+
+    page-break-after: avoid;
+  }
+
+  /* ============================= */
+  /* Student Header                */
+  /* ============================= */
+
+  .print-student-header {
+    display: flex;
+    align-items: center;
+
+    margin-bottom: 20px;
+    padding: 10px;
+
+    border: 1px solid #ddd;
+  }
+
+  .print-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+
+    margin-right: 15px;
+  }
+
+  .print-student-details h3 {
+    margin: 0;
+    font-size: 13pt;
+  }
+
+  .print-student-details p {
+    margin: 2px 0;
+    font-size: 10pt;
+  }
+
+  /* ============================= */
+  /* Metrics Table                 */
+  /* ============================= */
+
+  .print-metrics-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+    font-size: 10pt;
+  }
+
+  .print-metrics-table th,
+  .print-metrics-table td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+  }
+
+  .print-metrics-table th {
+    background: #f2f2f2;
+    text-align: left;
+  }
+
+  /* ============================= */
+  /* Data Tables                   */
+  /* ============================= */
+
+  .print-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    margin-bottom: 15px;
+  }
+
+  .print-data-table th,
+  .print-data-table td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    text-align: center;
+  }
+
+  .print-data-table th {
+    background: #f2f2f2;
+    font-weight: bold;
+  }
+
+  /* Repeat table header on new page */
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* ============================= */
+  /* Text blocks                   */
+  /* ============================= */
+
+  .print-analysis-text {
+    font-size: 10pt;
+    text-align: justify;
+    line-height: 1.5;
+  }
+
+  /* ============================= */
+  /* Footer                        */
+  /* ============================= */
+
+  .print-footer {
+    margin-top: 40px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .print-signature-line {
+    text-align: center;
+    width: 200px;
+  }
+
+  .print-signature-line .line {
+    border-top: 1px solid #000;
+    margin-top: 35px;
+  }
+
+  /* ============================= */
+  /* Prevent Page Break            */
+  /* ============================= */
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+}
