@@ -8,7 +8,7 @@ import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/pro
 import { FaPalette, FaUsers, FaEllipsisH, FaCrown, FaUserGraduate, FaArrowUp, FaArrowDown, FaUserSlash, FaCopy, FaCheck, FaSpinner, FaCog } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 const DEBOUNCE_DELAY = 800;
 
 const ClassroomSettings = ({ classId, user, classroom, onRefresh }) => {
@@ -289,7 +289,7 @@ const ClassroomSettings = ({ classId, user, classroom, onRefresh }) => {
                 <div className="members-list">
                     {classroomMembers.creator.map(creator => (
                         <div key={creator._id} className="member-card creator">
-                            <img src={getProfileImageSrc(creator.photoURL, isGoogleUser(creator))} alt={creator.displayName} onError={handleImageError} />
+                            <img referrerPolicy="no-referrer" src={getProfileImageSrc(creator.photoURL, isGoogleUser(creator))} alt={creator.displayName} onError={handleImageError} />
                             <div className="member-info">
                                 <span className="member-name">{creator.displayName}</span>
                                 {creator.email && <span className="member-email">{creator.email}</span>}
@@ -326,7 +326,7 @@ const ClassroomSettings = ({ classId, user, classroom, onRefresh }) => {
                     ) : (
                         classroomMembers.participants.map(participant => (
                             <div key={participant._id} className="member-card participant">
-                                <img src={getProfileImageSrc(participant.photoURL, isGoogleUser(participant))} alt={participant.displayName} onError={handleImageError} />
+                                <img referrerPolicy="no-referrer" src={getProfileImageSrc(participant.photoURL, isGoogleUser(participant))} alt={participant.displayName} onError={handleImageError} />
                                 <div className="member-info">
                                     <span className="member-name">{participant.displayName}</span>
                                     {participant.email && <span className="member-email">{participant.email}</span>}
@@ -492,3 +492,4 @@ const ClassroomSettings = ({ classId, user, classroom, onRefresh }) => {
 };
 
 export default ClassroomSettings;
+

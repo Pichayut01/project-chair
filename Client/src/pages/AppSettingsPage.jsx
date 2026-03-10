@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import '../CSS/AppSettings.css';
 import '../CSS/Main.css';
-import { FiSettings, FiDatabase, FiShield, FiBell, FiUsers, FiGlobe, FiHelpCircle } from 'react-icons/fi';
+import { FiSettings, FiBell, FiGlobe } from 'react-icons/fi';
 
 import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
@@ -14,6 +14,15 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
     const { t, i18n } = useTranslation(); // ✨ Apply hook
     const [user, setUser] = useState(propUser);
     const [activeSection, setActiveSection] = useState('general');
+    const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+        return localStorage.getItem('notificationsEnabled') !== 'false';
+    });
+
+    const handleNotificationToggle = (e) => {
+        const enabled = e.target.checked;
+        setNotificationsEnabled(enabled);
+        localStorage.setItem('notificationsEnabled', enabled);
+    };
 
     useEffect(() => {
         if (propUser) {
@@ -57,11 +66,22 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
             case 'general':
                 return (
                     <div className="settings-content">
-                        <h2>{t('settings.general.title')}</h2>
-                        <div className="settings-section">
-                            <h3>{t('settings.general.appPreferences')}</h3>
+                        <div className="settings-header">
+                            <h2>{t('settings.general.title')}</h2>
+                            <p className="settings-subtitle">จัดการการตั้งค่าทั่วไปของแอปพลิเคชัน</p>
+                        </div>
+                        <div className="settings-card">
+                            <div className="settings-card-inner">
                             <div className="setting-item">
-                                <label>{t('settings.general.language')}</label>
+                                <div className="setting-label">
+                                    <div className="setting-icon">
+                                        <FiGlobe size={20} />
+                                    </div>
+                                    <div className="setting-label-text">
+                                        <label>{t('settings.general.language')}</label>
+                                        <span>เลือกภาษาที่ต้องการใช้งาน</span>
+                                    </div>
+                                </div>
                                 <select 
                                     className="setting-select"
                                     value={i18n.language}
@@ -76,159 +96,60 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
                                 </select>
                             </div>
                             <div className="setting-item">
-                                <label>{t('settings.general.theme')}</label>
-                                <select className="setting-select">
-                                    <option value="light">{t('settings.general.themeLight')}</option>
-                                    <option value="dark">{t('settings.general.themeDark')}</option>
-                                    <option value="auto">{t('settings.general.themeAuto')}</option>
-                                </select>
-                            </div>
-                            <div className="setting-item">
-                                <label>
-                                    <input type="checkbox" className="setting-checkbox" />
-                                    {t('settings.general.enableSound')}
+                                <div className="setting-label">
+                                    <div className="setting-icon">
+                                        <FiBell size={20} />
+                                    </div>
+                                    <div className="setting-label-text">
+                                        <label>การแจ้งเตือน</label>
+                                        <span>รับการแจ้งเตือนจากระบบ</span>
+                                    </div>
+                                </div>
+                                <label className="toggle-switch">
+                                    <input 
+                                        type="checkbox" 
+                                        className="setting-checkbox" 
+                                        checked={notificationsEnabled}
+                                        onChange={handleNotificationToggle}
+                                    />
+                                    <span className="toggle-slider"></span>
                                 </label>
+                            </div>
                             </div>
                         </div>
                     </div>
                 );
-            case 'data':
+            case 'about':
                 return (
                     <div className="settings-content">
-                        <h2>{t('settings.data.title')}</h2>
-                        <div className="settings-section">
-                            <h3>{t('settings.data.storageBackup')}</h3>
-                            <div className="setting-item">
-                                <label>{t('settings.data.autoSave')}</label>
-                                <select className="setting-select">
-                                    <option value="30">{t('settings.data.sec30')}</option>
-                                    <option value="60">{t('settings.data.min1')}</option>
-                                    <option value="300">{t('settings.data.min5')}</option>
-                                </select>
-                            </div>
-                            <div className="setting-item">
-                                <button className="setting-button">{t('settings.data.exportData')}</button>
-                                <button className="setting-button secondary">{t('settings.data.importData')}</button>
-                            </div>
+                        <div className="settings-header">
+                            <h2>{t('settings.help.title')}</h2>
+                            <p className="settings-subtitle">{t('settings.help.subtitle') || 'ข้อมูลเกี่ยวกับแอปพลิเคชัน'}</p>
                         </div>
-                    </div>
-                );
-            case 'security':
-                return (
-                    <div className="settings-content">
-                        <h2>{t('settings.security.title')}</h2>
-                        <div className="settings-section">
-                            <h3>{t('settings.security.accessControl')}</h3>
-                            <div className="setting-item">
-                                <label>
-                                    <input type="checkbox" className="setting-checkbox" />
-                                    {t('settings.security.requireAuth')}
-                                </label>
+                        <div className="settings-card about-card">
+                            <div className="about-logo">
+                                <div className="logo-circle" style={{ background: '#ffffff', padding: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                                    <img referrerPolicy="no-referrer" src="/favicon.ico" alt="EChair Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                </div>
+                                <h3>EChair</h3>
                             </div>
-                            <div className="setting-item">
-                                <label>{t('settings.security.sessionTimeout')}</label>
-                                <select className="setting-select">
-                                    <option value="30">{t('settings.security.min30')}</option>
-                                    <option value="60">{t('settings.security.hr1')}</option>
-                                    <option value="480">{t('settings.security.hr8')}</option>
-                                    <option value="never">{t('settings.security.never')}</option>
-                                </select>
+                            <div className="about-info">
+                                <div className="about-item">
+                                    <span className="about-label">{t('settings.help.version') || 'เวอร์ชัน (Version)'}</span>
+                                    <span className="about-value">1.0.0</span>
+                                </div>
+                                <div className="about-item">
+                                    <span className="about-label">{t('settings.help.developer') || 'ผู้พัฒนา (Developers)'}</span>
+                                    <span className="about-value">Tanicha & Pichayut</span>
+                                </div>
+                                <div className="about-item" style={{ alignItems: 'flex-start' }}>
+                                    <span className="about-label">{t('settings.help.institution') || 'สถาบัน (Institution)'}</span>
+                                    <span className="about-value" style={{ textAlign: 'right', lineHeight: '1.4' }}>
+                                        KMUTNB<br/>
+                                        <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: 'normal' }}>ภาควิชา CED TCT</span>
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                );
-            case 'notifications':
-                return (
-                    <div className="settings-content">
-                        <h2>{t('settings.notifications.title')}</h2>
-                        <div className="settings-section">
-                            <h3>{t('settings.notifications.sysNotif')}</h3>
-                            <div className="setting-item">
-                                <label>
-                                    <input type="checkbox" className="setting-checkbox" defaultChecked />
-                                    {t('settings.notifications.desktopNotif')}
-                                </label>
-                            </div>
-                            <div className="setting-item">
-                                <label>
-                                    <input type="checkbox" className="setting-checkbox" defaultChecked />
-                                    {t('settings.notifications.emailNotif')}
-                                </label>
-                            </div>
-                            <div className="setting-item">
-                                <label>
-                                    <input type="checkbox" className="setting-checkbox" />
-                                    {t('settings.notifications.soundNotif')}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                );
-            case 'users':
-                return (
-                    <div className="settings-content">
-                        <h2>{t('settings.users.title')}</h2>
-                        <div className="settings-section">
-                            <h3>{t('settings.users.defaultSettings')}</h3>
-                            <div className="setting-item">
-                                <label>{t('settings.users.defaultRole')}</label>
-                                <select className="setting-select">
-                                    <option value="participant">{t('login.roleParticipant')}</option>
-                                    <option value="moderator">{t('login.roleCreator')}</option>
-                                </select>
-                            </div>
-                            <div className="setting-item">
-                                <label>
-                                    <input type="checkbox" className="setting-checkbox" />
-                                    {t('settings.users.allowGuest')}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                );
-            case 'integration':
-                return (
-                    <div className="settings-content">
-                        <h2>{t('settings.integration.title')}</h2>
-                        <div className="settings-section">
-                            <h3>{t('settings.integration.extServices')}</h3>
-                            <div className="setting-item">
-                                <label>
-                                    <input type="checkbox" className="setting-checkbox" />
-                                    {t('settings.integration.enableGoogle')}
-                                </label>
-                            </div>
-                            <div className="setting-item">
-                                <label>{t('settings.integration.apiRateLimit')}</label>
-                                <select className="setting-select">
-                                    <option value="100">{t('settings.integration.req100')}</option>
-                                    <option value="500">{t('settings.integration.req500')}</option>
-                                    <option value="1000">{t('settings.integration.req1000')}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                );
-            case 'help':
-                return (
-                    <div className="settings-content">
-                        <h2>{t('settings.help.title')}</h2>
-                        <div className="settings-section">
-                            <h3>{t('settings.help.documentation')}</h3>
-                            <div className="setting-item">
-                                <button className="setting-button">{t('settings.help.userGuide')}</button>
-                            </div>
-                            <div className="setting-item">
-                                <button className="setting-button">{t('settings.help.contactSupport')}</button>
-                            </div>
-                            <div className="setting-item">
-                                <button className="setting-button">{t('settings.help.reportBug')}</button>
-                            </div>
-                        </div>
-                        <div className="settings-section">
-                            <h3>{t('settings.help.about') || 'About'}</h3>
-                            <p>{t('settings.help.version') || 'EChair App Version 1.0.0'}</p>
-                            <p>{t('settings.help.copyright') || '© 2024 EChair Team'}</p>
                         </div>
                     </div>
                 );
@@ -255,7 +176,7 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
                 onBackClick={handleBackClick}
             />
             <main className={`main__content ${isSidebarOpen ? 'shift' : ''}`}>
-                <div className="google-account-container">
+                <div className="app-settings-container">
                     {renderContent()}
                 </div>
             </main>
@@ -264,3 +185,4 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
 };
 
 export default AppSettingsPage;
+

@@ -33,7 +33,7 @@ const SummaryPrintLayout = ({
                     </div>
 
                     <div className="print-student-header">
-                        <img 
+                        <img referrerPolicy="no-referrer" 
                             src={getProfileImageSrc(selectedStudent.photoURL, isGoogleUser(selectedStudent.user))} 
                             alt={selectedStudent.name} 
                             className="print-avatar"
@@ -214,3 +214,4 @@ const SummaryPrintLayout = ({
 };
 
 export default SummaryPrintLayout;
+

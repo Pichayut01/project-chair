@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import '../CSS/OtpVerification.css';
 import { FaShieldAlt, FaArrowLeft, FaEnvelope } from 'react-icons/fa';
 import Loader from '../components/Loader';
+import { API_AUTH_URL } from '../config/api';
 
 const OtpVerificationPage = ({ onLogin }) => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -89,7 +90,7 @@ const OtpVerificationPage = ({ onLogin }) => {
         setError('');
 
         try {
-            const response = await fetch('http://localhost:5000/api/auth/login', {
+            const response = await fetch(`${API_AUTH_URL}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -135,7 +136,7 @@ const OtpVerificationPage = ({ onLogin }) => {
         setError('');
 
         try {
-            const response = await fetch('http://localhost:5000/api/auth/login', {
+            const response = await fetch(`${API_AUTH_URL}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

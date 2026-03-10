@@ -7,7 +7,7 @@ import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDi
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 import { useTranslation } from 'react-i18next';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, onDeleteEvent, onSubmitAnswer, onEndEvent, onPublishDraftEvent, candidates = [], currentUser, zoomScale = 1 }) => {
     const { t } = useTranslation();
@@ -487,7 +487,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                             </label>
                                             {selectedImage && (
                                                 <div className="cfg-image-preview">
-                                                    <img src={`${API_BASE_URL}${selectedImage}`} alt="Preview" />
+                                                    <img referrerPolicy="no-referrer" src={`${API_BASE_URL}${selectedImage}`} alt="Preview" />
                                                     <button className="cfg-remove-img" onClick={() => setSelectedImage(null)}><FaTimes /></button>
                                                 </div>
                                             )}
@@ -530,7 +530,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                             </label>
                                             {selectedImage && (
                                                 <div className="cfg-image-preview">
-                                                    <img src={`${API_BASE_URL}${selectedImage}`} alt="Preview" />
+                                                    <img referrerPolicy="no-referrer" src={`${API_BASE_URL}${selectedImage}`} alt="Preview" />
                                                     <button className="cfg-remove-img" onClick={() => setSelectedImage(null)}><FaTimes /></button>
                                                 </div>
                                             )}
@@ -849,7 +849,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                         {displayNames.map((candidate, i) => (
                                             <div key={i} className={`random-animating-item slot-swap ${animationPhase}`}>
                                                 {candidate.photoSrc ? (
-                                                    <img src={candidate.photoSrc} alt="avatar" className={`random-avatar animating ${animationPhase}`} />
+                                                    <img referrerPolicy="no-referrer" src={candidate.photoSrc} alt="avatar" className={`random-avatar animating ${animationPhase}`} />
                                                 ) : (
                                                     <div className={`random-avatar-placeholder animating ${animationPhase}`}>
                                                         <FaUser />
@@ -864,7 +864,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                         {displayNames.map((candidate, i) => (
                                             <div key={i} className={`spin-bubble ${animationPhase}`}>
                                                 {candidate.photoSrc ? (
-                                                    <img src={candidate.photoSrc} alt="avatar" className="spin-bubble-img" />
+                                                    <img referrerPolicy="no-referrer" src={candidate.photoSrc} alt="avatar" className="spin-bubble-img" />
                                                 ) : (
                                                     <div className="spin-bubble-placeholder">
                                                         <FaUser />
@@ -883,7 +883,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                         {event.results.map((r, i) => (
                                             <div key={i} className="random-winner-bubble" title={r.userName || t('classroomEvent.unknown') || 'Unknown'}>
                                                 {r.photoSrc ? (
-                                                    <img src={r.photoSrc} alt={r.userName} className="winner-bubble-img" />
+                                                    <img referrerPolicy="no-referrer" src={r.photoSrc} alt={r.userName} className="winner-bubble-img" />
                                                 ) : (
                                                     <div className="winner-bubble-placeholder">
                                                         <FaUser />
@@ -961,7 +961,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         {/* Image if present */}
                         {event.config?.imageUrl && (
                             <div className="ev-image-container">
-                                <img 
+                                <img referrerPolicy="no-referrer" 
                                     src={`${API_BASE_URL}${event.config.imageUrl}`} 
                                     alt="Question" 
                                     className="ev-image" 
@@ -982,7 +982,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                         return (
                                             <div key={idx} className="ev-answer-card">
                                                 <div className="ev-answer-header">
-                                                    <img 
+                                                    <img referrerPolicy="no-referrer" 
                                                         src={imgSrc} 
                                                         alt={ans.userName} 
                                                         className="ev-answer-avatar"
@@ -1071,7 +1071,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         {/* Image if present */}
                         {event.config?.imageUrl && (
                             <div className="ev-image-container">
-                                <img 
+                                <img referrerPolicy="no-referrer" 
                                     src={`${API_BASE_URL}${event.config.imageUrl}`} 
                                     alt="Poll" 
                                     className="ev-image" 
@@ -1185,7 +1185,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                             {members.length > 0 && (
                                                 <div className="grouping-avatar-stack">
                                                     {members.slice(0, 8).map((m, mIdx) => (
-                                                        <img
+                                                        <img referrerPolicy="no-referrer"
                                                             key={mIdx}
                                                             src={getProfileImageSrc(m.photoURL)}
                                                             alt={m.userName}
@@ -1250,7 +1250,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                                     {members.length > 0 && (
                                                         <div className="grouping-avatar-stack" style={{ marginTop: '6px' }}>
                                                             {members.slice(0, 5).map((m, mIdx) => (
-                                                                <img
+                                                                <img referrerPolicy="no-referrer"
                                                                     key={mIdx}
                                                                     src={getProfileImageSrc(m.photoURL)}
                                                                     alt={m.userName}
@@ -1374,7 +1374,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                                         <div style={{ ...badgeStyle, padding: '4px 8px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', minWidth: '48px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                                             {rankIcon}{rank === 1 ? '1st' : (rank === 2 ? '2nd' : (rank === 3 ? '3rd' : `${rank}th`))}
                                                         </div>
-                                                        <img 
+                                                        <img referrerPolicy="no-referrer" 
                                                             src={getProfileImageSrc(result.photoURL, isGoogleUser(result))} 
                                                             alt={result.userName} 
                                                             style={{ width: rank === 1 ? '40px' : '36px', height: rank === 1 ? '40px' : '36px', borderRadius: '50%', objectFit: 'cover', border: rank === 1 ? '2px solid #f59e0b' : (rank === 2 ? '2px solid #94a3b8' : (rank === 3 ? '2px solid #d97706' : '1px solid #e2e8f0')) }}
@@ -1583,3 +1583,4 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
 };
 
 export default ClassroomEvent;
+

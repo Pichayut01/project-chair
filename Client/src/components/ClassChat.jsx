@@ -169,7 +169,7 @@ const ClassChat = ({
                                                         {members.length > 0 && (
                                                             <div style={{ display: 'flex', alignItems: 'center', marginTop: '6px' }}>
                                                                 {members.slice(0, 5).map((m, mIdx) => (
-                                                                    <img
+                                                                    <img referrerPolicy="no-referrer"
                                                                         key={mIdx}
                                                                         src={getProfileImageSrc(m.photoURL, false)} // Simplify google user check as photoURl usually handles it via profileImageHelper if it's already a full URL or fallback
                                                                         alt={m.userName}
@@ -223,7 +223,7 @@ const ClassChat = ({
                                 gap: '10px',
                                 flexDirection: isMe ? 'row-reverse' : 'row'
                             }}>
-                                <img
+                                <img referrerPolicy="no-referrer"
                                     src={getProfileImageSrc(msg.senderPhoto, false)}
                                     alt={msg.senderName}
                                     onError={handleImageError}
@@ -296,3 +296,4 @@ const ClassChat = ({
 };
 
 export default ClassChat;
+

@@ -1243,7 +1243,7 @@
         function adminApp() {
             return {
                 // Config
-                API_BASE_URL: 'http://localhost:5000/api',
+                API_BASE_URL: '/api',
 
                 // UI State
                 currentTab: localStorage.getItem('adminCurrentTab') || 'dashboard',
@@ -1370,7 +1370,7 @@
 
                 initSocket() {
                     if (window.io) {
-                        this.socket = io('http://localhost:5000');
+                        this.socket = io(window.location.protocol + '//' + window.location.host);
 
                         this.socket.on('connect', () => {
                             console.info('[Admin] Socket connected:', this.socket.id);
@@ -2012,7 +2012,7 @@
                     }
                     // If it's a relative path, prepend the server URL
                     if (photoURL.startsWith('/')) {
-                        return `http://localhost:5000${photoURL}`;
+                        return `${photoURL}`;
                     }
                     // If it's already an absolute URL, use as-is
                     return photoURL;

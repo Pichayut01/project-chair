@@ -217,10 +217,14 @@
     },
     "help": {
       "title": "Help & Support",
+      "subtitle": "Information about the application",
       "documentation": "Documentation",
       "userGuide": "View User Guide",
       "contactSupport": "Contact Support",
-      "reportBug": "Report Bug"
+      "reportBug": "Report Bug",
+      "version": "Version",
+      "developer": "Developers",
+      "institution": "Institution"
     },
     "selectCategory": "Select a setting category",
     "english": "English",
@@ -602,6 +606,8 @@
     "select": "Select...",
     "showStudentStatus": "Show Student Status",
     "showStudentStatusMobile": "Status",
+    "showScoreBar": "Show Score Bar",
+    "showScoreBarMobile": "Score Bar",
     "printPdf": "Print PDF",
     "topPerformers": "Top Performers",
     "rank1st": "1st",

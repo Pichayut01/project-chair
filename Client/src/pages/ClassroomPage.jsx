@@ -30,7 +30,7 @@ import StudentStatusBanner from '../components/StudentStatusBanner'; // ✨ Impo
 import SessionSummaryModal from '../components/SessionSummaryModal'; // ✨ Import Session Summary Modal
 import { useTranslation } from 'react-i18next';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 
 const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
@@ -1230,7 +1230,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
         const initialAvatarHtml = isGlobalCheck 
             ? `<div style="width: 50px; height: 50px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 1.5rem;">${usersSvg}</div>`
-            : `<img src="${photoSrc}" class="attendance-student-photo" onerror="this.src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'"/>`;
+            : `<img referrerPolicy="no-referrer" src="${photoSrc}" class="attendance-student-photo" onerror="this.src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'"/>`;
 
         // Create structured options for the custom dropdown
         // Exclude creator(s) from the list
@@ -1259,7 +1259,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 return {
                     value: pIdStr,
                     label: displayName,
-                    photo: `<img src="${photoSrc}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; margin-right: 10px;" onerror="this.src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'" />`
+                    photo: `<img referrerPolicy="no-referrer" src="${photoSrc}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; margin-right: 10px;" onerror="this.src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'" />`
                 };
             })
         ];
@@ -1417,7 +1417,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                             const participant = classroom?.participants?.find(p => (p._id || p.id || '').toString() === val);
                             const rawPhoto = matchedUser ? matchedUser.photoURL : (participant?.photoURL || participant?.userPhoto);
                             const newPhotoSrc = rawPhoto ? getProfileImageSrc(rawPhoto) : 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
-                            avatarContainer.innerHTML = "<img src='" + newPhotoSrc + "' class='attendance-student-photo' onerror='this.src=\"https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y\"' />";
+                            avatarContainer.innerHTML = "<img referrerPolicy='no-referrer' src='" + newPhotoSrc + "' class='attendance-student-photo' onerror='this.src=\"https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y\"' />";
                         }
                     });
                 });
@@ -2592,6 +2592,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                                                 isHandRaised={assignedUser && raisedHands.has(assignedUser.userId)} // ✨ Pass raised hand state
                                                 currentEmoji={assignedUser && activeEmojis[assignedUser.userId]?.emoji} // ✨ Pass current emoji
                                                 groupColor={groupColor}
+                                                showScoreBar={classroom?.showScoreBar}
                                             />
                                         );
                                     })}
@@ -3089,3 +3090,5 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 };
 
 export default ClassroomPage;
+
+

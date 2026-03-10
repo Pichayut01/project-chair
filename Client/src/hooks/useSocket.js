@@ -3,7 +3,11 @@
 import { useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+// In production behind reverse proxy, Socket.IO connects to the same host (nginx handles routing)
+// In development, connect directly to localhost:5000
+const SOCKET_URL = process.env.NODE_ENV === 'production'
+    ? window.location.origin
+    : (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000');
 
 export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMove, onChairGroupUpdate, onChatMessage, onClassroomEventAdded, onClassroomEventTriggered, onClassroomEventDeleted, onRaiseHandUpdated, onEmojiSent, onUserJoined, onUserLeft, onClassroomUpdated, onGroupMemberRemoved, onGroupMemberMoved) => { // ✨ Added group editors
     const socketRef = useRef(null);
@@ -14,7 +18,7 @@ export const useSocket = (classId, user, onScoreUpdate, onChairUpdate, onChairMo
         if (!classId || !user) return;
 
         // ... (connection logic)
-        socketRef.current = io(API_BASE_URL, {
+        socketRef.current = io(SOCKET_URL, {
             auth: {
                 token: user.token,
                 classId: classId,

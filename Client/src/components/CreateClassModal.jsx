@@ -6,6 +6,7 @@ import '../CSS/Chair.css';
 import Chair from './Chair';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
+import API_BASE_URL from '../config/api';
 
 const SeatingPreviewModal = ({ rows, cols, onClose, onSavePositions, initialSavedPositions }) => {
     const { t } = useTranslation();
@@ -188,7 +189,7 @@ const CreateClassModal = ({ onClose, onClassCreated, user }) => {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/api/classrooms/create', {
+            const response = await fetch(`${API_BASE_URL}/api/classrooms/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

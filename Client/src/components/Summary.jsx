@@ -14,7 +14,7 @@ import {
     Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { FiPrinter } from 'react-icons/fi';
+import { FiPrinter, FiUser, FiActivity } from 'react-icons/fi';
 import '../CSS/Summary.css';
 import '../CSS/Print.css';
 import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
@@ -32,7 +32,7 @@ ChartJS.register(
     Filler
 );
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 /* ───────── SVG Icon Components ───────── */
 const SvgTrophy = () => (
@@ -78,8 +78,9 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
     const [selectedStudentId, setSelectedStudentId] = useState('overview');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-    // ─── Student Status Toggle ───
+    // ─── Student Status & Score Bar Toggle ───
     const [showStudentStatus, setShowStudentStatus] = useState(classroom?.showStudentStatus || false);
+    const [showScoreBar, setShowScoreBar] = useState(classroom?.showScoreBar || false);
     const isCreator = classroom?.creator?.some(c => {
         const cId = c._id || c.id || c.toString();
         return cId === (user?.id || user?._id);
@@ -283,10 +284,11 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
         if (user && user.token && classId) fetchSummaryData();
     }, [classId, user]);
 
-    // ─── Sync showStudentStatus from classroom prop ───
+    // ─── Sync showStudentStatus and showScoreBar from classroom prop ───
     useEffect(() => {
         if (classroom) {
             setShowStudentStatus(classroom.showStudentStatus || false);
+            setShowScoreBar(classroom.showScoreBar || false);
         }
     }, [classroom]);
 
@@ -303,6 +305,22 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
         } catch (err) {
             console.error('Failed to update student status setting:', err);
             setShowStudentStatus(!newValue); // Revert on error
+        }
+    };
+
+    // ─── Toggle Score Bar Handler ───
+    const handleToggleScoreBar = async () => {
+        const newValue = !showScoreBar;
+        setShowScoreBar(newValue);
+        try {
+            await axios.put(`${API_BASE_URL}/api/classrooms/${classId}/settings`, {
+                showScoreBar: newValue
+            }, {
+                headers: { 'x-auth-token': user.token }
+            });
+        } catch (err) {
+            console.error('Failed to update score bar setting:', err);
+            setShowScoreBar(!newValue); // Revert on error
         }
     };
 
@@ -446,7 +464,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                 const s = summaryData?.studentData.find(st => st.id === selectedStudentId);
                                 return s ? (
                                     <div className="bento-select-student">
-                                        <img src={getProfileImageSrc(s.photoURL, isGoogleUser(s.user))} alt={s.name} onError={handleImageError} />
+                                        <img referrerPolicy="no-referrer" src={getProfileImageSrc(s.photoURL, isGoogleUser(s.user))} alt={s.name} onError={handleImageError} />
                                         <span>{s.name}</span>
                                     </div>
                                 ) : <span className="bento-select-text">{t('summary.select') || 'Select...'}</span>;
@@ -460,7 +478,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                 </div>
                                 {summaryData?.studentData.map(student => (
                                     <div key={student.id} className={`bento-select-option ${selectedStudentId === student.id ? 'active' : ''}`} onClick={() => { setSelectedStudentId(student.id); setIsDropdownOpen(false); }}>
-                                        <img src={getProfileImageSrc(student.photoURL, isGoogleUser(student.user))} alt={student.name} onError={handleImageError} />
+                                        <img referrerPolicy="no-referrer" src={getProfileImageSrc(student.photoURL, isGoogleUser(student.user))} alt={student.name} onError={handleImageError} />
                                         <span>{student.name}</span>
                                     </div>
                                 ))}
@@ -473,8 +491,21 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                     {isCreator && (
                         <div className="bento-status-toggle">
                             <label className="status-toggle-label">
-                                <span className="status-toggle-text"><span className="hide-on-mobile">{t('summary.showStudentStatus') || 'Show Student Status'}</span><span className="show-on-mobile" style={{ display: 'none' }}>{t('summary.showStudentStatusMobile') || 'Status'}</span></span>
+                                <span className="status-toggle-text">
+                                    <FiUser className="show-on-mobile icon-only" size={18} title={t('summary.showStudentStatus') || 'Show Student Status'} />
+                                    <span className="hide-on-mobile">{t('summary.showStudentStatus') || 'Show Student Status'}</span>
+                                </span>
                                 <div className={`status-toggle-switch ${showStudentStatus ? 'active' : ''}`} onClick={handleToggleStudentStatus}>
+                                    <div className="status-toggle-knob"></div>
+                                </div>
+                            </label>
+                            
+                            <label className="status-toggle-label">
+                                <span className="status-toggle-text">
+                                    <FiActivity className="show-on-mobile icon-only" size={18} title={t('summary.showScoreBar') || 'Show Score Bar'} />
+                                    <span className="hide-on-mobile">{t('summary.showScoreBar') || 'Show Score Bar'}</span>
+                                </span>
+                                <div className={`status-toggle-switch ${showScoreBar ? 'active' : ''}`} onClick={handleToggleScoreBar}>
                                     <div className="status-toggle-knob"></div>
                                 </div>
                             </label>
@@ -489,7 +520,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                             title={t('summary.printPdf') || 'Export as PDF'}
                         >
                             <FiPrinter size={18} />
-                            <span>{t('summary.printPdf') || 'Print PDF'}</span>
+                            <span className="hide-on-mobile">{t('summary.printPdf') || 'Print PDF'}</span>
                         </button>
                     </div>
                 </div>
@@ -510,7 +541,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                 {topStudents[1] && (
                                     <div className="podium-col second">
                                         <div className="podium-medal silver"><SvgMedal /></div>
-                                        <img src={getProfileImageSrc(topStudents[1].student.photoURL, isGoogleUser(topStudents[1].student))} alt={topStudents[1].student.displayName} className="podium-img" />
+                                        <img referrerPolicy="no-referrer" src={getProfileImageSrc(topStudents[1].student.photoURL, isGoogleUser(topStudents[1].student))} alt={topStudents[1].student.displayName} className="podium-img" />
                                         <div className="podium-bar">
                                             <span className="podium-rank-num">{t('summary.rank2nd') || '2nd'}</span>
                                         </div>
@@ -522,7 +553,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                 {topStudents[0] && (
                                     <div className="podium-col first">
                                         <div className="podium-medal gold"><SvgCrown /></div>
-                                        <img src={getProfileImageSrc(topStudents[0].student.photoURL, isGoogleUser(topStudents[0].student))} alt={topStudents[0].student.displayName} className="podium-img first-img" />
+                                        <img referrerPolicy="no-referrer" src={getProfileImageSrc(topStudents[0].student.photoURL, isGoogleUser(topStudents[0].student))} alt={topStudents[0].student.displayName} className="podium-img first-img" />
                                         <div className="podium-bar first-bar">
                                             <span className="podium-rank-num">{t('summary.rank1st') || '1st'}</span>
                                         </div>
@@ -534,7 +565,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                 {topStudents[2] && (
                                     <div className="podium-col third">
                                         <div className="podium-medal bronze"><SvgMedal /></div>
-                                        <img src={getProfileImageSrc(topStudents[2].student.photoURL, isGoogleUser(topStudents[2].student))} alt={topStudents[2].student.displayName} className="podium-img" />
+                                        <img referrerPolicy="no-referrer" src={getProfileImageSrc(topStudents[2].student.photoURL, isGoogleUser(topStudents[2].student))} alt={topStudents[2].student.displayName} className="podium-img" />
                                         <div className="podium-bar">
                                             <span className="podium-rank-num">{t('summary.rank3rd') || '3rd'}</span>
                                         </div>
@@ -554,7 +585,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                 <h3>{t('summary.studentProfile') || 'Student Profile'}</h3>
                             </div>
                             <div className="profile-top">
-                                <img src={getProfileImageSrc(selectedStudent.photoURL, isGoogleUser(selectedStudent.user))} alt={selectedStudent.name} onError={handleImageError} className="profile-avatar" />
+                                <img referrerPolicy="no-referrer" src={getProfileImageSrc(selectedStudent.photoURL, isGoogleUser(selectedStudent.user))} alt={selectedStudent.name} onError={handleImageError} className="profile-avatar" />
                                 <div className="profile-info">
                                     <h4>{selectedStudent.name}</h4>
                                     <span className="profile-group-badge">{t('summary.group', { group: selectedStudent.group }) || `Group ${selectedStudent.group}`}</span>
@@ -711,7 +742,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                                 </td>
                                                 <td>
                                                     <div className="bento-student-cell">
-                                                        <img src={getProfileImageSrc(score.student.photoURL, isGoogleUser(score.student))} alt={score.student.displayName} />
+                                                        <img referrerPolicy="no-referrer" src={getProfileImageSrc(score.student.photoURL, isGoogleUser(score.student))} alt={score.student.displayName} />
                                                         <span>{score.student.displayName}</span>
                                                         {index === 0 && <span className="bento-crown-inline"><SvgCrown /></span>}
                                                     </div>
@@ -762,7 +793,7 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
                                                 <td><span className={`bento-rank-badge ${idx < 3 ? `rank-${idx + 1}` : ''}`}>{idx + 1}</span></td>
                                                 <td>
                                                     <div className="bento-student-cell">
-                                                        <img src={getProfileImageSrc(student.photoURL, isGoogleUser(student.user))} alt={student.name} onError={handleImageError} />
+                                                        <img referrerPolicy="no-referrer" src={getProfileImageSrc(student.photoURL, isGoogleUser(student.user))} alt={student.name} onError={handleImageError} />
                                                         <span>{student.name}</span>
                                                     </div>
                                                 </td>
@@ -785,3 +816,4 @@ const Summary = ({ classId, user, classroom, onUpdateScores }) => {
 };
 
 export default Summary;
+

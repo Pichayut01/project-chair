@@ -7,7 +7,7 @@ import { FiClock, FiUsers, FiStar, FiChevronDown, FiBookOpen, FiInbox, FiChevron
 import { useTranslation } from 'react-i18next';
 import '../CSS/SessionHistory.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 const formatDuration = (seconds, t) => {
     if (!seconds) return '0s';
@@ -168,7 +168,7 @@ const SessionHistory = ({ classId, user }) => {
                                                         {topStudents.map((student, idx) => (
                                                             <div key={student.studentId} className={`sh-mini-rank ${idx < 3 ? `mini-rank-${idx + 1}` : ''}`}>
                                                                 <span className="mini-rank-pos">{getRankDisplay(idx)}</span>
-                                                                <img
+                                                                <img referrerPolicy="no-referrer"
                                                                     src={getProfileImageSrc(student.photoURL, false)}
                                                                     alt={student.studentName}
                                                                     className="mini-rank-avatar"
@@ -201,3 +201,4 @@ const SessionHistory = ({ classId, user }) => {
 };
 
 export default SessionHistory;
+

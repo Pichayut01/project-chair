@@ -257,7 +257,7 @@ const AttendanceTracker = ({ classroom, user }) => {
                                         <tr key={student._id}>
                                             <td className="sticky-col name-col">
                                                 <div className="student-info">
-                                                    <img 
+                                                    <img referrerPolicy="no-referrer" 
                                                         src={getProfileImageSrc(student.photoURL, isGoogleUser(student))} 
                                                         alt={student.displayName}
                                                         onError={handleImageError}
@@ -311,7 +311,7 @@ const AttendanceTracker = ({ classroom, user }) => {
                                         {studentStats.map(student => (
                                             <tr key={student._id}>
                                                 <td className="student-info">
-                                                    <img 
+                                                    <img referrerPolicy="no-referrer" 
                                                         src={getProfileImageSrc(student.photoURL, isGoogleUser(student))} 
                                                         alt={student.displayName}
                                                         onError={handleImageError}
@@ -369,3 +369,4 @@ const AttendanceTracker = ({ classroom, user }) => {
 };
 
 export default AttendanceTracker;
+

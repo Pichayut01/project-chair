@@ -1,0 +1,105 @@
+# ============================================
+#  Echair - Docker Compose Production Setup
+#  Usage: docker compose up -d --build
+# ============================================
+
+services:
+  # ─── MongoDB Database ───
+  mongodb:
+    image: mongo:7
+    container_name: echair-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - echair-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─── API Server (Express + Socket.IO) ───
+  server:
+    build:
+      context: ..
+      dockerfile: production-build/Dockerfile.server
+    container_name: echair-server
+    restart: unless-stopped
+    environment:
+      PORT: 5000
+      MONGODB_URI: ${MONGODB_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      CLIENT_URL: ${CLIENT_URL}
+    volumes:
+      - server_uploads:/app/uploads
+      - ${FIREBASE_SERVICE_ACCOUNT_PATH:-./firebase-service-account.json}:/app/chair-f440c-firebase-adminsdk-fbsvc-92d591e38e.json:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - echair-network
+
+  # ─── Client App (React CRA) ───
+  client:
+    build:
+      context: ..
+      dockerfile: production-build/Dockerfile.client
+    container_name: echair-client
+    restart: unless-stopped
+    networks:
+      - echair-network
+
+  # ─── Admin Panel (Static HTML) ───
+  admin:
+    build:
+      context: ..
+      dockerfile: production-build/Dockerfile.admin
+    container_name: echair-admin
+    restart: unless-stopped
+    networks:
+      - echair-network
+
+  # ─── Landing Page (Vite React) ───
+  landing:
+    build:
+      context: ..
+      dockerfile: production-build/Dockerfile.landing
+    container_name: echair-landing
+    restart: unless-stopped
+    networks:
+      - echair-network
+
+  # ─── Nginx Reverse Proxy ───
+  nginx:
+    image: nginx:alpine
+    container_name: echair-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - server
+      - client
+      - admin
+      - landing
+    networks:
+      - echair-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  server_uploads:
+    driver: local
+
+networks:
+  echair-network:
+    driver: bridge

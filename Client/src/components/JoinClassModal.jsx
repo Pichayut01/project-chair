@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import '../CSS/Modal.css';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import API_BASE_URL from '../config/api';
 
 const JoinClassModal = ({ onClose, onClassJoined, user }) => {
     const { t } = useTranslation();
@@ -20,7 +21,7 @@ const JoinClassModal = ({ onClose, onClassJoined, user }) => {
         }
 
         try {
-            const response = await axios.post('http://localhost:5000/api/classrooms/join', { classCode }, {
+            const response = await axios.post(`${API_BASE_URL}/api/classrooms/join`, { classCode }, {
                 headers: {
                     'x-auth-token': user.token,
                 },

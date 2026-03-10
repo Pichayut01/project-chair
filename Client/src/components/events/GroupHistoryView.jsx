@@ -137,7 +137,7 @@ const GroupHistoryView = ({ classroom, user, onRefresh }) => {
             html: `
                 <div style="text-align: left; padding: 4px;">
                     <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f3f4f6;">
-                        <img src="${photoSrc}" 
+                        <img referrerPolicy="no-referrer" src="${photoSrc}" 
                              style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.08);" 
                              onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%239ca3af%22><circle cx=%2212%22 cy=%228%22 r=%224%22/><path d=%22M12 14c-6 0-8 3-8 3v1h16v-1s-2-3-8-3z%22/></svg>'" />
                         <div>
@@ -346,7 +346,7 @@ const GroupHistoryView = ({ classroom, user, onRefresh }) => {
                                                                             alignItems: 'center',
                                                                             borderBottom: mIdx < members.length - 1 ? '1px solid #f3f4f6' : 'none'
                                                                         }}>
-                                                                            <img 
+                                                                            <img referrerPolicy="no-referrer" 
                                                                                 src={imgSrc} 
                                                                                 alt={member.userName || 'User'} 
                                                                                 onError={handleImageError}
@@ -401,3 +401,4 @@ const GroupHistoryView = ({ classroom, user, onRefresh }) => {
 };
 
 export default GroupHistoryView;
+

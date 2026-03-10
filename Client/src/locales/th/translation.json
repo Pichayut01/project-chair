@@ -217,10 +217,14 @@
     },
     "help": {
       "title": "ช่วยเหลือและสนับสนุน",
+      "subtitle": "ข้อมูลเกี่ยวกับแอปพลิเคชัน",
       "documentation": "คู่มือผู้ใช้",
       "userGuide": "ดูคู่มือผู้ใช้",
       "contactSupport": "ติดต่อฝ่ายสนับสนุน",
-      "reportBug": "รายงานปัญหา/บั๊ก"
+      "reportBug": "รายงานปัญหา/บั๊ก",
+      "version": "เวอร์ชัน (Version)",
+      "developer": "ผู้พัฒนา (Developers)",
+      "institution": "สถาบัน (Institution)"
     },
     "selectCategory": "เลือกหมวดหมู่การตั้งค่า",
     "english": "English",
@@ -602,6 +606,8 @@
     "select": "เลือก...",
     "showStudentStatus": "แสดงสถานะนักเรียน",
     "showStudentStatusMobile": "สถานะ",
+    "showScoreBar": "แสดงหลอดคะแนน",
+    "showScoreBarMobile": "หลอดคะแนน",
     "printPdf": "พิมพ์ PDF",
     "topPerformers": "ผู้ทำคะแนนสูงสุด",
     "rank1st": "ที่ 1",

@@ -16,7 +16,7 @@ import ChairPresets from '../components/ChairPresets';
 import { FaPalette, FaUsers, FaEllipsisH, FaChair, FaTh, FaRandom, FaBars, FaThLarge, FaArrowUp, FaArrowDown, FaUserSlash, FaCopy, FaCheck, FaCrown, FaUserGraduate, FaSpinner, FaSave } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 // Debounce delay in milliseconds
 const DEBOUNCE_DELAY = 800;
@@ -565,7 +565,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                 <div className="members-list">
                     {classroomMembers.creator.map(creator => (
                         <div key={creator._id} className="member-card creator">
-                            <img src={getProfileImageSrc(creator.photoURL, isGoogleUser(creator))} alt={creator.displayName} onError={handleImageError} />
+                            <img referrerPolicy="no-referrer" src={getProfileImageSrc(creator.photoURL, isGoogleUser(creator))} alt={creator.displayName} onError={handleImageError} />
                             <div className="member-info">
                                 <span className="member-name">{creator.displayName}</span>
                                 {creator.email && <span className="member-email">{creator.email}</span>}
@@ -603,7 +603,7 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
                     ) : (
                         classroomMembers.participants.map(participant => (
                             <div key={participant._id} className="member-card participant">
-                                <img src={getProfileImageSrc(participant.photoURL, isGoogleUser(participant))} alt={participant.displayName} onError={handleImageError} />
+                                <img referrerPolicy="no-referrer" src={getProfileImageSrc(participant.photoURL, isGoogleUser(participant))} alt={participant.displayName} onError={handleImageError} />
                                 <div className="member-info">
                                     <span className="member-name">{participant.displayName}</span>
                                     {participant.email && <span className="member-email">{participant.email}</span>}
@@ -854,3 +854,4 @@ const EditClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }
 };
 
 export default EditClassroomPage;
+

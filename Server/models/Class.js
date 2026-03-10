@@ -29,6 +29,7 @@ const classSchema = new mongoose.Schema({
     attendance: { type: mongoose.Schema.Types.Mixed, default: {} },
     attendanceDays: { type: Number, default: 20 },
     showStudentStatus: { type: Boolean, default: false },
+    showScoreBar: { type: Boolean, default: false },
     chatMessages: {
         type: [{
             senderId: { type: String, required: true },

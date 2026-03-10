@@ -5,7 +5,7 @@ import axios from 'axios';
 import BeautifulDateTimePicker from './BeautifulDateTimePicker';
 import '../CSS/CreateAssignmentModal.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 /* ─── SVG Icons ─── */
 const SvgLink = () => (
@@ -261,7 +261,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCre
                                     <div key={i} className={`cam-attachment-item cam-attachment-item--${att.type}`}>
                                         {att.type === 'image' ? (
                                             <div className="cam-attachment-thumb">
-                                                <img 
+                                                <img referrerPolicy="no-referrer" 
                                                     src={att.url.startsWith('http') ? att.url : `${API_BASE_URL}${att.url}`} 
                                                     alt={att.filename} 
                                                     onError={e => { e.target.style.display = 'none'; }}
@@ -343,3 +343,4 @@ const CreateAssignmentModal = ({ isOpen, onClose, classId, user, onAssignmentCre
 };
 
 export default CreateAssignmentModal;
+

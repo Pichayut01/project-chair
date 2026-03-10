@@ -1,0 +1,22 @@
+# ============================================
+# Dockerfile for Echair API Server
+# ============================================
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY Server/package.json Server/package-lock.json ./
+
+# Install production dependencies only
+RUN npm ci --production
+
+# Copy server source code
+COPY Server/ ./
+
+# Create uploads directory
+RUN mkdir -p uploads
+
+EXPOSE 5000
+
+CMD ["node", "server.js"]

@@ -158,7 +158,7 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
                                     {topStudents[1] && (
                                         <div className="podium-item second">
                                             <div className="medal-icon silver"><FaMedal /></div>
-                                            <img
+                                            <img referrerPolicy="no-referrer"
                                                 src={getProfileImageSrc(topStudents[1].student.photoURL, isGoogleUser(topStudents[1].student))}
                                                 alt={topStudents[1].student.displayName}
                                                 className="podium-avatar"
@@ -173,7 +173,7 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
                                     {topStudents[0] && (
                                         <div className="podium-item first">
                                             <div className="crown-icon"><FaCrown /></div>
-                                            <img
+                                            <img referrerPolicy="no-referrer"
                                                 src={getProfileImageSrc(topStudents[0].student.photoURL, isGoogleUser(topStudents[0].student))}
                                                 alt={topStudents[0].student.displayName}
                                                 className="podium-avatar"
@@ -188,7 +188,7 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
                                     {topStudents[2] && (
                                         <div className="podium-item third">
                                             <div className="medal-icon bronze"><FaMedal /></div>
-                                            <img
+                                            <img referrerPolicy="no-referrer"
                                                 src={getProfileImageSrc(topStudents[2].student.photoURL, isGoogleUser(topStudents[2].student))}
                                                 alt={topStudents[2].student.displayName}
                                                 className="podium-avatar"
@@ -297,7 +297,7 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
                                         <span className="rank-badge">{index + 1}</span>
                                     </td>
                                     <td className="student-name-cell">
-                                        <img
+                                        <img referrerPolicy="no-referrer"
                                             src={getProfileImageSrc(score.student.photoURL, isGoogleUser(score.student))}
                                             alt={score.student.displayName}
                                             className="student-profile-pic"
@@ -342,3 +342,4 @@ const Scoreboard = ({ classroom, user, onUpdateScores }) => {
 };
 
 export default Scoreboard;
+

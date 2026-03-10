@@ -18,7 +18,7 @@ import Summary from '../components/Summary'; // ✨ Import Summary
 import SessionHistory from '../components/SessionHistory'; // ✨ Import SessionHistory
 import { useTranslation } from 'react-i18next';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     const { classId } = useParams();

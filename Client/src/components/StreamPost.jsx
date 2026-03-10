@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import axios from 'axios';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 // SVG Icons
 const TrashIcon = () => (
@@ -149,7 +149,7 @@ const StreamPost = ({ post, user, isCreator, classId, onDelete, onAddComment, on
             {/* Header */}
             <div className="sp-header">
                 <div className="sp-author">
-                    <img className="sp-avatar" src={authorImage || 'https://ui-avatars.com/api/?name=User'} alt={post.author?.displayName || '?'}
+                    <img referrerPolicy="no-referrer" className="sp-avatar" src={authorImage || 'https://ui-avatars.com/api/?name=User'} alt={post.author?.displayName || '?'}
                          onError={e => { e.target.src = 'https://ui-avatars.com/api/?name=User'; }} />
                     <div>
                         <div className="sp-author-name">{post.author?.displayName || 'Unknown'}</div>
@@ -190,7 +190,7 @@ const StreamPost = ({ post, user, isCreator, classId, onDelete, onAddComment, on
                         if (att.type === 'image') {
                             return (
                                 <a key={i} href={`${API_BASE_URL}${att.url}`} target="_blank" rel="noopener noreferrer" className="sp-att-image-wrap">
-                                    <img src={`${API_BASE_URL}${att.url}`} alt={att.name || 'Image'} className="sp-att-image" />
+                                    <img referrerPolicy="no-referrer" src={`${API_BASE_URL}${att.url}`} alt={att.name || 'Image'} className="sp-att-image" />
                                 </a>
                             );
                         }
@@ -223,7 +223,7 @@ const StreamPost = ({ post, user, isCreator, classId, onDelete, onAddComment, on
                             const canDel = isCreator || isOwn;
                             return (
                                 <div key={comment._id} className="sp-comment">
-                                    <img className="sp-comment-avatar" src={cImg || 'https://ui-avatars.com/api/?name=U'} alt="" onError={e => { e.target.src = 'https://ui-avatars.com/api/?name=U'; }} />
+                                    <img referrerPolicy="no-referrer" className="sp-comment-avatar" src={cImg || 'https://ui-avatars.com/api/?name=U'} alt="" onError={e => { e.target.src = 'https://ui-avatars.com/api/?name=U'; }} />
                                     <div className="sp-comment-body">
                                         <div className="sp-comment-meta">
                                             <span className="sp-comment-author">{comment.author?.displayName || 'Unknown'}</span>
@@ -244,7 +244,7 @@ const StreamPost = ({ post, user, isCreator, classId, onDelete, onAddComment, on
 
                 {/* Add Comment */}
                 <div className="sp-comment-form-wrap">
-                    <img className="sp-comment-avatar" src={currentUserImage || 'https://ui-avatars.com/api/?name=Me'} alt="You" onError={e => { e.target.src = 'https://ui-avatars.com/api/?name=Me'; }} />
+                    <img referrerPolicy="no-referrer" className="sp-comment-avatar" src={currentUserImage || 'https://ui-avatars.com/api/?name=Me'} alt="You" onError={e => { e.target.src = 'https://ui-avatars.com/api/?name=Me'; }} />
                     <form className="sp-comment-form" onSubmit={handleCommentSubmit}>
                         <input
                             className="sp-comment-input"
@@ -265,3 +265,4 @@ const StreamPost = ({ post, user, isCreator, classId, onDelete, onAddComment, on
 };
 
 export default StreamPost;
+

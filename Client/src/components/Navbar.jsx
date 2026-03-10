@@ -12,7 +12,7 @@ import Swal from 'sweetalert2';
 import io from 'socket.io-client';
 import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 const Navbar = ({
     isSidebarOpen, toggleSidebar, user, handleSignOut, onClassActionClick, classrooms = [],
@@ -43,6 +43,7 @@ const Navbar = ({
     const [notifications, setNotifications] = useState([]);
     const [hasUnread, setHasUnread] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
     const [isCreatedByMeExpanded, setIsCreatedByMeExpanded] = useState(true);
     const [isJoinedExpanded, setIsJoinedExpanded] = useState(true);
     const [isCreatorsExpanded, setIsCreatorsExpanded] = useState(true);
@@ -50,7 +51,7 @@ const Navbar = ({
 
     // Fetch Notifications
     const fetchNotifications = async () => {
-        if (!user) return;
+        if (!user || !notificationsEnabled) return;
         try {
             const token = localStorage.getItem('authToken');
             const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
@@ -66,14 +67,14 @@ const Navbar = ({
     };
 
     useEffect(() => {
-        if (user) {
+        if (user && notificationsEnabled) {
             fetchNotifications();
         } else {
             setNotifications([]);
             setUnreadCount(0);
             setHasUnread(false);
         }
-    }, [user]);
+    }, [user, notificationsEnabled]);
 
     // Handle Mark as Read
     const markAsRead = async (id) => {
@@ -162,7 +163,7 @@ const Navbar = ({
 
     // ✨ Global Socket Connection for Real-time Notifications
     useEffect(() => {
-        if (user && user.id) {
+        if (user && user.id && notificationsEnabled) {
             const socket = io(API_BASE_URL, {
                 auth: { userId: user.id }
             });
@@ -180,7 +181,7 @@ const Navbar = ({
                 socket.disconnect();
             };
         }
-    }, [user]);
+    }, [user, notificationsEnabled]);
 
     const prevUser = usePrevious(user);
 
@@ -314,7 +315,7 @@ const Navbar = ({
                     <button className="navbar__burger" onClick={toggleSidebar}>
                         <FiMenu size={24} />
                     </button>
-                    <img src={icon} alt="Logo" className="navbar__logo-image" />
+                    <img referrerPolicy="no-referrer" src={icon} alt="Logo" className="navbar__logo-image" />
                     <h1 style={{ color: "#414141ff", fontSize: "24px" }}>EChair <span style={{ color: "#0aa158" , fontSize: "13px" }}> </span></h1>
                 </div>
 
@@ -325,7 +326,7 @@ const Navbar = ({
 
 
                 <div className="navbar__right">
-                    {user && (
+                    {user && notificationsEnabled && (
                         <div className="navbar__notification" onClick={toggleNotificationDropdown}>
                             <FiBell size={22} />
                             {hasUnread && <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
@@ -374,7 +375,7 @@ const Navbar = ({
                     )}
                     <div className="navbar__profile" onClick={toggleDropdown}>
                         {user ? (
-                            <img
+                            <img referrerPolicy="no-referrer"
                                 src={getCurrentUserProfileImageSrc(user.photoURL, isGoogleUser(user))}
                                 alt="User Profile"
                                 className="navbar-profile-image"
@@ -388,7 +389,7 @@ const Navbar = ({
                         {isDropdownOpen && user && (
                             <div className="dropdown-menu">
                                 <div className="dropdown-user-info">
-                                    <img
+                                    <img referrerPolicy="no-referrer"
                                         src={getCurrentUserProfileImageSrc(user.photoURL, isGoogleUser(user))}
                                         alt="User Profile"
                                         className="dropdown-profile-image"
@@ -460,18 +461,6 @@ const Navbar = ({
                             >
                                 <span>{t('navbar.accountSettings.security')}</span>
                             </li>
-                            <li
-                                className={`sidebar-list-item ${accountActiveSection === 'privacy' ? 'active' : ''}`}
-                                onClick={() => onAccountSectionChange && onAccountSectionChange('privacy')}
-                            >
-                                <span>{t('navbar.accountSettings.privacy')}</span>
-                            </li>
-                            <li
-                                className={`sidebar-list-item ${accountActiveSection === 'notifications' ? 'active' : ''}`}
-                                onClick={() => onAccountSectionChange && onAccountSectionChange('notifications')}
-                            >
-                                <span>{t('navbar.accountSettings.notifications')}</span>
-                            </li>
                         </>
                     ) : isAppSettingPage ? (
                         <>
@@ -494,38 +483,8 @@ const Navbar = ({
                                 <span>{t('navbar.appSettings.general')}</span>
                             </li>
                             <li
-                                className={`sidebar-list-item ${appActiveSection === 'data' ? 'active' : ''}`}
-                                onClick={() => onAppSectionChange && onAppSectionChange('data')}
-                            >
-                                <span>{t('navbar.appSettings.dataManagement')}</span>
-                            </li>
-                            <li
-                                className={`sidebar-list-item ${appActiveSection === 'security' ? 'active' : ''}`}
-                                onClick={() => onAppSectionChange && onAppSectionChange('security')}
-                            >
-                                <span>{t('navbar.appSettings.security')}</span>
-                            </li>
-                            <li
-                                className={`sidebar-list-item ${appActiveSection === 'notifications' ? 'active' : ''}`}
-                                onClick={() => onAppSectionChange && onAppSectionChange('notifications')}
-                            >
-                                <span>{t('navbar.appSettings.notifications')}</span>
-                            </li>
-                            <li
-                                className={`sidebar-list-item ${appActiveSection === 'users' ? 'active' : ''}`}
-                                onClick={() => onAppSectionChange && onAppSectionChange('users')}
-                            >
-                                <span>{t('navbar.appSettings.userManagement')}</span>
-                            </li>
-                            <li
-                                className={`sidebar-list-item ${appActiveSection === 'integration' ? 'active' : ''}`}
-                                onClick={() => onAppSectionChange && onAppSectionChange('integration')}
-                            >
-                                <span>{t('navbar.appSettings.integration')}</span>
-                            </li>
-                            <li
-                                className={`sidebar-list-item ${appActiveSection === 'help' ? 'active' : ''}`}
-                                onClick={() => onAppSectionChange && onAppSectionChange('help')}
+                                className={`sidebar-list-item ${appActiveSection === 'about' ? 'active' : ''}`}
+                                onClick={() => onAppSectionChange && onAppSectionChange('about')}
                             >
                                 <span>{t('navbar.appSettings.helpSupport')}</span>
                             </li>
@@ -766,7 +725,7 @@ const Navbar = ({
                                     {/* ✨ แก้ไข: แสดงผล creator ให้รองรับทั้ง Object และ Array */}
                                     {isCreatorsExpanded && (Array.isArray(classroomMembers.creator) ? classroomMembers.creator : [classroomMembers.creator]).map(c => (
                                         c && <li key={c._id} className="sidebar-list-item sidebar-member-item sidebar-member-nested" onClick={() => isCreator && handleMemberMenu(c)}>
-                                            <img
+                                            <img referrerPolicy="no-referrer"
                                                 src={getProfileImageSrc(c.photoURL, isGoogleUser(c))}
                                                 alt={c.displayName}
                                                 onError={handleImageError}
@@ -816,7 +775,7 @@ const Navbar = ({
                                                     .filter(p => !creatorIds.includes(p._id))
                                                     .map(participant => (
                                                         <li key={participant._id} className="sidebar-list-item sidebar-member-item sidebar-member-nested" onClick={() => isCreator && handleMemberMenu(participant)}>
-                                                            <img
+                                                            <img referrerPolicy="no-referrer"
                                                                 src={getProfileImageSrc(participant.photoURL, isGoogleUser(participant))}
                                                                 alt={participant.displayName}
                                                                 className="sidebar-profile-image"
@@ -902,7 +861,7 @@ const Navbar = ({
                                                         className="sidebar-list-item sidebar-classroom-item sidebar-classroom-nested"
                                                         onClick={() => handleClassroomClick(room._id)}
                                                     >
-                                                        <img
+                                                        <img referrerPolicy="no-referrer"
                                                             src={getProfileImageSrc(room.creator?.[0]?.photoURL, isGoogleUser(room.creator?.[0]))}
                                                             alt="Creator Profile"
                                                             className="sidebar-profile-image"
@@ -933,7 +892,7 @@ const Navbar = ({
                                                         className="sidebar-list-item sidebar-classroom-item sidebar-classroom-nested"
                                                         onClick={() => handleClassroomClick(room._id)}
                                                     >
-                                                        <img
+                                                        <img referrerPolicy="no-referrer"
                                                             src={getProfileImageSrc(room.creator?.[0]?.photoURL, isGoogleUser(room.creator?.[0]))}
                                                             alt="Creator Profile"
                                                             className="sidebar-profile-image"
@@ -963,3 +922,4 @@ const Navbar = ({
 };
 
 export default Navbar;
+

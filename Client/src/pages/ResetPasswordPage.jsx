@@ -8,7 +8,8 @@ import withReactContent from "sweetalert2-react-content";
 import { FaEye, FaEyeSlash, FaLock, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import "../CSS/ResetPassword.css";
 
-const backendUrl = "http://localhost:5000/api/auth";
+import { API_AUTH_URL } from '../config/api';
+const backendUrl = API_AUTH_URL;
 const MySwal = withReactContent(Swal);
 
 const ResetPasswordPage = () => {

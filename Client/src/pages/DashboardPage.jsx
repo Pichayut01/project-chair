@@ -10,7 +10,7 @@ import '../CSS/Navbar.css';
 import '../CSS/Main.css';
 import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
-const API_BASE_URL = 'http://localhost:5000';
+import API_BASE_URL from '../config/api';
 
 const DashboardPage = ({ user, updateUserProfile, onSignOut, isSidebarOpen, toggleSidebar, addNotification, onAddNotification }) => {
     const { t } = useTranslation(); // ✨ Apply hook

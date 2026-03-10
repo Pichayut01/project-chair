@@ -419,9 +419,13 @@ exports.updateSettings = async (req, res) => {
         }
 
         // Student Performance Status visibility toggle
-        const { showStudentStatus } = req.body;
+        const { showStudentStatus, showScoreBar } = req.body;
         if (typeof showStudentStatus === 'boolean') {
             classroom.showStudentStatus = showStudentStatus;
+        }
+
+        if (typeof showScoreBar === 'boolean') {
+            classroom.showScoreBar = showScoreBar;
         }
 
         const updatedClassroom = await classroom.save();

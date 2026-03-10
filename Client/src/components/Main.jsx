@@ -9,7 +9,7 @@ import { FaThumbtack } from "react-icons/fa";
 import Swal from 'sweetalert2';
 import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
-const API_BASE_URL = 'http://localhost:5000';
+import API_BASE_URL from '../config/api';
 
 const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMenu, handleLeaveClassroom, onClassActionClick }) => {
     const { t } = useTranslation(); // ✨ Apply hook
@@ -122,7 +122,7 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
                             {/* Creator info */}
                             {creator && (
                                 <div className="card-creator-info">
-                                    <img
+                                    <img referrerPolicy="no-referrer"
                                         src={getProfileImageSrc(creator.photoURL, isGoogleUser(creator))}
                                         alt={creator.displayName}
                                         className="card-creator-avatar"
@@ -155,7 +155,7 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
                                     <div className="card-avatar-extra">+{extraMembers}</div>
                                 )}
                                 {displayAvatars.map((member, index) => (
-                                    <img
+                                    <img referrerPolicy="no-referrer"
                                         key={member._id || index}
                                         src={getProfileImageSrc(member.photoURL, isGoogleUser(member))}
                                         alt={member.displayName || `Member ${index + 1}`}
@@ -234,3 +234,4 @@ const Main = ({ isSidebarOpen, classrooms, user, onPinClass, setShowMenu, showMe
 };
 
 export default Main;
+

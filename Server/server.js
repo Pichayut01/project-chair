@@ -30,6 +30,7 @@ logger.info('>> Starting server initialization...');
 connectDB();
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 const port = process.env.PORT || 5000;
 
@@ -84,6 +85,7 @@ app.use('/api/notifications', require('./routes/notifications')); // ✨ Notific
 app.use('/api/upload', require('./routes/upload')); // ✨ Generic Upload Route
 app.use('/api/stream', require('./routes/stream')); // ✨ Stream Route
 app.use('/api/classwork', require('./routes/classwork')); // ✨ Classwork Route
+app.use('/api/public', require('./routes/public')); // ✨ Public API Route
 logger.success('All API routes registered successfully');
 
 // Socket Handler

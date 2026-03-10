@@ -12,7 +12,7 @@ import '../CSS/Main.css';
 import { getProfileImageSrc, getCurrentUserProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, toggleSidebar }) => {
     const { t } = useTranslation(); // ✨ Apply hook
@@ -282,7 +282,7 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
             {/* Profile Header */}
             <div className="profile-header">
                 <div className="profile-avatar-section">
-                    <img
+                    <img referrerPolicy="no-referrer"
                         src={photoSrc}
                         alt="Profile"
                         className="profile-avatar"
@@ -738,36 +738,6 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
         </div>
     );
 
-    const renderPrivacySection = () => (
-        <div className="setting-section">
-            <h2 className="section-title">{t('accountSettingsPage.privacy.title') || 'Privacy Settings'}</h2>
-            <div className="placeholder-content">
-                <p>{t('accountSettingsPage.privacy.placeholder') || 'Privacy settings will be implemented here.'}</p>
-                <ul>
-                    <li>{t('accountSettingsPage.privacy.visibility') || 'Profile Visibility'}</li>
-                    <li>{t('accountSettingsPage.privacy.sharing') || 'Data Sharing Preferences'}</li>
-                    <li>{t('accountSettingsPage.privacy.tracking') || 'Activity Tracking'}</li>
-                    <li>{t('accountSettingsPage.privacy.deletion') || 'Account Deletion'}</li>
-                </ul>
-            </div>
-        </div>
-    );
-
-    const renderNotificationsSection = () => (
-        <div className="setting-section">
-            <h2 className="section-title">{t('accountSettingsPage.notifications.title') || 'Notification Settings'}</h2>
-            <div className="placeholder-content">
-                <p>{t('accountSettingsPage.notifications.placeholder') || 'Notification settings will be implemented here.'}</p>
-                <ul>
-                    <li>{t('accountSettingsPage.notifications.email') || 'Email Notifications'}</li>
-                    <li>{t('accountSettingsPage.notifications.push') || 'Push Notifications'}</li>
-                    <li>{t('accountSettingsPage.notifications.classroom') || 'Classroom Updates'}</li>
-                    <li>{t('accountSettingsPage.notifications.system') || 'System Alerts'}</li>
-                </ul>
-            </div>
-        </div>
-    );
-
     // Fetch security data when security section is active
     useEffect(() => {
         if (activeSection === 'security') {
@@ -792,8 +762,6 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
                     <div className="google-account-container">
                         {activeSection === 'account' && renderAccountSection()}
                         {activeSection === 'security' && renderSecuritySection()}
-                        {activeSection === 'privacy' && renderPrivacySection()}
-                        {activeSection === 'notifications' && renderNotificationsSection()}
                     </div>
                 </div>
             </main>
@@ -837,3 +805,4 @@ const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, tog
 };
 
 export default AccountSetting;
+

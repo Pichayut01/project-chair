@@ -7,7 +7,7 @@ import CreateAssignmentModal from '../components/CreateAssignmentModal';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 import '../CSS/AssignmentDetailPage.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 /* ───────── SVG Icons ───────── */
 const SvgClipboard = () => (
@@ -330,7 +330,7 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                                                     return (
                                                         <a key={i} href={fullUrl} target="_blank" rel="noreferrer" className="ad-attach-card ad-attach-image">
                                                             <div className="ad-attach-img-preview">
-                                                                <img src={fullUrl} alt={att.filename} onError={e => { e.target.style.display = 'none'; }} />
+                                                                <img referrerPolicy="no-referrer" src={fullUrl} alt={att.filename} onError={e => { e.target.style.display = 'none'; }} />
                                                             </div>
                                                             <span className="ad-attach-label">{att.filename}</span>
                                                         </a>
@@ -521,7 +521,7 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                                                 <div key={sub._id} className="ad-sub-card">
                                                     <div className="ad-sub-top">
                                                         <div className="ad-sub-student">
-                                                            <img 
+                                                            <img referrerPolicy="no-referrer" 
                                                                 className="ad-sub-avatar" 
                                                                 src={getProfileImageSrc(sub.studentId?.photoURL, isGoogleUser(sub.studentId)) || `https://ui-avatars.com/api/?name=${encodeURIComponent(sub.studentId?.displayName || '?')}&background=random`} 
                                                                 alt="" 
@@ -598,7 +598,7 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                                             const canDel = isCreator || isOwn;
                                             return (
                                                 <div key={comment._id} className="ad-comment-item">
-                                                    <img className="ad-comment-avatar" src={cImg || 'https://ui-avatars.com/api/?name=U'} alt="" onError={e => { e.target.src = 'https://ui-avatars.com/api/?name=U'; }} />
+                                                    <img referrerPolicy="no-referrer" className="ad-comment-avatar" src={cImg || 'https://ui-avatars.com/api/?name=U'} alt="" onError={e => { e.target.src = 'https://ui-avatars.com/api/?name=U'; }} />
                                                     <div className="ad-comment-body">
                                                         <div className="ad-comment-meta">
                                                             <span className="ad-comment-author">{comment.author?.displayName || 'Unknown'}</span>
@@ -618,7 +618,7 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                                 )}
 
                                 <form className="ad-comment-form" onSubmit={handleAddComment}>
-                                    <img className="ad-comment-avatar" src={getProfileImageSrc(user?.photoURL, isGoogleUser(user)) || 'https://ui-avatars.com/api/?name=Me'} alt="" onError={e => { e.target.src = 'https://ui-avatars.com/api/?name=Me'; }} />
+                                    <img referrerPolicy="no-referrer" className="ad-comment-avatar" src={getProfileImageSrc(user?.photoURL, isGoogleUser(user)) || 'https://ui-avatars.com/api/?name=Me'} alt="" onError={e => { e.target.src = 'https://ui-avatars.com/api/?name=Me'; }} />
                                     <div className="ad-comment-input-row">
                                         <input
                                             type="text"
@@ -654,3 +654,4 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
 };
 
 export default AssignmentDetailPage;
+

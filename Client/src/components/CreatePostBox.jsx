@@ -6,7 +6,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 // SVG Icons (inline to avoid dependency on react-icons for consistency)
 const LinkIcon = () => (
@@ -144,7 +144,7 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
         <div className={`cpb-container ${isExpanded ? 'cpb-container--expanded' : ''}`}>
             {!isExpanded ? (
                 <div className="cpb-placeholder" onClick={() => setIsExpanded(true)}>
-                    <img 
+                    <img referrerPolicy="no-referrer" 
                         className="cpb-avatar"
                         src={getProfileImageSrc(user?.photoURL, user ? isGoogleUser(user) : false)} 
                         alt="Profile" 
@@ -249,3 +249,4 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
 };
 
 export default CreatePostBox;
+

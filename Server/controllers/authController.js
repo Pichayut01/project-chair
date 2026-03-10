@@ -131,7 +131,7 @@ exports.googleLoginVerify = async (req, res) => {
             }
         );
     } catch (error) {
-        logger.error(`Google authentication error:`, error);
+        logger.error(`Google authentication error: ${error.message}`, error);
         if (error.code === 'auth/id-token-expired') {
             res.status(401).json({ msg: 'Google token has expired. Please sign in again.' });
         } else if (error.code === 'auth/invalid-id-token') {

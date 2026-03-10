@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'r
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from './firebaseConfig';
 import axios from 'axios';
+import { API_AUTH_URL } from './config/api';
 
 const AccountSetting = lazy(() => import('./pages/AccountSetting'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -25,7 +26,7 @@ const EventPresentationPage = lazy(() => import('./pages/EventPresentationPage')
 const StreamPage = lazy(() => import('./pages/StreamPage')); // ✨ Add Stream Page
 const AssignmentDetailPage = lazy(() => import('./pages/AssignmentDetailPage')); // ✨ Add Assignment Detail Page
 
-const backendUrl = 'http://localhost:5000/api/auth';
+const backendUrl = API_AUTH_URL;
 
 function App() {
     const [user, setUser] = useState(null);
@@ -154,7 +155,7 @@ function App() {
 
 
     return (
-        <Router>
+        <Router basename={process.env.PUBLIC_URL || '/'}>
             <Suspense fallback={<Loader />}>
                 <AppRoutes
                     user={user}

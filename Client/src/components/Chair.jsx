@@ -9,7 +9,7 @@ import NoUserInChair from '../image/ืNoUserInChair.png';
 import { FaUser, FaHandPaper } from 'react-icons/fa';
 import nullUserPhoto from '../image/nulluser.png';
 
-const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, userPhotoURL, userName, onChairClick, userScore, minScore, maxScore, hasAnyScores, isCreator, rotation = 0, isSelectedForGroup = false, selectionIndex, zoomScale = 1, isHandRaised = false, currentEmoji = null, groupColor = null }) => {
+const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, userPhotoURL, userName, onChairClick, userScore, minScore, maxScore, hasAnyScores, isCreator, rotation = 0, isSelectedForGroup = false, selectionIndex, zoomScale = 1, isHandRaised = false, currentEmoji = null, groupColor = null, showScoreBar = true }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [position, setPosition] = useState(initialPosition);
     const offset = useRef({ x: 0, y: 0 });
@@ -242,8 +242,8 @@ const Chair = ({ id, initialPosition, onChairMove, containerRef, isDraggable, us
                 </div>
             )}
 
-            {/* HP Bar around chair - Always visible to everyone */}
-            {userName && (
+            {/* HP Bar around chair - Conditionally visible based on settings and role */}
+            {userName && (isCreator || showScoreBar) && (
                 <div
                     className="hp-bar-container"
                     style={{

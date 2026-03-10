@@ -125,7 +125,7 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
                                                         overflow: 'hidden', border: `2px solid ${group.color}`, cursor: 'help'
                                                     }}>
                                                         {m.photoURL ? (
-                                                            <img src={m.photoURL.startsWith('http') ? m.photoURL : (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000') + m.photoURL} alt={m.userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.userName || '?')}&background=random&size=32`; }} />
+                                                            <img referrerPolicy="no-referrer" src={m.photoURL.startsWith('http') ? m.photoURL : (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000') + m.photoURL} alt={m.userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.userName || '?')}&background=random&size=32`; }} />
                                                         ) : (
                                                             <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#4b5563' }}>
                                                                 {m.userName?.substring(0, 2).toUpperCase() || '?'}
@@ -248,3 +248,4 @@ const GroupingModal = ({ isOpen, onClose, onCreateGroups, activeGroupingEvent, o
 };
 
 export default GroupingModal;
+

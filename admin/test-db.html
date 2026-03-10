@@ -52,7 +52,7 @@
     <script>
         // Use the same token as the main app
         const token = localStorage.getItem('admin_token');
-        const API_URL = 'http://localhost:5000/api/admin/system-settings';
+        const API_URL = '/api/admin/system-settings';
 
         if (!token) {
             document.body.innerHTML += '<h2 style="color:red">NO ADMIN TOKEN FOUND! Login in the main app first.</h2>';

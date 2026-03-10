@@ -83,7 +83,7 @@ const SessionSummaryModal = ({ sessionData, onClose }) => {
                                             <div className={`session-rank-position ${isNumericRank ? 'numeric' : ''}`}>
                                                 {rankDisplay}
                                             </div>
-                                            <img
+                                            <img referrerPolicy="no-referrer"
                                                 src={getProfileImageSrc(student.photoURL, false)}
                                                 alt={student.studentName}
                                                 className="session-rank-avatar"
@@ -123,3 +123,4 @@ const SessionSummaryModal = ({ sessionData, onClose }) => {
 };
 
 export default SessionSummaryModal;
+

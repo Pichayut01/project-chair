@@ -11,7 +11,8 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
 import { useTranslation } from "react-i18next"; // ✨ Add useTranslation hook
 
-const backendUrl = "http://localhost:5000/api/auth";
+import { API_AUTH_URL } from '../config/api';
+const backendUrl = API_AUTH_URL;
 const MySwal = withReactContent(Swal);
 
 /* ===== Inline SVG Icons ===== */
@@ -305,7 +306,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
 
         {/* Left Panel - Image & Branding (Desktop Only) */}
         <div className="login-left-panel">
-          <img
+          <img referrerPolicy="no-referrer"
             src={require('../image/Gemini_Generated_Image_fnyc63fnyc63fnyc.png')}
             alt="EChair Classroom"
             className="panel-bg-image"
@@ -327,7 +328,7 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
           {/* Brand / Logo */}
           <div className="login-brand">
             <div className="brand-icon-wrapper">
-              <img src={require('../image/icon.ico')} alt="EChair Logo" />
+              <img referrerPolicy="no-referrer" src={require('../image/icon.ico')} alt="EChair Logo" />
             </div>
             <h1 className="brand-text">
               EChair
@@ -624,3 +625,4 @@ const LoginPage = ({ onLoginSuccess, isSidebarOpen = false }) => {
 };
 
 export default LoginPage;
+
