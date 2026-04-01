@@ -7,8 +7,7 @@ import Loader from './Loader';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import '../CSS/AssignRate.css';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+import API_BASE_URL from '../config/api';
 
 const AssignRate = ({ classId, user }) => {
     const [ratePresets, setRatePresets] = useState([]);

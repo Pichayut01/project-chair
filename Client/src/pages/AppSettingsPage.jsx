@@ -9,6 +9,8 @@ import { FiSettings, FiBell, FiGlobe } from 'react-icons/fi';
 
 import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
+import { buildPublicAssetUrl } from '../config/api';
+
 const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSidebar }) => {
     const navigate = useNavigate();
     const { t, i18n } = useTranslation(); // ✨ Apply hook
@@ -129,7 +131,7 @@ const AppSettingsPage = ({ user: propUser, onSignOut, isSidebarOpen, toggleSideb
                         <div className="settings-card about-card">
                             <div className="about-logo">
                                 <div className="logo-circle" style={{ background: '#ffffff', padding: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                                    <img referrerPolicy="no-referrer" src="/favicon.ico" alt="EChair Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                    <img referrerPolicy="no-referrer" src={buildPublicAssetUrl('/favicon.ico')} alt="EChair Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                 </div>
                                 <h3>EChair</h3>
                             </div>

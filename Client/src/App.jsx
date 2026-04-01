@@ -7,7 +7,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'r
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from './firebaseConfig';
 import axios from 'axios';
-import { API_AUTH_URL } from './config/api';
+import { API_AUTH_URL, APP_BASENAME } from './config/api';
 
 const AccountSetting = lazy(() => import('./pages/AccountSetting'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -155,7 +155,7 @@ function App() {
 
 
     return (
-        <Router basename={process.env.PUBLIC_URL || '/'}>
+        <Router basename={APP_BASENAME}>
             <Suspense fallback={<Loader />}>
                 <AppRoutes
                     user={user}

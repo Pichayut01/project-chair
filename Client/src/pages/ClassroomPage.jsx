@@ -16,6 +16,7 @@ import ChairPresets from '../components/ChairPresets';
 import ChairDropdown from '../components/ChairDropdown';
 import StudentRatingModal from '../components/StudentRatingModal';
 import { useSocket } from '../hooks/useSocket';
+import API_BASE_URL from '../config/api';
 
 
 import { FaSearch, FaChalkboardTeacher, FaEdit, FaCheck, FaTimes, FaUndo, FaTrash, FaObjectGroup, FaUsers, FaTh, FaThLarge, FaSave, FaUserPlus, FaEllipsisV, FaHandPaper, FaDownload, FaCrown, FaUserCog, FaRobot, FaMicrophone, FaRegLightbulb, FaSmile, FaImages, FaPlay, FaMedal, FaExternalLinkAlt, FaClock, FaComment, FaLink, FaUsersSlash, FaChevronDown, FaChevronUp, FaUserCheck } from 'react-icons/fa';
@@ -30,7 +31,6 @@ import StudentStatusBanner from '../components/StudentStatusBanner'; // ✨ Impo
 import SessionSummaryModal from '../components/SessionSummaryModal'; // ✨ Import Session Summary Modal
 import { useTranslation } from 'react-i18next';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 const getTeacherViewStorageKey = (classId, userId) => {
     if (!classId) return null;

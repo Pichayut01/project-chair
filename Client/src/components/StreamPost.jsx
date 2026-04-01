@@ -17,13 +17,11 @@ import {
 } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+import API_BASE_URL, { buildServerUrl } from '../config/api';
 
 const resolveAttachmentUrl = (url) => {
     if (!url) return '';
-    if (/^https?:\/\//i.test(url)) return url;
-    return `${API_BASE_URL}${url}`;
+    return buildServerUrl(url);
 };
 
 const renderTextWithLinks = (text, className = 'sp-inline-link') => {

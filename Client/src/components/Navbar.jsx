@@ -10,9 +10,9 @@ import { getProfileImageSrc, getCurrentUserProfileImageSrc, isGoogleUser, handle
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import io from 'socket.io-client';
+import API_BASE_URL, { createSocketClient } from '../config/api';
 import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 const Navbar = ({
     isSidebarOpen, toggleSidebar, user, handleSignOut, onClassActionClick, classrooms = [],
@@ -164,7 +164,7 @@ const Navbar = ({
     // ✨ Global Socket Connection for Real-time Notifications
     useEffect(() => {
         if (user && user.id && notificationsEnabled) {
-            const socket = io(API_BASE_URL, {
+            const socket = createSocketClient(io, {
                 auth: { userId: user.id }
             });
 

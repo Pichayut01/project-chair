@@ -7,8 +7,8 @@ import '../CSS/EditClassroomPage.css';
 import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
 import { FaPalette, FaUsers, FaEllipsisH, FaCrown, FaUserGraduate, FaArrowUp, FaArrowDown, FaUserSlash, FaCopy, FaCheck, FaSpinner, FaCog } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
+import API_BASE_URL from '../config/api';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 const DEBOUNCE_DELAY = 800;
 
 const ClassroomSettings = ({ classId, user, classroom, onRefresh }) => {

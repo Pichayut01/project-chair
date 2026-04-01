@@ -6,8 +6,7 @@ import { getProfileImageSrc, handleImageError } from '../utils/profileImageHelpe
 import { FiClock, FiUsers, FiStar, FiChevronDown, FiBookOpen, FiInbox, FiChevronUp } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import '../CSS/SessionHistory.css';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+import API_BASE_URL from '../config/api';
 
 const formatDuration = (seconds, t) => {
     if (!seconds) return '0s';

@@ -1,7 +1,6 @@
 // Profile Image Helper Utility
 import nullUserPhoto from '../image/nulluser.png';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+import { buildServerUrl } from '../config/api';
 
 /**
  * Get the correct profile image source with proper fallbacks
@@ -26,12 +25,7 @@ export const getProfileImageSrc = (photoURL, isGoogleUser = false) => {
     }
 
     // If it's a relative path (uploaded image), prepend API base URL
-    if (photoURL.startsWith('/')) {
-        return `${API_BASE_URL}${photoURL}`;
-    }
-
-    // If it's a relative path without leading slash, normalize
-    return `${API_BASE_URL}/${photoURL.replace(/^\/+/, '')}`;
+    return buildServerUrl(photoURL);
 };
 
 /**

@@ -6,8 +6,7 @@ import Lottie from 'lottie-react';
 import CreateAssignmentModal from './CreateAssignmentModal';
 import classworkHeroDesignerAnimation from '../assets/classwork-hero-designer.json';
 import '../CSS/ClassworkSection.css';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+import API_BASE_URL from '../config/api';
 
 const formatStatValue = (value) => new Intl.NumberFormat().format(value || 0);
 

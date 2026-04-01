@@ -8,8 +8,7 @@ import CreateAssignmentModal from '../components/CreateAssignmentModal';
 import assignmentDetailWorkspaceAnimation from '../assets/assignment-detail-workspace.json';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 import '../CSS/AssignmentDetailPage.css';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+import API_BASE_URL from '../config/api';
 
 const ASSIGNMENT_DETAIL_ANIMATION_COLORS = {
     Color1: [0.1294117647, 0.7215686275, 0.431372549, 1],

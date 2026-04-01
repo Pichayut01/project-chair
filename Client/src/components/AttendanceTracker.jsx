@@ -7,10 +7,9 @@ import { Doughnut } from 'react-chartjs-2';
 import { FaCalendarCheck } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import '../CSS/AttendanceTracker.css';
+import API_BASE_URL from '../config/api';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const AttendanceTracker = ({ classroom, user }) => {
     const { t } = useTranslation();

@@ -17,8 +17,8 @@ import AttendanceTracker from '../components/AttendanceTracker'; // ✨ Import A
 import Summary from '../components/Summary'; // ✨ Import Summary
 import SessionHistory from '../components/SessionHistory'; // ✨ Import SessionHistory
 import { useTranslation } from 'react-i18next';
+import API_BASE_URL from '../config/api';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 const ClassDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     const { classId } = useParams();

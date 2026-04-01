@@ -52,6 +52,9 @@ services:
     build:
       context: ..
       dockerfile: production-build/Dockerfile.client
+      args:
+        CLIENT_PUBLIC_URL: ${CLIENT_PUBLIC_URL:-/app}
+        REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL:-}
     container_name: echair-client
     restart: unless-stopped
     networks:
@@ -82,10 +85,12 @@ services:
     image: nginx:alpine
     container_name: echair-nginx
     restart: unless-stopped
+    environment:
+      CLIENT_PUBLIC_URL: ${CLIENT_PUBLIC_URL:-/app}
     ports:
       - "${NGINX_PORT:-80}:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
     depends_on:
       - server
       - client

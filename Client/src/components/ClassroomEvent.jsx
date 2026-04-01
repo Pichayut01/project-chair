@@ -9,14 +9,7 @@ import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDi
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 import { useTranslation } from 'react-i18next';
 import classroomEventEmptyAnimation from '../assets/classroom-event-empty.json';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production'
-    ? ''
-    : (
-        process.env.REACT_APP_API_BASE_URL ||
-        process.env.REACT_APP_API_URL ||
-        `${window.location.protocol}//${window.location.hostname}:5000`
-    );
+import API_BASE_URL, { buildAppUrl as buildClientAppUrl, buildServerUrl } from '../config/api';
 
 const CLASSROOM_EVENT_ANIMATION_COLORS = {
     accent: [0.1294117647, 0.7215686275, 0.431372549, 1],
@@ -79,41 +72,10 @@ const createThemedClassroomEventAnimation = (animationData) => {
 const getEventImageSrc = (event) => {
     const imageUrl = event?.config?.imageUrl || event?.imageUrl;
     if (!imageUrl) return null;
-    if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
-    if (imageUrl.startsWith('/')) return `${API_BASE_URL}${imageUrl}`;
-    return `${API_BASE_URL}/${imageUrl.replace(/^\/+/, '')}`;
+    return buildServerUrl(imageUrl);
 };
 
-const getAppBasePath = () => {
-    if (typeof window === 'undefined') return '';
-
-    const pathname = window.location.pathname || '';
-    const routeMatch = pathname.match(/^(.*?)(?:\/classroom\/|\/presentation\/)/);
-    if (routeMatch) {
-        return routeMatch[1].replace(/\/+$/, '');
-    }
-
-    const publicUrl = (process.env.PUBLIC_URL || '').trim();
-    if (!publicUrl || publicUrl === '/') return '';
-
-    try {
-        return new URL(publicUrl, window.location.origin).pathname.replace(/\/+$/, '');
-    } catch (error) {
-        return publicUrl.startsWith('/')
-            ? publicUrl.replace(/\/+$/, '')
-            : `/${publicUrl.replace(/^\/+|\/+$/g, '')}`;
-    }
-};
-
-const buildAppUrl = (pathname) => {
-    if (typeof window === 'undefined') return pathname;
-
-    const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
-    const basePath = getAppBasePath();
-    return new URL(`${basePath}${normalizedPath}`.replace(/\/{2,}/g, '/'), window.location.origin).toString();
-};
-
-const buildPresentationUrl = (classId, eventId) => buildAppUrl(`/presentation/${encodeURIComponent(classId)}/${encodeURIComponent(eventId)}`);
+const buildPresentationUrl = (classId, eventId) => buildClientAppUrl(`/presentation/${encodeURIComponent(classId)}/${encodeURIComponent(eventId)}`);
 
 const EVENT_TYPES_WITH_TIMER = ['question', 'poll'];
 
@@ -254,9 +216,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
 
     const getPreviewImageSrc = () => {
         if (!selectedImage) return null;
-        if (/^https?:\/\//i.test(selectedImage)) return selectedImage;
-        if (selectedImage.startsWith('/')) return `${API_BASE_URL}${selectedImage}`;
-        return `${API_BASE_URL}/${selectedImage.replace(/^\/+/, '')}`;
+        return buildServerUrl(selectedImage);
     };
 
     const handleTimerToggle = (enabled) => {

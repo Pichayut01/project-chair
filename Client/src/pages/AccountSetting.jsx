@@ -12,7 +12,8 @@ import '../CSS/Main.css';
 import { getProfileImageSrc, getCurrentUserProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 import { useTranslation } from 'react-i18next'; // ✨ Add useTranslation hook
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+
+import API_BASE_URL from '../config/api';
 
 const AccountSetting = ({ user, updateUserProfile, onSignOut, isSidebarOpen, toggleSidebar }) => {
     const { t } = useTranslation(); // ✨ Apply hook

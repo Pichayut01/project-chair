@@ -18,10 +18,14 @@ RUN npm ci --legacy-peer-deps
 COPY Client/ ./
 
 # Set environment variables for build
-# API URL uses relative path so it works with nginx reverse proxy
-ENV REACT_APP_API_URL=
-ENV REACT_APP_API_BASE_URL=
-ENV PUBLIC_URL=/app
+# CLIENT_PUBLIC_URL controls both CRA asset paths and React Router basename.
+# Example: /chair-demo (no trailing slash)
+ARG CLIENT_PUBLIC_URL=/app
+ARG REACT_APP_API_BASE_URL=
+ENV REACT_APP_API_URL=${REACT_APP_API_BASE_URL}
+ENV REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
+ENV REACT_APP_BASE_PATH=${CLIENT_PUBLIC_URL}
+ENV PUBLIC_URL=${CLIENT_PUBLIC_URL}
 
 # Build the React app
 RUN npm run build

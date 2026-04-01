@@ -4,8 +4,7 @@ import { createPortal } from 'react-dom';
 import axios from 'axios';
 import BeautifulDateTimePicker from './BeautifulDateTimePicker';
 import '../CSS/CreateAssignmentModal.css';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+import API_BASE_URL from '../config/api';
 
 /* ─── SVG Icons ─── */
 const SvgLink = () => (

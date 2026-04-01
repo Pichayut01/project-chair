@@ -1,94 +1,77 @@
-# ============================================
+# Echair Production Deployment
 
-# Echair Production Deployment Guide
+ชุดนี้ใช้ `docker compose` + `nginx` สำหรับ deploy แบบมี reverse proxy และรองรับ path prefix เช่น:
 
-# Docker Compose + Nginx Reverse Proxy
+- `https://www.example.com/chair-demo/`
+- `https://www.example.com/chair-demo/api/`
+- `https://www.example.com/chair-demo/socket.io/`
+- `https://www.example.com/chair-demo/uploads/`
 
-# ============================================
+## Services
 
-# 🚀 Echair — Production Deployment
+| Service | URL | Notes |
+| --- | --- | --- |
+| Landing Page | `/` | หน้าแรกของโดเมน |
+| Client App | `/<project-name>/` | React client |
+| Admin Panel | `/admin/` | Static admin |
+| API Server | `/<project-name>/api/` | Express backend |
+| Socket.IO | `/<project-name>/socket.io/` | Realtime |
+| Uploads | `/<project-name>/uploads/` | Uploaded files |
 
-ระบบ Echair ทั้งหมดพร้อม deploy ด้วยคำสั่งเดียว!
+## Quick Start
 
-## 📋 Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/) (>= 20.x)
-- [Docker Compose](https://docs.docker.com/compose/install/) (>= 2.x)
-
-## 📁 โครงสร้าง Services
-
-| Service      | Path URL  | Description          |
-| ------------ | --------- | -------------------- |
-| Landing Page | `/`       | หน้าแรกของเว็บไซต์   |
-| Client App   | `/app/`   | แอปหลัก (React)      |
-| Admin Panel  | `/admin/` | หน้า Admin           |
-| API Server   | `/api/`   | Backend API          |
-| MongoDB      | —         | ฐานข้อมูล (internal) |
-| Nginx        | Port 80   | Reverse Proxy        |
-
-## ⚡ Quick Start
-
-### 1. Copy Environment File
+1. Copy env
 
 ```bash
 cp .env.example .env
 ```
 
-### 2. แก้ไขข้อมูลใน `.env`
+2. Fill the important values in `.env`
 
-เปิดไฟล์ `.env` แล้วกรอกข้อมูลจริง:
+- `CLIENT_PUBLIC_URL=/chair-demo`
+- `CLIENT_URL=https://www.example.com/chair-demo`
+- `JWT_SECRET=...`
+- `EMAIL_USER=...`
+- `EMAIL_PASS=...`
+- `MONGODB_URI=...`
 
-- `MONGO_INITDB_ROOT_PASSWORD` — รหัสผ่าน MongoDB
-- `JWT_SECRET` — Secret key สำหรับ JWT token
-- `EMAIL_USER` / `EMAIL_PASS` — Gmail + App Password สำหรับส่ง email
-- `CLIENT_URL` — URL ของเว็บไซต์จริง (เช่น `http://yourdomain.com/app`)
+3. Put your Firebase service account JSON at the path set in `FIREBASE_SERVICE_ACCOUNT_PATH`
 
-### 3. Firebase Service Account
-
-Copy ไฟล์ Firebase Service Account JSON ไปที่:
-
-```bash
-cp /path/to/your-firebase-key.json ./firebase-service-account.json
-```
-
-### 4. Deploy! 🚀
+4. Build and start
 
 ```bash
 docker compose up -d --build
 ```
 
-### 5. เปิดเบราว์เซอร์
+## Important Notes
 
-- **Landing Page**: `http://localhost`
-- **Client App**: `http://localhost/app`
-- **Admin Panel**: `http://localhost/admin`
-- **API Health**: `http://localhost/api/health`
+- `CLIENT_PUBLIC_URL` ต้องเป็น path prefix และห้ามมี `/` ท้าย เช่น `/chair-demo`
+- `CLIENT_URL` ต้องรวม prefix เดียวกันด้วย เพราะระบบ reset password จะใช้ค่านี้สร้างลิงก์
+- `production-build/nginx.conf` ถูกใช้เป็น nginx template ผ่าน `envsubst`
+- ถ้าไม่กำหนด `REACT_APP_API_BASE_URL`, frontend จะใช้ `CLIENT_PUBLIC_URL` เดียวกันเป็น base ของ API/socket/uploads อัตโนมัติ
 
-## 🔧 Commands ที่ใช้บ่อย
+## Local Example
+
+ถ้าตั้งค่าแบบนี้:
+
+```env
+CLIENT_PUBLIC_URL=/chair-app
+CLIENT_URL=http://localhost/chair-app
+```
+
+หลัง deploy แล้ว URL หลักจะเป็น:
+
+- `http://localhost/chair-app/`
+- `http://localhost/chair-app/api/health`
+- `http://localhost/chair-app/socket.io/`
+
+## Useful Commands
 
 ```bash
-# ดูสถานะ containers
 docker compose ps
-
-# ดู logs
 docker compose logs -f
-
-# ดู logs ของ service เฉพาะ
 docker compose logs -f server
-
-# หยุดทุก service
 docker compose down
-
-# Rebuild containers ทั้งหมด
 docker compose up -d --build
-
-# ลบข้อมูลทั้งหมด (รวม database)
 docker compose down -v
 ```
-
-## 🔒 หมายเหตุด้านความปลอดภัย
-
-- เปลี่ยน `MONGO_INITDB_ROOT_PASSWORD` เป็นรหัสผ่านที่ปลอดภัย
-- เปลี่ยน `JWT_SECRET` เป็น random string ที่ยาว
-- ห้าม commit ไฟล์ `.env` และ `firebase-service-account.json` ขึ้น git
-- ในโปรดักชันจริง ควรใช้ HTTPS (ตั้ง SSL บน nginx หรือใช้ Cloudflare)

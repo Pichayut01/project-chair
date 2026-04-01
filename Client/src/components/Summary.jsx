@@ -20,6 +20,7 @@ import '../CSS/Print.css';
 import { getProfileImageSrc, isGoogleUser, handleImageError } from '../utils/profileImageHelper';
 import SummaryPrintLayout from './SummaryPrintLayout';
 import { useTranslation } from 'react-i18next';
+import API_BASE_URL from '../config/api';
 
 ChartJS.register(
     CategoryScale,
@@ -31,8 +32,6 @@ ChartJS.register(
     Legend,
     Filler
 );
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 /* ───────── SVG Icon Components ───────── */
 const SvgTrophy = () => (

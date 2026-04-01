@@ -9,8 +9,7 @@ import '../CSS/Navbar.css';
 import '../CSS/Main.css';
 import '../CSS/PrivateClassroomPage.css';
 import { FiLock, FiMail, FiArrowLeft } from 'react-icons/fi';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+import API_BASE_URL from '../config/api';
 
 const PrivateClassroomPage = ({
     user,

@@ -15,8 +15,7 @@ import Chair from '../components/Chair';
 import ChairPresets from '../components/ChairPresets';
 import { FaPalette, FaUsers, FaEllipsisH, FaChair, FaTh, FaRandom, FaBars, FaThLarge, FaArrowUp, FaArrowDown, FaUserSlash, FaCopy, FaCheck, FaCrown, FaUserGraduate, FaSpinner, FaSave } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+import API_BASE_URL from '../config/api';
 
 // Debounce delay in milliseconds
 const DEBOUNCE_DELAY = 800;

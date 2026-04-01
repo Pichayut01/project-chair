@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../CSS/AssignmentDetailModal.css';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+import API_BASE_URL, { buildServerUrl } from '../config/api';
 
 const AssignmentDetailModal = ({ isOpen, onClose, assignment, classId, user, isCreator, onUpdate }) => {
     const [loading, setLoading] = useState(false);
@@ -127,7 +126,7 @@ const AssignmentDetailModal = ({ isOpen, onClose, assignment, classId, user, isC
                                         </div>
                                         {sub.attachments && sub.attachments.length > 0 && (
                                             <div className="attachment-link">
-                                                <a href={sub.attachments[0].url} target="_blank" rel="noreferrer">
+                                                <a href={buildServerUrl(sub.attachments[0].url)} target="_blank" rel="noreferrer">
                                                     View Attachment
                                                 </a>
                                             </div>

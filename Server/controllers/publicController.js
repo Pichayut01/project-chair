@@ -1,6 +1,16 @@
 const User = require('../models/User');
 const Class = require('../models/Class');
 
+const normalizePathPrefix = (value = '') => {
+    if (!value || value === '/') return '';
+    return `/${String(value).replace(/^\/+|\/+$/g, '')}`;
+};
+
+const getRequestBaseUrl = (req) => {
+    const forwardedPrefix = normalizePathPrefix(req.get('x-forwarded-prefix'));
+    return `${req.protocol}://${req.get('host')}${forwardedPrefix}`;
+};
+
 // @desc    Get public stats for landing page
 // @route   GET /api/public/stats
 // @access  Public
@@ -21,7 +31,7 @@ exports.getStats = async (req, res) => {
             let photoUrl = u.photoURL;
             if (photoUrl && !photoUrl.startsWith('http')) {
                 // Handle relative paths from /uploads
-                const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+                const baseUrl = process.env.BASE_URL || getRequestBaseUrl(req);
                 photoUrl = photoUrl.startsWith('/') ? `${baseUrl}${photoUrl}` : `${baseUrl}/${photoUrl}`;
             }
             return {

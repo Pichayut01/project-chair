@@ -5,7 +5,7 @@ import io from 'socket.io-client';
 import { useTranslation } from 'react-i18next';
 import WordCloudViz from '../components/events/WordCloudViz';
 import { FaCloud } from 'react-icons/fa';
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { createSocketClient } from '../config/api';
 import '../CSS/ClassroomEvent.css';
 
 const EventPresentationPage = () => {
@@ -15,10 +15,6 @@ const EventPresentationPage = () => {
     const [loading, setLoading] = useState(true);
 
     const tr = (key, defaultValue, options = {}) => t(key, { defaultValue, ...options });
-    const SOCKET_URL = process.env.NODE_ENV === 'production'
-        ? window.location.origin
-        : (process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:5000');
-
     useEffect(() => {
         let socket = null;
 
@@ -41,7 +37,7 @@ const EventPresentationPage = () => {
                     }
                 }
 
-                socket = io(SOCKET_URL, {
+                socket = createSocketClient(io, {
                     auth: { token }
                 });
 
@@ -78,7 +74,7 @@ const EventPresentationPage = () => {
         return () => {
             if (socket) socket.disconnect();
         };
-    }, [classId, eventId, SOCKET_URL]);
+    }, [classId, eventId]);
 
     if (loading) return <div className="pres-loading">{tr('classroomEvent.loadingWordCloud', 'Loading Word Cloud...')}</div>;
     if (!eventData) return <div className="pres-error">{tr('classroomEvent.presentationEventNotFound', 'Event not found.')}</div>;

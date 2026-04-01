@@ -22,6 +22,7 @@ import ClassChat from '../components/ClassChat';
 import ClassworkSection from '../components/ClassworkSection';
 import CalendarSection from '../components/CalendarSection';
 import { useSocket } from '../hooks/useSocket';
+import API_BASE_URL from '../config/api';
 import businessGroupMeetingAnimation from '../assets/business-group-meeting.json';
 import '../CSS/ClassDetailPage.css';
 import '../CSS/ClassroomPage.css';
@@ -30,7 +31,6 @@ import '../CSS/Main.css';
 import '../CSS/StreamPage.css';
 import { useTranslation } from 'react-i18next';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
 const normalizeUserIds = (items) => {
     if (!items) return [];
