@@ -268,7 +268,8 @@ router.put('/:classId/:assignmentId/grade/:submissionId', auth, async (req, res)
             return res.status(403).json({ msg: 'Not authorized' });
         }
 
-        const submission = await AssignmentSubmission.findById(submissionId);
+        const submission = await AssignmentSubmission.findById(submissionId)
+            .populate('studentId', 'displayName email photoURL');
         if (!submission) {
             return res.status(404).json({ msg: 'Submission not found' });
         }
@@ -276,6 +277,7 @@ router.put('/:classId/:assignmentId/grade/:submissionId', auth, async (req, res)
         submission.pointsAwarded = pointsAwarded;
         submission.status = 'graded';
         await submission.save();
+        await submission.populate('studentId', 'displayName email photoURL');
 
         res.json(submission);
     } catch (err) {

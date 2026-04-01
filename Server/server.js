@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
+const fs = require('fs');
 const path = require('path');
 
 // Logger
@@ -12,6 +13,7 @@ const httpLogger = require('./middleware/httpLogger');
 const chalk = require('chalk'); // For status monitoring colors
 const figlet = require('figlet'); // ASCII art banner
 const { startHealthCheck } = require('./utils/healthCheck');
+const { startSessionCleaner } = require('./utils/sessionCleaner');
 
 // Display ASCII Art Banner
 console.log(chalk.green(figlet.textSync('Echair Server', {
@@ -88,6 +90,26 @@ app.use('/api/classwork', require('./routes/classwork')); // ✨ Classwork Route
 app.use('/api/public', require('./routes/public')); // ✨ Public API Route
 logger.success('All API routes registered successfully');
 
+const clientBuildPath = path.resolve(__dirname, '../Client/build');
+const clientIndexPath = path.join(clientBuildPath, 'index.html');
+
+if (fs.existsSync(clientIndexPath)) {
+    logger.info(`Serving client build from ${clientBuildPath}`);
+    app.use(express.static(clientBuildPath));
+
+    app.get('*', (req, res, next) => {
+        if (
+            req.path.startsWith('/api') ||
+            req.path.startsWith('/uploads') ||
+            req.path.startsWith('/socket.io')
+        ) {
+            return next();
+        }
+
+        return res.sendFile(clientIndexPath);
+    });
+}
+
 // Socket Handler
 logger.info('Setting up Socket.IO event handlers...');
 require('./socket/socketHandler')(io);
@@ -153,4 +175,8 @@ server.listen(port, () => {
     // Start health check monitoring (every 10 seconds)
     logger.info(chalk.cyan('[HEALTH]') + ' Starting health check monitoring (every 10 seconds)...');
     startHealthCheck();
+
+    // Start session cleaner to auto-end stale sessions (every 15 minutes)
+    logger.info(chalk.cyan('[SESSION]') + ' Starting session cleaner (stale sessions will auto-end)...');
+    startSessionCleaner();
 });

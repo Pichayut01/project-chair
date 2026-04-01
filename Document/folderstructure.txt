@@ -1,0 +1,359 @@
+โครงสร้างโฟลเดอร์ของโปรเจกต์
+อ้างอิงจากโครงสร้างจริงใน D:\chair project somkid ณ วันที่ 30 มีนาคม 2026
+
+หมายเหตุ
+1. ไฟล์นี้สรุปโครงสร้างของโปรเจกต์ทั้งหมดตามโฟลเดอร์จริงใน workspace
+2. โฟลเดอร์ขนาดใหญ่ที่เป็น dependency หรือ generated output เช่น node_modules, build, logs, uploads ถูกสรุประดับสำคัญเพื่อให้อ่านง่าย
+
+==================================================
+1) Root Project Structure
+==================================================
+
+D:\chair project somkid
+|-- .git/                         : ข้อมูลเวอร์ชันของ Git
+|-- .nogic/                       : ฐานข้อมูลย่อยของระบบ nogic
+|   `-- nogic.db
+|-- .vscode/                      : การตั้งค่า editor
+|   `-- settings.json
+|-- admin/                        : ส่วนแอดมินแบบแยกโปรเจกต์ย่อย
+|-- Client/                       : Frontend หลักของระบบห้องเรียน
+|-- Document/                     : เอกสารประกอบโครงการ
+|-- landing-page-app/             : โปรเจกต์หน้า Landing Page
+|-- production-build/             : ไฟล์ deploy/proxy/docker สำหรับ production
+|-- Server/                       : Backend หลักของระบบ
+|-- .dockerignore
+|-- .env
+|-- .gitignore
+|-- package-lock.json
+|-- push.log
+|-- push_error.log
+|-- push_error.txt
+|-- README.md
+`-- start-servers.bat
+
+==================================================
+2) admin/
+==================================================
+
+admin/
+|-- node_modules/                 : dependency ของโปรเจกต์แอดมิน
+|-- index.html                    : หน้า admin หลัก
+|-- package-lock.json
+|-- package.json
+|-- server-admin.js               : เซิร์ฟเวอร์สำหรับ admin panel
+|-- simple-settings.html          : หน้าตั้งค่าระบบแบบง่าย
+`-- test-db.html                  : หน้าใช้ทดสอบการเชื่อมต่อฐานข้อมูล
+
+==================================================
+3) Client/
+==================================================
+
+Client/
+|-- .firebase/
+|   `-- hosting.YnVpbGQ.cache     : cache ของ Firebase hosting
+|-- build/                        : ไฟล์ build ของ frontend
+|   |-- static/
+|   |   |-- css/
+|   |   |-- js/
+|   |   `-- media/
+|   |-- asset-manifest.json
+|   |-- favicon.ico
+|   |-- index.html
+|   |-- logo192.png
+|   |-- logo512.png
+|   |-- manifest.json
+|   `-- robots.txt
+|-- node_modules/                 : dependency ของ frontend
+|-- public/                       : static files ของ React app
+|   |-- favicon.ico
+|   |-- index.html
+|   |-- logo192.png
+|   |-- logo512.png
+|   |-- manifest.json
+|   `-- robots.txt
+|-- serverfont/                   : โปรเจกต์ย่อยเกี่ยวกับ server font/build
+|   |-- build/
+|   `-- server.js
+|-- src/                          : source code หลักของ frontend
+|   |-- assets/
+|   |   |-- assignment-detail-workspace.json
+|   |   |-- business-group-meeting.json
+|   |   |-- classroom-event-empty.json
+|   |   |-- classwork-hero-designer.json
+|   |   `-- dashboard-empty-research.json
+|   |-- components/
+|   |   |-- events/
+|   |   |   |-- EventHistoryView.jsx
+|   |   |   |-- GroupHistoryView.jsx
+|   |   |   `-- WordCloudViz.jsx
+|   |   |-- ActionBar.jsx
+|   |   |-- AssignmentDetailModal.jsx
+|   |   |-- AssignRate.jsx
+|   |   |-- AttendanceTracker.jsx
+|   |   |-- BeautifulDateTimePicker.jsx
+|   |   |-- CalendarSection.jsx
+|   |   |-- Chair.jsx
+|   |   |-- ChairAssignModal.jsx
+|   |   |-- ChairDropdown.jsx
+|   |   |-- ChairPresets.js
+|   |   |-- ClassActionModal.jsx
+|   |   |-- ClassChat.jsx
+|   |   |-- ClassroomEvent.jsx
+|   |   |-- ClassroomSettings.jsx
+|   |   |-- ClassworkSection.jsx
+|   |   |-- CreateAssignmentModal.jsx
+|   |   |-- CreateClassModal.jsx
+|   |   |-- CreatePostBox.jsx
+|   |   |-- ErrorBoundary.jsx
+|   |   |-- GroupingModal.jsx
+|   |   |-- GroupOverlay.jsx
+|   |   |-- JoinClassModal.jsx
+|   |   |-- Layout.jsx
+|   |   |-- Loader.jsx
+|   |   |-- Main.jsx
+|   |   |-- Navbar.jsx
+|   |   |-- PresentationBuilder.jsx
+|   |   |-- RatePresetModal.jsx
+|   |   |-- Scoreboard.jsx
+|   |   |-- SessionHistory.jsx
+|   |   |-- SessionSummaryModal.jsx
+|   |   |-- StreamPost.jsx
+|   |   |-- StudentRatingModal.jsx
+|   |   |-- StudentStatusBanner.jsx
+|   |   |-- Summary.jsx
+|   |   |-- SummaryPrintLayout.jsx
+|   |   |-- TestErrorComponent.jsx
+|   |   `-- ViewToggle.jsx
+|   |-- config/
+|   |   `-- api.js
+|   |-- context/                  : โฟลเดอร์ context ปัจจุบันว่างหรือยังไม่ใช้งาน
+|   |-- CSS/                      : ไฟล์ style ของแต่ละหน้า/คอมโพเนนต์
+|   |-- hooks/
+|   |   `-- useSocket.js
+|   |-- image/
+|   |   |-- Gemini_Generated_Image_fnyc63fnyc63fnyc.png
+|   |   |-- Google__G__logo.svg.webp
+|   |   |-- icon.ico
+|   |   |-- nulluser.png
+|   |   |-- user.webp
+|   |   `-- ืNoUserInChair.png
+|   |-- locales/
+|   |   |-- en/
+|   |   `-- th/
+|   |-- pages/
+|   |   |-- AccountSetting.jsx
+|   |   |-- AppSettingsPage.jsx
+|   |   |-- AssignmentDetailPage.jsx
+|   |   |-- ClassDetailPage.jsx
+|   |   |-- ClassroomErrorPage.jsx
+|   |   |-- ClassroomPage.jsx
+|   |   |-- DashboardPage.jsx
+|   |   |-- EditClassroomPage.jsx
+|   |   |-- ErrorPage.jsx
+|   |   |-- EventPresentationPage.jsx
+|   |   |-- LoginPage.jsx
+|   |   |-- OtpVerificationPage.jsx
+|   |   |-- PrivateClassroomPage.jsx
+|   |   |-- ResetPasswordPage.jsx
+|   |   `-- StreamPage.jsx
+|   |-- utils/
+|   |   |-- ChairValidation.js
+|   |   |-- ContainerUtils.js
+|   |   |-- cropImage.js
+|   |   `-- profileImageHelper.js
+|   |-- App.jsx
+|   |-- firebaseConfig.js
+|   |-- i18n.js
+|   |-- index.js
+|   `-- reportWebVitals.js
+|-- .firebaserc
+|-- .gitignore
+|-- firebase.json
+|-- package-lock.json
+|-- package.json
+`-- README.md
+
+==================================================
+4) Server/
+==================================================
+
+Server/
+|-- config/
+|   |-- db.js                     : การเชื่อมต่อฐานข้อมูล MongoDB
+|   |-- email.js                  : การตั้งค่าอีเมล
+|   `-- firebase.js               : การตั้งค่า Firebase ฝั่ง server
+|-- controllers/
+|   |-- adminController.js
+|   |-- authController.js
+|   |-- classController.js
+|   |-- presetController.js
+|   |-- publicController.js
+|   `-- userController.js
+|-- docs/
+|   `-- LOGIN_HISTORY.md
+|-- logs/                         : log runtime ของระบบ
+|-- middleware/
+|   |-- adminMiddleware.js
+|   |-- auth.js
+|   |-- authMiddleware.js
+|   |-- httpLogger.js
+|   |-- rateLimiter.js
+|   `-- uploadMiddleware.js
+|-- models/
+|   |-- ActiveSession.js
+|   |-- Assignment.js
+|   |-- AssignmentSubmission.js
+|   |-- Class.js
+|   |-- LoginHistory.js
+|   |-- Notification.js
+|   |-- RatingPreset.js
+|   |-- StreamPost.js
+|   |-- SystemSettings.js
+|   |-- TeachingSession.js
+|   `-- User.js
+|-- node_modules/                 : dependency ของ backend
+|-- routes/
+|   |-- admin.js
+|   |-- auth.js
+|   |-- classrooms.js
+|   |-- classwork.js
+|   |-- health.js
+|   |-- notifications.js
+|   |-- presets.js
+|   |-- public.js
+|   |-- stream.js
+|   |-- upload.js
+|   `-- users.js
+|-- socket/
+|   `-- socketHandler.js
+|-- uploads/                      : ไฟล์ที่ผู้ใช้หรือระบบอัปโหลด
+|   |-- banners/
+|   |-- profile_photos/
+|   `-- <uploaded files>
+|-- utils/
+|   |-- healthCheck.js
+|   |-- logger.js
+|   |-- loginTracking.js
+|   |-- notificationHelper.js
+|   |-- sessionCleaner.js
+|   `-- socketLogger.js
+|-- .env
+|-- .gitignore
+|-- chair-f440c-firebase-adminsdk-fbsvc-92d591e38e.json
+|-- check-login-history.js
+|-- check_events.js
+|-- debug-login-history.js
+|-- migrate-login-history.js
+|-- package-lock.json
+|-- package.json
+|-- reset-settings-db.js
+|-- server.js
+|-- set-admin.js
+|-- set-password.js
+|-- test-comment.js
+|-- test-login-info.js
+`-- verify-settings-db.js
+
+==================================================
+5) landing-page-app/
+==================================================
+
+landing-page-app/
+|-- node_modules/                 : dependency ของ landing page
+|-- public/
+|   `-- vite.svg
+|-- src/
+|   |-- assets/
+|   |   |-- icon.ico
+|   |   `-- react.svg
+|   |-- App.css
+|   |-- App.jsx
+|   |-- index.css
+|   `-- main.jsx
+|-- .gitignore
+|-- eslint.config.js
+|-- index.html
+|-- package-lock.json
+|-- package.json
+|-- README.md
+`-- vite.config.js
+
+==================================================
+6) production-build/
+==================================================
+
+production-build/
+|-- .env
+|-- .env.example
+|-- docker-compose.yml
+|-- Dockerfile.admin
+|-- Dockerfile.client
+|-- Dockerfile.landing
+|-- Dockerfile.server
+|-- firebase-service-account.json
+|-- nginx-admin.conf
+|-- nginx-client.conf
+|-- nginx-landing.conf
+|-- nginx.conf
+`-- README.md
+
+==================================================
+7) Document/
+==================================================
+
+Document/
+|-- bugscansumarry.md
+|-- chair_layout_system_chapter3.txt
+|-- classroom_event_system_chapter3_content.md
+|-- classroom_event_system_detailed.md
+|-- classroom_system_explanation.md
+|-- ClientFunctions.md
+|-- FolderStructure.md
+|-- login register .md
+|-- ServerFunctions.md
+|-- ืnewbugsee.md
+`-- folderstructure.txt
+
+==================================================
+8) สรุปหน้าที่ของโฟลเดอร์หลัก
+==================================================
+
+1. Client
+   ใช้พัฒนาระบบฝั่งผู้ใช้หลักของห้องเรียน เช่น หน้า dashboard, ห้องเรียน, stream, assignment, event และประวัติข้อมูล
+
+2. Server
+   ใช้พัฒนาระบบฝั่ง backend สำหรับ API, authentication, database, notification, real-time socket และการจัดการข้อมูลทั้งหมดของระบบ
+
+3. admin
+   เป็นโปรเจกต์ย่อยสำหรับหน้าผู้ดูแลระบบ ใช้ตรวจสอบและตั้งค่าบางส่วนแยกจาก frontend หลัก
+
+4. landing-page-app
+   เป็นโปรเจกต์ย่อยสำหรับหน้า landing page ของระบบ แยกจาก client หลักและพัฒนาด้วย Vite
+
+5. production-build
+   รวมไฟล์สำหรับ deploy ระบบจริง เช่น Dockerfile, docker-compose และ nginx config
+
+6. Document
+   ใช้เก็บเอกสารสรุปโครงสร้างระบบ เอกสารเชิงเทคนิค และเนื้อหาสำหรับงานวิจัย
+
+7. .nogic
+   เป็นโฟลเดอร์ข้อมูลภายในที่มีไฟล์ฐานข้อมูลย่อย `nogic.db`
+
+==================================================
+9) โฟลเดอร์ที่ควรระวังเวลาทำงาน
+==================================================
+
+1. node_modules
+   เป็น dependency ที่ติดตั้งอัตโนมัติ ไม่ควรแก้ไขโดยตรง
+
+2. build
+   เป็นผลลัพธ์จากการ build frontend ไม่ใช่ source code หลัก
+
+3. logs
+   เป็นไฟล์ log ระหว่าง runtime อาจมีขนาดใหญ่ขึ้นเรื่อย ๆ
+
+4. uploads
+   เป็นไฟล์ที่ระบบหรือผู้ใช้อัปโหลดจริง เช่น รูปภาพ เอกสาร และ banner
+
+5. Document
+   เป็นโฟลเดอร์เอกสาร หากต้องการให้ข้อมูลล่าสุดควรอัปเดตตาม source code จริงเสมอ

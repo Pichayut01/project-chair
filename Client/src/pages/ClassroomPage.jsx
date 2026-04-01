@@ -32,6 +32,39 @@ import { useTranslation } from 'react-i18next';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
+const getTeacherViewStorageKey = (classId, userId) => {
+    if (!classId) return null;
+    return `teacher-front-view-${userId || 'anonymous'}-${classId}`;
+};
+
+const getSavedTeacherView = (classId, userId) => {
+    if (typeof window === 'undefined') return false;
+
+    const storageKey = getTeacherViewStorageKey(classId, userId);
+    if (!storageKey) return false;
+
+    try {
+        const saved = window.localStorage.getItem(storageKey);
+        return saved ? JSON.parse(saved) : false;
+    } catch (error) {
+        console.warn('Failed to read saved teacher view state:', error);
+        return false;
+    }
+};
+
+const saveTeacherViewPreference = (classId, userId, value) => {
+    if (typeof window === 'undefined') return;
+
+    const storageKey = getTeacherViewStorageKey(classId, userId);
+    if (!storageKey) return;
+
+    try {
+        window.localStorage.setItem(storageKey, JSON.stringify(Boolean(value)));
+    } catch (error) {
+        console.warn('Failed to save teacher view state:', error);
+    }
+};
+
 
 const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) => {
     const { classId } = useParams();
@@ -61,6 +94,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const containerRef = useRef(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
+    const [dropdownAnchorEl, setDropdownAnchorEl] = useState(null);
     const [selectedStudentChair, setSelectedStudentChair] = useState(null);
     const [ratingModalOpen, setRatingModalOpen] = useState(false);
     const [ratePresets, setRatePresets] = useState([]);
@@ -75,7 +109,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const [panStart, setPanStart] = useState({ x: 0, y: 0 });
     const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
     const seatingWrapperRef = useRef(null);
-    const [isTeacherView, setIsTeacherView] = useState(false); // ✨ State for toggling teacher view
+    const [isTeacherView, setIsTeacherView] = useState(() => getSavedTeacherView(classId, user?.id)); // ✨ State for toggling teacher view
     const [isViewChanging, setIsViewChanging] = useState(false); // ✨ State for loader animation
 
     const [chairGroups, setChairGroups] = useState([]); // ✨ State for chair groups
@@ -137,6 +171,11 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     useEffect(() => {
         localStorage.setItem(`chat-sidebar-open-${classId}`, JSON.stringify(isChatSidebarOpen));
     }, [isChatSidebarOpen, classId]);
+
+    // ✨ Restore saved teacher/front view per classroom
+    useEffect(() => {
+        setIsTeacherView(getSavedTeacherView(classId, user?.id));
+    }, [classId, user?.id]);
 
     // ✨ Cleanup session timer on unmount
     useEffect(() => {
@@ -622,8 +661,26 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
     // ✨ Handler for publishing a draft event to active
     const handlePublishDraftEvent = (event) => {
-        emitTriggerClassroomEvent(event.id, { 
-            status: 'idle', 
+        const now = Date.now();
+        const timerConfig = event?.config?.timer;
+        const shouldStartTimer = ['question', 'poll'].includes(event?.type)
+            && timerConfig?.enabled
+            && Number(timerConfig.durationSeconds) > 0;
+        const publishedConfig = shouldStartTimer
+            ? {
+                ...event.config,
+                timer: {
+                    ...timerConfig,
+                    startedAt: now,
+                    endsAt: now + (Number(timerConfig.durationSeconds) * 1000)
+                }
+            }
+            : event.config;
+
+        emitTriggerClassroomEvent(event.id, {
+            status: 'idle',
+            config: publishedConfig,
+            updatedAt: now,
             _isPublishingDraft: true // Flag for backend to send notification
         });
     };
@@ -921,7 +978,11 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     const handleToggleView = useCallback(() => {
         setIsViewChanging(true);
         setTimeout(() => {
-            setIsTeacherView(prev => !prev);
+            setIsTeacherView(prev => {
+                const nextValue = !prev;
+                saveTeacherViewPreference(classId, user?.id, nextValue);
+                return nextValue;
+            });
             setTimeout(() => {
                 setIsViewChanging(false);
                 // ✨ Manually calculate scroll to focus board WITHIN the wrapper
@@ -944,7 +1005,7 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 }
             }, 500); // Keep loader briefly after switch for smooth transition
         }, 1500); // Show loader for 1.5 seconds
-    }, []);
+    }, [classId, user?.id]);
 
     // ✨ Lock body scroll when loader is active
     useEffect(() => {
@@ -987,6 +1048,8 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
     };
 
     const handleChairClick = async (chairId, event) => {
+        const chairUser = assignedUsers[chairId];
+
         // ✨ Grouping Mode Logic
         if (isGroupingMode && isEditing) {
             // Toggle selection
@@ -1026,27 +1089,31 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
 
         // If creator clicks on a chair with a student (not in edit mode)
-        if (isCreator && !isEditing && assignedUsers[chairId]) {
-            // Check if we can get a standard bounding rect
-            let rect;
-            if (event && event.target && typeof event.target.getBoundingClientRect === 'function') {
-                rect = event.target.getBoundingClientRect();
-            } else {
-                rect = { left: window.innerWidth / 2, width: 0, bottom: window.innerHeight / 2 };
+        if (isCreator && !isEditing) {
+            if (!chairUser) {
+                setDropdownOpen(false);
+                setDropdownAnchorEl(null);
+                setSelectedStudentChair(null);
+                return;
             }
-            
+
+            const anchorElement =
+                event?.currentTarget && typeof event.currentTarget.getBoundingClientRect === 'function'
+                    ? event.currentTarget
+                    : event?.target && typeof event.target.getBoundingClientRect === 'function'
+                        ? event.target
+                        : null;
+
+            const rect = anchorElement
+                ? anchorElement.getBoundingClientRect()
+                : { left: window.innerWidth / 2, width: 0, bottom: window.innerHeight / 2 };
+
             setDropdownPosition({
                 x: rect.left + rect.width / 2,
-                y: rect.bottom + 5
+                y: rect.bottom + 10
             });
+            setDropdownAnchorEl(anchorElement);
             setSelectedStudentChair(chairId);
-            setDropdownOpen(true);
-            return;
-        }
-
-        // Teacher behavior - open modal for any chair
-        if (isTeacherView) {
-            setSelectedChairId(chairId);
             setDropdownOpen(true);
             return;
         }
@@ -1057,7 +1124,6 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         const currentSeatId = Object.keys(assignedUsers).find(
             key => assignedUsers[key]?.userId === user.id
         );
-        const chairUser = assignedUsers[chairId];
 
         if (!currentSeatId && chairUser) {
             Swal.fire({
@@ -2041,17 +2107,59 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
         }
     }, [classId, user]);
 
+    // ✨ Fetch active session on mount
+    const fetchActiveSession = useCallback(async () => {
+        if (!isCreator) return;
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/classrooms/${classId}/sessions?limit=1`, {
+                headers: { 'x-auth-token': user.token }
+            });
+            const { sessions } = response.data;
+            if (sessions && sessions.length > 0) {
+                const latestSession = sessions[0];
+                if (!latestSession.endedAt) {
+                    // Session is still active, restore state
+                    setIsSessionActive(true);
+                    setSessionId(latestSession._id);
+                    const startTime = new Date(latestSession.startedAt);
+                    setSessionStartTime(startTime);
+                    setSessionScoreChanges(latestSession.scoreChanges || []);
+                    
+                    const elapsed = Math.floor((Date.now() - startTime.getTime()) / 1000);
+                    setSessionElapsed(elapsed > 0 ? elapsed : 0);
+
+                    // Re-start timer
+                    if (sessionTimerRef.current) clearInterval(sessionTimerRef.current);
+                    sessionTimerRef.current = setInterval(() => {
+                        setSessionElapsed(prev => {
+                            const next = prev + 1;
+                            if (next >= 18000) { // 5 hours limit
+                                handleEndSession();
+                            }
+                            return next;
+                        });
+                    }, 1000);
+                    
+                    console.log('✅ Restored active session:', latestSession._id);
+                }
+            }
+        } catch (err) {
+            console.error('❌ Error fetching active session:', err);
+        }
+    }, [classId, user, isCreator]);
+
     useEffect(() => {
         if (!user || !user.token || !classId) return;
 
         setLoading(true);
         fetchClassroomDetails();
         fetchChatHistory(); // ✨ Load chat history whenever classId changes
+        fetchActiveSession(); // ✨ Restore session state if active
 
         if (isCreator) {
             fetchRatePresets();
         }
-    }, [classId, user, fetchClassroomDetails, fetchChatHistory, fetchRatePresets, isCreator]);
+    }, [classId, user, fetchClassroomDetails, fetchChatHistory, fetchRatePresets, isCreator, fetchActiveSession]);
 
     // ✨ Polling Fallback: Fetch classroom details every 5 seconds to ensure member list is up-to-date
     // (Since server join events are not reliably broadcasting)
@@ -2647,7 +2755,13 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
 
             // Start timer
             sessionTimerRef.current = setInterval(() => {
-                setSessionElapsed(prev => prev + 1);
+                setSessionElapsed(prev => {
+                    const next = prev + 1;
+                    if (next >= 18000) { // 5 hours in seconds
+                        handleEndSession();
+                    }
+                    return next;
+                });
             }, 1000);
 
             Swal.fire({
@@ -3054,8 +3168,11 @@ const ClassroomPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOut }) =>
                 isOpen={dropdownOpen}
                     onClose={() => setDropdownOpen(false)}
                     position={dropdownPosition}
+                    anchorEl={dropdownAnchorEl}
                     onRateStudent={handleRateStudent}
-                    onCheckAttendance={handleCheckAttendance}
+                    onCheckAttendance={() => handleCheckAttendance(
+                        selectedStudentChair ? assignedUsers[selectedStudentChair]?.userId : null
+                    )}
                     onFunction3={handleFunction3}
                 onFunction4={handleFunction4}
                 showGroupRating={selectedStudentChair && assignedUsers[selectedStudentChair] && isStudentInGroup(assignedUsers[selectedStudentChair].userId)}

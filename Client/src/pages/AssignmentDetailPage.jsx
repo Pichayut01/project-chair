@@ -1,13 +1,109 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Lottie from 'lottie-react';
 import Navbar from '../components/Navbar';
 import Loader from '../components/Loader';
 import CreateAssignmentModal from '../components/CreateAssignmentModal';
+import assignmentDetailWorkspaceAnimation from '../assets/assignment-detail-workspace.json';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 import '../CSS/AssignmentDetailPage.css';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+
+const ASSIGNMENT_DETAIL_ANIMATION_COLORS = {
+    Color1: [0.1294117647, 0.7215686275, 0.431372549, 1],
+    'Color 1': [0.1294117647, 0.7215686275, 0.431372549, 1],
+    Color2: [1, 1, 1, 1],
+    'Color 2': [1, 1, 1, 1],
+    Color3: [0.0901960784, 0.137254902, 0.2274509804, 1],
+    'Color 3': [0.0901960784, 0.137254902, 0.2274509804, 1],
+    Color4: [1, 1, 1, 1],
+    'Color 4': [1, 1, 1, 1],
+    Color5: [0.1960784314, 0.2549019608, 0.3294117647, 1],
+    'Color 5': [0.1960784314, 0.2549019608, 0.3294117647, 1]
+};
+
+const createThemedAssignmentAnimation = (animationData) => {
+    const themedAnimation = JSON.parse(JSON.stringify(animationData));
+
+    const applyThemeToLayers = (layers = []) => {
+        layers.forEach((layer) => {
+            if (Array.isArray(layer?.ef)) {
+                layer.ef.forEach((effect) => {
+                    const nextColor = ASSIGNMENT_DETAIL_ANIMATION_COLORS[effect?.nm];
+                    const control = effect?.ef?.[0];
+
+                    if (nextColor && control?.v) {
+                        control.v.k = nextColor;
+                    }
+                });
+            }
+
+            if (Array.isArray(layer?.layers)) {
+                applyThemeToLayers(layer.layers);
+            }
+        });
+    };
+
+    applyThemeToLayers(themedAnimation.layers);
+    themedAnimation.assets?.forEach((asset) => {
+        if (Array.isArray(asset?.layers)) {
+            applyThemeToLayers(asset.layers);
+        }
+    });
+
+    return themedAnimation;
+};
+
+const formatDateTime = (value) => {
+    if (!value) return 'No due date';
+
+    return new Date(value).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+const getSubmissionStatusLabel = (status = 'assigned') => {
+    switch (status) {
+        case 'submitted':
+            return 'Submitted';
+        case 'late':
+            return 'Late';
+        case 'graded':
+            return 'Graded';
+        default:
+            return 'Assigned';
+    }
+};
+
+const getSubmissionIdentity = (submission) => {
+    const student = submission?.studentId;
+    const name = student?.displayName || student?.email || student?.uid || 'Unknown';
+
+    return {
+        name,
+        email: student?.email || ''
+    };
+};
+
+const getSubmissionAvatar = (submission) => {
+    const student = submission?.studentId;
+    const { name } = getSubmissionIdentity(submission);
+    const avatarSrc = getProfileImageSrc(student?.photoURL, student ? isGoogleUser(student) : false);
+
+    return avatarSrc || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || '?')}&background=ECF7F0&color=0F766E`;
+};
+
+const mergeSubmissionDetails = (currentSubmission, nextSubmission) => ({
+    ...currentSubmission,
+    ...nextSubmission,
+    studentId: nextSubmission?.studentId || currentSubmission?.studentId,
+    attachments: nextSubmission?.attachments || currentSubmission?.attachments
+});
 
 /* ───────── SVG Icons ───────── */
 const SvgClipboard = () => (
@@ -24,11 +120,6 @@ const SvgEdit = () => (
 const SvgTrash = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
-    </svg>
-);
-const SvgBack = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="15 18 9 12 15 6"/>
     </svg>
 );
 const SvgUsers = () => (
@@ -96,6 +187,11 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
     const [newComment, setNewComment] = useState('');
     const [submittingComment, setSubmittingComment] = useState(false);
 
+    const themedAssignmentAnimation = useMemo(
+        () => createThemedAssignmentAnimation(assignmentDetailWorkspaceAnimation),
+        []
+    );
+
     const isCreator = classroom?.creator?.some(c => 
         (typeof c === 'string' && c === user.id) || 
         (c._id && c._id === user.id)
@@ -135,7 +231,7 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                 const subsRes = await axios.get(`${API_BASE_URL}/api/classwork/${classId}/${assignmentId}/submissions`, {
                     headers: { 'x-auth-token': user.token }
                 });
-                setSubmissions(subsRes.data);
+                setSubmissions(Array.isArray(subsRes.data) ? subsRes.data : []);
             }
 
             try {
@@ -222,7 +318,9 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
         try {
             setSubmitting(true);
             const res = await axios.put(`${API_BASE_URL}/api/classwork/${classId}/${assignmentId}/grade/${submissionId}`, { pointsAwarded: Number(pointsAwarded) }, { headers: { 'x-auth-token': user.token } });
-            setSubmissions(prev => prev.map(s => s._id === submissionId ? res.data : s));
+            setSubmissions(prev => prev.map(s => (
+                s._id === submissionId ? mergeSubmissionDetails(s, res.data) : s
+            )));
             setGradingSubmission(null);
             setSubmitting(false);
         } catch (err) {
@@ -253,7 +351,22 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
 
     const turnedIn = submissions.filter(s => s.status === 'submitted' || s.status === 'late').length;
     const graded = submissions.filter(s => s.status === 'graded').length;
+    const rosterCount = classroom?.participants?.length || submissions.length;
+    const pending = Math.max(0, rosterCount - turnedIn - graded);
     const isDue = assignment.dueDate && new Date() > new Date(assignment.dueDate);
+    const dueLabel = formatDateTime(assignment.dueDate);
+    const studentSubmissionStatus = assignment.submission?.status || 'assigned';
+    const heroKicker = isCreator ? 'Review and grade work' : 'Submit and track your work';
+    const heroDescription = isCreator
+        ? 'Keep directions, student submissions, scores, and class feedback in one organized workspace.'
+        : 'Read the brief, attach your work, and keep your submission status in one organized workspace.';
+    const heroNote = isCreator
+        ? `${graded} graded · ${pending} pending review`
+        : assignment.submission?.status === 'graded' && assignment.showScoreToStudents
+            ? `Score posted: ${assignment.submission.pointsAwarded ?? 0} / ${assignment.points}`
+            : assignment.submission
+                ? 'Your latest submission is saved here and ready for review.'
+                : 'Add a link or file when you are ready to turn in.';
 
     return (
         <>
@@ -269,35 +382,53 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
             />
             <main className={`main__content ${isSidebarOpen ? 'shift' : ''}`}>
                 <div className="class-detail-container">
-                    <div className="ad-container">
-                        {/* ═══ Back Button ═══ */}
-
-                        {/* ═══ BENTO GRID ═══ */}
-                        <div className="ad-bento">
+                    <div className={`ad-container ${isCreator ? 'is-creator' : 'is-student'}`}>
+                                          {/* ═══ BENTO GRID ═══ */}
+                        <div className={`ad-bento ${isCreator ? 'is-creator' : 'is-student'}`}>
                             {/* ── Tile: Header ── */}
                             <div className="ad-tile ad-header-tile" style={{ '--delay': '0' }}>
                                 <div className="ad-header-top">
-                                    <div className="ad-header-icon"><SvgClipboard /></div>
-                                    <div className="ad-header-info">
-                                        <h1>{assignment.title}</h1>
+                                    <div className="ad-header-copy">
+                                        <span className="ad-header-kicker">{heroKicker}</span>
+                                        <div className="ad-header-title-row">
+                                            <div className="ad-header-info">
+                                                <h1>{assignment.title}</h1>
+                                                <p className="ad-header-description">{heroDescription}</p>
+                                            </div>
+                                        </div>
                                         <div className="ad-header-meta">
-                                            <span className="ad-meta-chip points"><SvgStar /> {assignment.points} points</span>
-                                            {assignment.dueDate && (
-                                                <span className={`ad-meta-chip due ${isDue ? 'overdue' : ''}`}>
-                                                    <SvgClock /> Due {new Date(assignment.dueDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                            )}
+                                            <span className="ad-meta-chip points"><SvgStar /> {assignment.points} pts</span>
+                                            <span className={`ad-meta-chip due ${isDue ? 'overdue' : ''}`}>
+                                                <SvgClock /> {assignment.dueDate ? `Due ${dueLabel}` : 'No due date'}
+                                            </span>
+                                            <span className={`ad-meta-chip status ${isCreator ? (pending > 0 ? 'submitted' : 'graded') : studentSubmissionStatus}`}>
+                                                {isCreator ? <SvgUsers /> : <SvgCheckCircle />}
+                                                {isCreator ? `${submissions.length} submissions` : getSubmissionStatusLabel(studentSubmissionStatus)}
+                                            </span>
                                             {assignment.allowLateSubmission && (
                                                 <span className="ad-meta-chip late-ok">Late OK</span>
                                             )}
+                                            {isCreator && (
+                                                <>
+                                                    <button className="ad-action-btn edit" onClick={() => setIsEditModalOpen(true)} title="Edit"><SvgEdit /></button>
+                                                    <button className="ad-action-btn delete" onClick={handleDeleteAssignment} title="Delete"><SvgTrash /></button>
+                                                </>
+                                            )}
+                                        </div>
+                                        <p className="ad-header-note">{heroNote}</p>
+                                    </div>
+                                    <div className="ad-header-side">
+                                        <div className="ad-header-art" aria-hidden="true">
+                                            <div className="ad-header-art-panel">
+                                                <Lottie
+                                                    animationData={themedAssignmentAnimation}
+                                                    loop
+                                                    autoplay
+                                                    className="ad-header-lottie"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                    {isCreator && (
-                                        <div className="ad-header-actions">
-                                            <button className="ad-action-btn edit" onClick={() => setIsEditModalOpen(true)} title="Edit"><SvgEdit /></button>
-                                            <button className="ad-action-btn delete" onClick={handleDeleteAssignment} title="Delete"><SvgTrash /></button>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 
@@ -366,8 +497,8 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                                     <div className="ad-tile-header">
                                         <SvgUpload />
                                         <h3>Your Work</h3>
-                                        <span className={`ad-status-badge ${assignment.submission ? assignment.submission.status : 'assigned'}`}>
-                                            {assignment.submission ? assignment.submission.status : 'Assigned'}
+                                        <span className={`ad-status-badge ${studentSubmissionStatus}`}>
+                                            {getSubmissionStatusLabel(studentSubmissionStatus)}
                                         </span>
                                     </div>
 
@@ -453,8 +584,7 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                                                     </button>
                                                     {isResubmitting && (
                                                         <button
-                                                            className="ad-turnin-btn resubmit"
-                                                            style={{ marginTop: '8px', background: 'transparent', border: '1.5px solid #e2e8f0', color: '#64748b', boxShadow: 'none' }}
+                                                            className="ad-turnin-btn ghost"
                                                             onClick={() => {
                                                                 setIsResubmitting(false);
                                                                 setAttachmentFile(null);
@@ -490,17 +620,17 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                                             <span className="ad-stat-label">Graded</span>
                                         </div>
                                         <div className="ad-stat-card not-sub">
-                                            <span className="ad-stat-num">{Math.max(0, submissions.length - turnedIn - graded)}</span>
+                                            <span className="ad-stat-num">{pending}</span>
                                             <span className="ad-stat-label">Pending</span>
                                         </div>
                                     </div>
                                     {submissions.length > 0 && (
                                         <div className="ad-progress-row">
                                             <div className="ad-progress-bar-lg">
-                                                <div className="ad-progress-fill-lg graded-fill" style={{ width: `${submissions.length > 0 ? (graded / submissions.length) * 100 : 0}%` }}></div>
-                                                <div className="ad-progress-fill-lg turned-fill" style={{ width: `${submissions.length > 0 ? (turnedIn / submissions.length) * 100 : 0}%` }}></div>
+                                                <div className="ad-progress-fill-lg graded-fill" style={{ width: `${rosterCount > 0 ? (graded / rosterCount) * 100 : 0}%` }}></div>
+                                                <div className="ad-progress-fill-lg turned-fill" style={{ width: `${rosterCount > 0 ? (turnedIn / rosterCount) * 100 : 0}%` }}></div>
                                             </div>
-                                            <span className="ad-progress-label">{graded + turnedIn}/{submissions.length} complete</span>
+                                            <span className="ad-progress-label">{graded + turnedIn}/{rosterCount} complete</span>
                                         </div>
                                     )}
                                 </div>
@@ -517,19 +647,26 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                                         <div className="ad-no-submissions">No submissions yet.</div>
                                     ) : (
                                         <div className="ad-submissions-grid">
-                                            {submissions.map(sub => (
+                                            {submissions.map(sub => {
+                                                const submissionIdentity = getSubmissionIdentity(sub);
+                                                const submissionAvatar = getSubmissionAvatar(sub);
+
+                                                return (
                                                 <div key={sub._id} className="ad-sub-card">
                                                     <div className="ad-sub-top">
                                                         <div className="ad-sub-student">
                                                             <img referrerPolicy="no-referrer" 
                                                                 className="ad-sub-avatar" 
-                                                                src={getProfileImageSrc(sub.studentId?.photoURL, isGoogleUser(sub.studentId)) || `https://ui-avatars.com/api/?name=${encodeURIComponent(sub.studentId?.displayName || '?')}&background=random`} 
+                                                                src={submissionAvatar}
                                                                 alt="" 
-                                                                onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(sub.studentId?.displayName || '?')}&background=random`; }} 
+                                                                onError={e => { e.target.src = submissionAvatar; }} 
                                                             />
-                                                            <span className="ad-sub-name">{sub.studentId?.displayName || sub.studentId?.email || 'Unknown'}</span>
+                                                            <div className="ad-sub-student-copy">
+                                                                <span className="ad-sub-name">{submissionIdentity.name}</span>
+                                                                <span className="ad-sub-meta">{submissionIdentity.email || formatDateTime(sub.submittedAt)}</span>
+                                                            </div>
                                                         </div>
-                                                        <span className={`ad-sub-pill ${sub.status}`}>{sub.status}</span>
+                                                        <span className={`ad-sub-pill ${sub.status}`}>{getSubmissionStatusLabel(sub.status)}</span>
                                                     </div>
 
                                                     {sub.attachments && sub.attachments.length > 0 ? (
@@ -577,7 +714,8 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                                                         )}
                                                     </div>
                                                 </div>
-                                            ))}
+                                            );
+                                            })}
                                         </div>
                                     )}
                                 </div>
@@ -601,7 +739,7 @@ const AssignmentDetailPage = ({ user, isSidebarOpen, toggleSidebar, handleSignOu
                                                     <img referrerPolicy="no-referrer" className="ad-comment-avatar" src={cImg || 'https://ui-avatars.com/api/?name=U'} alt="" onError={e => { e.target.src = 'https://ui-avatars.com/api/?name=U'; }} />
                                                     <div className="ad-comment-body">
                                                         <div className="ad-comment-meta">
-                                                            <span className="ad-comment-author">{comment.author?.displayName || 'Unknown'}</span>
+                                                            <span className="ad-comment-author">{comment.author?.displayName || comment.author?.email || 'Unknown'}</span>
                                                             <span className="ad-comment-time">{new Date(comment.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                                                         </div>
                                                         <p className="ad-comment-text">{comment.text}</p>

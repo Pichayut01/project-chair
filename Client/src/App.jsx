@@ -48,7 +48,7 @@ function App() {
         setUser(userData);
     };
 
-    const handleSignOut = async () => {
+    const handleSignOut = useCallback(async () => {
         try {
             const token = localStorage.getItem('authToken');
             if (token) {
@@ -75,7 +75,7 @@ function App() {
         } catch (error) {
             console.error("ข้อผิดพลาดในการออกจากระบบ:", error);
         }
-    };
+    }, []);
 
     const toggleSidebar = () => {
         const newSidebarState = !isSidebarOpen;
@@ -84,7 +84,7 @@ function App() {
         localStorage.setItem('sidebarOpen', newSidebarState.toString());
     };
 
-    const updateUserProfile = (updatedData) => {
+    const updateUserProfile = useCallback((updatedData) => {
         setUser(prevUser => ({
             ...prevUser,
             ...updatedData
@@ -100,7 +100,7 @@ function App() {
                 localStorage.setItem('userPhotoURL', updatedData.photoURL);
             }
         }
-    };
+    }, []);
 
     useEffect(() => {
         const storedAuthToken = localStorage.getItem('authToken');

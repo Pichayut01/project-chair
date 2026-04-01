@@ -4,45 +4,27 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import {
+    FaBullhorn,
+    FaImage,
+    FaLink,
+    FaPaperclip,
+    FaTimes
+} from 'react-icons/fa';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
-// SVG Icons (inline to avoid dependency on react-icons for consistency)
-const LinkIcon = () => (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-    </svg>
-);
+const resolveAttachmentUrl = (url) => {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${API_BASE_URL}${url}`;
+};
 
-const PaperclipIcon = () => (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-    </svg>
-);
-
-const SendIcon = () => (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-    </svg>
-);
-
-const CloseIcon = () => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-    </svg>
-);
-
-const FileDocIcon = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-        <polyline points="13 2 13 9 20 9"/>
-    </svg>
-);
-
-const CreatePostBox = ({ classId, user, onPostCreated }) => {
+const CreatePostBox = ({ classId, user, onPostCreated, classroomName, accentColor = '#10b981' }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'createPostBox' });
+    const tr = (key, defaultValue, options = {}) => t(key, { defaultValue, ...options });
+
     const [isExpanded, setIsExpanded] = useState(false);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -52,9 +34,24 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
     const [linkInput, setLinkInput] = useState('');
     const [showLinkInput, setShowLinkInput] = useState(false);
 
+    const currentUserImage = getProfileImageSrc(user?.photoURL, user ? isGoogleUser(user) : false);
+    const canSubmit = Boolean(title.trim() || content.trim() || attachments.length);
+
+    const resetComposer = () => {
+        setTitle('');
+        setContent('');
+        setAttachments([]);
+        setShowLinkInput(false);
+        setLinkInput('');
+        setIsExpanded(false);
+    };
+
     const handleAddLink = () => {
         if (!linkInput.trim()) return;
-        setAttachments(prev => [...prev, { type: 'link', url: linkInput, name: linkInput }]);
+        setAttachments((prev) => [
+            ...prev,
+            { type: 'link', url: linkInput.trim(), name: linkInput.trim() }
+        ]);
         setLinkInput('');
         setShowLinkInput(false);
     };
@@ -64,8 +61,8 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
         if (!file) return;
 
         if (file.size > 20 * 1024 * 1024) {
-             Swal.fire(t('swal.fileTooLarge'), t('swal.fileTooLargeDesc'), 'error');
-             return;
+            Swal.fire(tr('swal.fileTooLarge', 'File too large'), tr('swal.fileTooLargeDesc', 'Please upload a file smaller than 20 MB.'), 'error');
+            return;
         }
 
         const formData = new FormData();
@@ -73,172 +70,233 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
 
         setUploadingFile(true);
         try {
-             const response = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
-                 headers: {
-                     'Content-Type': 'multipart/form-data',
-                     'x-auth-token': user.token
-                 }
-             });
+            const response = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'x-auth-token': user.token
+                }
+            });
 
-             const isImage = file.type.startsWith('image/');
-             setAttachments(prev => [...prev, { 
-                 type: isImage ? 'image' : 'file', 
-                 url: response.data.url, 
-                 name: file.name 
-             }]);
+            const isImageFile = file.type.startsWith('image/');
+            setAttachments((prev) => [
+                ...prev,
+                {
+                    type: isImageFile ? 'image' : 'file',
+                    url: response.data.url,
+                    name: file.name
+                }
+            ]);
         } catch (error) {
-             console.error('Upload Error:', error);
-             Swal.fire(t('swal.uploadFailed'), t('swal.uploadFailedDesc'), 'error');
+            console.error('Upload Error:', error);
+            Swal.fire(tr('swal.uploadFailed', 'Upload failed'), tr('swal.uploadFailedDesc', 'We could not upload that file. Please try again.'), 'error');
         } finally {
-             setUploadingFile(false);
-             e.target.value = null;
+            setUploadingFile(false);
+            e.target.value = null;
         }
     };
 
     const handleRemoveAttachment = (index) => {
-        setAttachments(prev => prev.filter((_, i) => i !== index));
+        setAttachments((prev) => prev.filter((_, attachmentIndex) => attachmentIndex !== index));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!title.trim()) {
-            Swal.fire(t('swal.error'), t('swal.titleRequired'), 'error');
+
+        if (!canSubmit) {
+            Swal.fire(tr('swal.error', 'Error'), tr('swal.titleRequired', 'Add a title, message, or attachment before posting.'), 'error');
             return;
         }
+
+        const normalizedContent = content.trim();
+        const derivedTitle = title.trim()
+            || normalizedContent.split('\n').find(Boolean)?.slice(0, 72)
+            || tr('defaultAnnouncementTitle', 'Class announcement');
 
         setLoading(true);
         try {
             const response = await axios.post(`${API_BASE_URL}/api/stream/${classId}`, {
-                title,
-                content,
+                title: derivedTitle,
+                content: normalizedContent,
                 attachments
             }, {
                 headers: { 'x-auth-token': user.token }
             });
 
             onPostCreated(response.data);
-            
-            setTitle('');
-            setContent('');
-            setAttachments([]);
-            setIsExpanded(false);
-            Swal.fire(t('swal.success'), t('swal.postCreated'), 'success');
+            resetComposer();
+            Swal.fire(tr('swal.success', 'Success'), tr('swal.postCreated', 'Post created successfully.'), 'success');
         } catch (error) {
             console.error('Error creating post:', error);
-            Swal.fire(t('swal.error'), t('swal.postFailed'), 'error');
+            Swal.fire(tr('swal.error', 'Error'), tr('swal.postFailed', 'Failed to create post.'), 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleCancel = () => {
-        setIsExpanded(false);
-        setTitle('');
-        setContent('');
-        setAttachments([]);
-        setShowLinkInput(false);
-        setLinkInput('');
-    };
-
     return (
-        <div className={`cpb-container ${isExpanded ? 'cpb-container--expanded' : ''}`}>
+        <div className={`cpb-container ${isExpanded ? 'cpb-container--expanded' : ''}`} style={{ '--stream-accent': accentColor }}>
             {!isExpanded ? (
-                <div className="cpb-placeholder" onClick={() => setIsExpanded(true)}>
-                    <img referrerPolicy="no-referrer" 
+                <button type="button" className="cpb-placeholder" onClick={() => setIsExpanded(true)}>
+                    <img
+                        referrerPolicy="no-referrer"
                         className="cpb-avatar"
-                        src={getProfileImageSrc(user?.photoURL, user ? isGoogleUser(user) : false)} 
-                        alt="Profile" 
+                        src={currentUserImage}
+                        alt={tr('currentUserAvatarAlt', 'Profile')}
                         onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Me'; }}
                     />
-                    <div className="cpb-placeholder-text">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                        <span className="cpb-placeholder-label">{t('placeholder')}</span>
+
+                    <div className="cpb-placeholder-copy">
+                        <span className="cpb-placeholder-kicker">{classroomName || tr('classroomLabel', 'Class stream')}</span>
+                        <strong className="cpb-placeholder-title">{tr('placeholder', 'Share an announcement with your class')}</strong>
+                        <span className="cpb-placeholder-subtitle">{tr('placeholderSubtext', 'Post notes, lesson images, files, or quick reminders for students.')}</span>
                     </div>
-                </div>
+
+                    <div className="cpb-quick-actions">
+                        <span className="cpb-quick-chip">
+                            <FaBullhorn />
+                            {tr('quickAnnouncement', 'Announcement')}
+                        </span>
+                        <span className="cpb-quick-chip">
+                            <FaImage />
+                            {tr('quickImage', 'Image')}
+                        </span>
+                        <span className="cpb-quick-chip">
+                            <FaPaperclip />
+                            {tr('quickFile', 'File')}
+                        </span>
+                    </div>
+                </button>
             ) : (
                 <form onSubmit={handleSubmit} className="cpb-form">
+                    <div className="cpb-form-header">
+                        <img
+                            referrerPolicy="no-referrer"
+                            className="cpb-avatar cpb-avatar--large"
+                            src={currentUserImage}
+                            alt={tr('currentUserAvatarAlt', 'Profile')}
+                            onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Me'; }}
+                        />
+
+                        <div className="cpb-form-copy">
+                            <span className="cpb-form-kicker">{classroomName || tr('classroomLabel', 'Class stream')}</span>
+                            <h3>{tr('composerTitle', 'Create a class update')}</h3>
+                            <p>{tr('composerSubtitle', 'Students will see this in the stream and can comment underneath it.')}</p>
+                        </div>
+                    </div>
+
                     <div className="cpb-form-fields">
                         <input
                             className="cpb-title-input"
                             type="text"
-                            placeholder={t('titlePlaceholder')}
+                            placeholder={tr('titlePlaceholder', 'Headline (optional)')}
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             autoFocus
                         />
+
                         <textarea
                             className="cpb-content-input"
-                            placeholder={t('contentPlaceholder')}
+                            placeholder={tr('contentPlaceholder', 'Write the details of your announcement, reminder, or lesson update...')}
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
-                            rows={4}
+                            rows={5}
                         />
                     </div>
 
-                    {/* Attachments List */}
-                    {attachments.length > 0 && (
-                        <div className="cpb-attachments">
-                            {attachments.map((att, i) => (
-                                <div key={i} className="cpb-attachment-item">
-                                    <div className="cpb-attachment-info">
-                                        <span className="cpb-attachment-icon">
-                                            {att.type === 'link' ? <LinkIcon /> : <FileDocIcon />}
-                                        </span>
-                                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="cpb-attachment-name">
-                                            {att.name || att.url}
-                                        </a>
-                                    </div>
-                                    <button type="button" className="cpb-attachment-remove" onClick={() => handleRemoveAttachment(i)}>
-                                        <CloseIcon />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Link Input area */}
                     {showLinkInput && (
                         <div className="cpb-link-input-row">
                             <input
                                 className="cpb-link-input"
                                 type="url"
-                                placeholder={t('linkPlaceholder')}
+                                placeholder={tr('linkPlaceholder', 'Paste a website or resource link')}
                                 value={linkInput}
                                 onChange={(e) => setLinkInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddLink())}
                                 autoFocus
                             />
-                            <button type="button" className="cpb-link-add-btn" onClick={handleAddLink}>{t('btnAdd')}</button>
+                            <button type="button" className="cpb-link-add-btn" onClick={handleAddLink}>
+                                {tr('btnAdd', 'Add')}
+                            </button>
                             <button type="button" className="cpb-link-cancel-btn" onClick={() => setShowLinkInput(false)}>
-                                <CloseIcon />
+                                <FaTimes />
                             </button>
                         </div>
                     )}
 
-                    {/* Action Bar */}
+                    {attachments.length > 0 && (
+                        <div className="cpb-attachments">
+                            {attachments.map((attachment, index) => {
+                                const isImageAttachment = attachment.type === 'image';
+                                return (
+                                    <div
+                                        key={`${attachment.url}-${index}`}
+                                        className={`cpb-attachment-item ${isImageAttachment ? 'cpb-attachment-item--image' : ''}`}
+                                    >
+                                        <div className="cpb-attachment-preview">
+                                            {isImageAttachment ? (
+                                                <img
+                                                    referrerPolicy="no-referrer"
+                                                    src={resolveAttachmentUrl(attachment.url)}
+                                                    alt={attachment.name || tr('imageAttachment', 'Image attachment')}
+                                                    className="cpb-attachment-image"
+                                                />
+                                            ) : (
+                                                <span className="cpb-attachment-icon">
+                                                    {attachment.type === 'link' ? <FaLink /> : <FaPaperclip />}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="cpb-attachment-info">
+                                            <span className="cpb-attachment-kind">
+                                                {attachment.type === 'image'
+                                                    ? tr('attachmentTypeImage', 'Image')
+                                                    : attachment.type === 'link'
+                                                        ? tr('attachmentTypeLink', 'Link')
+                                                        : tr('attachmentTypeFile', 'File')}
+                                            </span>
+                                            <span className="cpb-attachment-name">{attachment.name || attachment.url}</span>
+                                        </div>
+
+                                        <button type="button" className="cpb-attachment-remove" onClick={() => handleRemoveAttachment(index)}>
+                                            <FaTimes />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
                     <div className="cpb-actions">
                         <div className="cpb-actions-left">
-                            <button type="button" className="cpb-action-btn" onClick={() => setShowLinkInput(true)}>
-                                <LinkIcon /> {t('btnLink')}
+                            <button type="button" className="cpb-action-btn" onClick={() => setShowLinkInput((prev) => !prev)}>
+                                <FaLink />
+                                {tr('btnLink', 'Add link')}
                             </button>
+
                             <label className={`cpb-action-btn ${uploadingFile ? 'cpb-action-btn--disabled' : ''}`}>
-                                <PaperclipIcon /> {uploadingFile ? t('uploading') : t('btnFile')}
-                                <input 
-                                    type="file" 
-                                    onChange={handleFileUpload} 
-                                    style={{ display: 'none' }} 
+                                <FaPaperclip />
+                                {uploadingFile ? tr('uploading', 'Uploading...') : tr('btnFile', 'Add file')}
+                                <input
+                                    type="file"
+                                    onChange={handleFileUpload}
+                                    style={{ display: 'none' }}
                                     disabled={uploadingFile}
                                 />
                             </label>
                         </div>
+
                         <div className="cpb-actions-right">
-                            <button type="button" className="cpb-cancel-btn" onClick={handleCancel}>
-                                {t('btnCancel')}
+                            <button type="button" className="cpb-cancel-btn" onClick={resetComposer}>
+                                {tr('btnCancel', 'Cancel')}
                             </button>
-                            <button type="submit" className={`cpb-submit-btn ${loading ? 'cpb-submit-btn--loading' : ''}`} disabled={loading}>
-                                <SendIcon /> {loading ? t('posting') : t('btnPost')}
+                            <button
+                                type="submit"
+                                className={`cpb-submit-btn ${loading ? 'cpb-submit-btn--loading' : ''}`}
+                                disabled={loading || !canSubmit}
+                            >
+                                <FaBullhorn />
+                                {loading ? tr('posting', 'Posting...') : tr('btnPost', 'Post update')}
                             </button>
                         </div>
                     </div>
@@ -249,4 +307,3 @@ const CreatePostBox = ({ classId, user, onPostCreated }) => {
 };
 
 export default CreatePostBox;
-

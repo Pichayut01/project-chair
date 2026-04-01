@@ -35,24 +35,45 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
+const uploadFields = upload.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'image', maxCount: 1 }
+]);
+
+const getUploadedFile = (req) => {
+    if (!req.files) return null;
+    return req.files.file?.[0] || req.files.image?.[0] || null;
+};
+
 // @route   POST /api/upload
 // @desc    Upload a file (image, document, etc.)
 // @access  Public (or Protected if needed, currently Public for ease)
-router.post('/', upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ msg: 'No file uploaded' });
-    }
+router.post('/', (req, res) => {
+    uploadFields(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({ msg: err.message });
+        }
 
-    // Return URL path
-    // Assumption: Server serves /uploads statically
-    const fileUrl = `/uploads/${req.file.filename}`;
+        if (err) {
+            return res.status(400).json({ msg: typeof err === 'string' ? err : 'Upload failed' });
+        }
 
-    res.json({
-        msg: 'File uploaded successfully',
-        url: fileUrl,
-        filename: req.file.filename,
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype
+        const uploadedFile = getUploadedFile(req);
+        if (!uploadedFile) {
+            return res.status(400).json({ msg: 'No file uploaded' });
+        }
+
+        // Return URL path
+        // Assumption: Server serves /uploads statically
+        const fileUrl = `/uploads/${uploadedFile.filename}`;
+
+        res.json({
+            msg: 'File uploaded successfully',
+            url: fileUrl,
+            filename: uploadedFile.filename,
+            originalname: uploadedFile.originalname,
+            mimetype: uploadedFile.mimetype
+        });
     });
 });
 

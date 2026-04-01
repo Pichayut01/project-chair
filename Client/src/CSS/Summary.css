@@ -53,8 +53,10 @@
 /* ─── Header ─── */
 .bento-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-bottom: 28px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--bento-border);
@@ -1002,15 +1004,26 @@
   }
 }
 
-@media (max-width: 768px) {
-  .bento-summary-container {
-    padding: 16px;
-  }
-
+@media (max-width: 960px) {
   .bento-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 12px;
+  }
+
+  .bento-header-right {
+    width: 100%;
+  }
+
+  .bento-select-container {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .bento-summary-container {
+    padding: 16px;
   }
 
   .bento-select-container {
@@ -1208,8 +1221,10 @@
    ═══════════════════════════════ */
 .bento-header-right {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  min-width: 0;
 }
 
 .bento-header-divider {

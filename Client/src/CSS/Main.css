@@ -290,107 +290,281 @@ body {
   border-radius: 8px;
 }
 
-/* No classrooms welcome message */
+@keyframes dashboardEmptyFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dashboardEmptyFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes dashboardEmptyGlow {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
 .no-classrooms-container {
-  display: flex;
+  --dashboard-empty-surface: rgba(255, 255, 255, 0.96);
+  --dashboard-empty-surface-soft: #f7fbf8;
+  --dashboard-empty-border: rgba(15, 118, 110, 0.12);
+  --dashboard-empty-border-strong: rgba(16, 185, 129, 0.18);
+  --dashboard-empty-accent: #10b981;
+  --dashboard-empty-accent-deep: #059669;
+  --dashboard-empty-text: #162032;
+  --dashboard-empty-muted: #5f6b7f;
+  display: grid;
+  padding: clamp(1.5rem, 2.8vw, 2.5rem) clamp(1rem, 2.5vw, 2rem) 2rem;
+}
+
+.no-classrooms-shell {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.no-classrooms-shell::before,
+.no-classrooms-shell::after {
+  display: none;
+}
+
+.no-classrooms-shell::before {
+  content: none;
+}
+
+.no-classrooms-shell::after {
+  content: none;
+}
+
+.no-classrooms-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 460px);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: center;
+  padding: 0;
+}
+
+.no-classrooms-copy {
+  display: grid;
+  gap: 1rem;
+  align-content: center;
+  justify-items: start;
+  animation: dashboardEmptyFadeUp 0.5s ease-out;
+}
+
+.no-classrooms-kicker {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
-  padding: 3rem 2rem 2rem;
-  min-height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--dashboard-empty-accent-deep);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .no-classrooms-message {
-  text-align: center;
-  max-width: 500px;
-  padding: 2rem;
+  max-width: 34rem;
+  padding: 0;
   background: transparent;
+  border: none;
   border-radius: 0;
   box-shadow: none;
-  border: none;
+  text-align: left;
 }
 
 .no-classrooms-message h2 {
-  color: #1f2937;
-  font-size: 1.75rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  margin-top: 0;
+  margin: 0;
+  color: var(--dashboard-empty-text);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.04em;
 }
 
 .no-classrooms-message p {
-  color: #6b7280;
+  margin: 0.45rem 0 0;
+  color: var(--dashboard-empty-muted);
   font-size: 1rem;
-  line-height: 1.6;
-  margin: 0 0 2rem 0;
+  line-height: 1.7;
 }
 
-/* Welcome buttons */
+.no-classrooms-caption {
+  margin: 0;
+  color: var(--dashboard-empty-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
 .welcome-buttons {
   display: flex;
-  gap: 1rem;
-  justify-content: center;
+  gap: 0.85rem;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 
 .welcome-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  min-width: 160px;
   justify-content: center;
+  gap: 0.65rem;
+  min-height: 3.15rem;
+  padding: 0.85rem 1.3rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.welcome-btn svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.welcome-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
 }
 
 .create-btn {
-  background: #9ca3af;
-  color: white;
+  background: var(--dashboard-empty-accent);
+  color: #ffffff;
 }
 
 .create-btn:hover {
-  background: #6b7280;
+  background: var(--dashboard-empty-accent-deep);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(156, 163, 175, 0.3);
 }
 
 .join-btn {
-  background: #9ca3af;
-  color: white;
+  background: transparent;
+  border-color: rgba(15, 118, 110, 0.14);
+  color: var(--dashboard-empty-text);
 }
 
 .join-btn:hover {
-  background: #6b7280;
+  background: #ffffff;
+  border-color: rgba(16, 185, 129, 0.22);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(156, 163, 175, 0.3);
 }
 
-@media (max-width: 480px) {
+.no-classrooms-art {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.no-classrooms-art-frame {
+  width: min(100%, 30rem);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  animation: none;
+}
+
+.no-classrooms-art-frame::before {
+  display: none;
+}
+
+.no-classrooms-art-glow {
+  display: none;
+}
+
+.no-classrooms-lottie {
+  width: 100%;
+  height: auto;
+  max-height: 30rem;
+}
+
+@media (max-width: 900px) {
+  .no-classrooms-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .no-classrooms-art-frame {
+    width: min(100%, 24rem);
+  }
+}
+
+@media (max-width: 640px) {
+  .no-classrooms-container {
+    padding: 1rem 0.85rem 1.5rem;
+  }
+
+  .no-classrooms-panel {
+    gap: 1.5rem;
+  }
+
+  .no-classrooms-copy {
+    justify-items: center;
+  }
+
+  .no-classrooms-message,
+  .no-classrooms-caption {
+    text-align: center;
+  }
+
   .welcome-buttons {
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
   }
 
   .welcome-btn {
     width: 100%;
-    max-width: 200px;
   }
 
-  .no-classrooms-container {
-    padding: 2rem 1rem 1rem;
+  .no-classrooms-art {
+    justify-content: center;
   }
 
-  .no-classrooms-message {
-    padding: 1.5rem;
+  .no-classrooms-art-frame {
+    width: min(100%, 20rem);
   }
+}
 
-  .no-classrooms-message h2 {
-    font-size: 1.5rem;
+@media (prefers-reduced-motion: reduce) {
+  .classroom-card,
+  .welcome-btn,
+  .no-classrooms-copy,
+  .no-classrooms-art-frame,
+  .no-classrooms-art-glow {
+    animation: none;
+    transition: none;
   }
 }
 

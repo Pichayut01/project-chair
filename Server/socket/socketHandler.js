@@ -417,6 +417,21 @@ module.exports = (io) => {
             const { classId, eventId, answer } = data;
 
             try {
+                const classroom = await Class.findById(classId);
+                const existingEvent = classroom?.classroomEvents?.find(e => e.id === eventId);
+
+                if (!existingEvent) {
+                    logger.warn(`Event ${eventId} not found for answer submission`);
+                    return;
+                }
+
+                const timerEndsAt = Number(existingEvent.config?.timer?.endsAt) || null;
+                const isTimerExpired = Boolean(timerEndsAt && serverTimestamp >= timerEndsAt);
+                if (existingEvent.status === 'ended' || isTimerExpired) {
+                    logger.warn(`Rejected late answer for event ${eventId}: ${existingEvent.status === 'ended' ? 'event ended' : 'timer expired'}`);
+                    return;
+                }
+
                 // Find class and push answer to specific event results
                 await Class.findOneAndUpdate(
                     { _id: classId, "classroomEvents.id": eventId },

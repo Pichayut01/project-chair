@@ -1,16 +1,209 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
+import Lottie from 'lottie-react';
+import { useParams } from 'react-router-dom';
 import '../CSS/ClassroomEvent.css';
 import WordCloudViz from './events/WordCloudViz';
-import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaClipboardList, FaTrophy, FaUser, FaUndo, FaMagic, FaUsers, FaChevronRight, FaFlagCheckered, FaStar, FaCrown } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaImage, FaTimes, FaHandPaper, FaExternalLinkAlt, FaDice, FaQuestionCircle, FaBullhorn, FaCloud, FaPoll, FaClipboardList, FaTrophy, FaUser, FaUndo, FaMagic, FaUsers, FaChevronRight, FaFlagCheckered, FaStar, FaCrown, FaClock } from 'react-icons/fa';
 import { getProfileImageSrc, isGoogleUser } from '../utils/profileImageHelper';
 import { useTranslation } from 'react-i18next';
+import classroomEventEmptyAnimation from '../assets/classroom-event-empty.json';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+    ? ''
+    : (
+        process.env.REACT_APP_API_BASE_URL ||
+        process.env.REACT_APP_API_URL ||
+        `${window.location.protocol}//${window.location.hostname}:5000`
+    );
+
+const CLASSROOM_EVENT_ANIMATION_COLORS = {
+    accent: [0.1294117647, 0.7215686275, 0.431372549, 1],
+    dark: [0.0901960784, 0.137254902, 0.2274509804, 1],
+    ink: [0.0588235294, 0.0901960784, 0.1647058824, 1],
+    soft: [0.9137254902, 0.9647058824, 0.9490196078, 1]
+};
+
+const CLASSROOM_EVENT_ANIMATION_COLOR_MAP = new Map([
+    ['0.4902,0.8235,0.7098,1', CLASSROOM_EVENT_ANIMATION_COLORS.accent],
+    ['0.148,0.252,0.2173,1', CLASSROOM_EVENT_ANIMATION_COLORS.dark],
+    ['0.1,0.1,0.1,1', CLASSROOM_EVENT_ANIMATION_COLORS.ink],
+    ['0.818,0.902,0.874,1', CLASSROOM_EVENT_ANIMATION_COLORS.soft]
+]);
+
+const isColorKeyframe = (value) => Array.isArray(value) && value.length === 4 && value.every((channel) => typeof channel === 'number');
+
+const normalizeAnimationColor = (value) => value.map((channel) => Number(channel.toFixed(4))).join(',');
+
+const createThemedClassroomEventAnimation = (animationData) => {
+    const themedAnimation = JSON.parse(JSON.stringify(animationData));
+
+    const applyThemeToShapes = (shapes = []) => {
+        shapes.forEach((shape) => {
+            if (isColorKeyframe(shape?.c?.k)) {
+                const replacement = CLASSROOM_EVENT_ANIMATION_COLOR_MAP.get(normalizeAnimationColor(shape.c.k));
+                if (replacement) {
+                    shape.c.k = replacement;
+                }
+            }
+
+            if (Array.isArray(shape?.it)) {
+                applyThemeToShapes(shape.it);
+            }
+        });
+    };
+
+    const applyThemeToLayers = (layers = []) => {
+        layers.forEach((layer) => {
+            if (Array.isArray(layer?.shapes)) {
+                applyThemeToShapes(layer.shapes);
+            }
+
+            if (Array.isArray(layer?.layers)) {
+                applyThemeToLayers(layer.layers);
+            }
+        });
+    };
+
+    applyThemeToLayers(themedAnimation.layers);
+    themedAnimation.assets?.forEach((asset) => {
+        if (Array.isArray(asset?.layers)) {
+            applyThemeToLayers(asset.layers);
+        }
+    });
+
+    return themedAnimation;
+};
+
+const getEventImageSrc = (event) => {
+    const imageUrl = event?.config?.imageUrl || event?.imageUrl;
+    if (!imageUrl) return null;
+    if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
+    if (imageUrl.startsWith('/')) return `${API_BASE_URL}${imageUrl}`;
+    return `${API_BASE_URL}/${imageUrl.replace(/^\/+/, '')}`;
+};
+
+const getAppBasePath = () => {
+    if (typeof window === 'undefined') return '';
+
+    const pathname = window.location.pathname || '';
+    const routeMatch = pathname.match(/^(.*?)(?:\/classroom\/|\/presentation\/)/);
+    if (routeMatch) {
+        return routeMatch[1].replace(/\/+$/, '');
+    }
+
+    const publicUrl = (process.env.PUBLIC_URL || '').trim();
+    if (!publicUrl || publicUrl === '/') return '';
+
+    try {
+        return new URL(publicUrl, window.location.origin).pathname.replace(/\/+$/, '');
+    } catch (error) {
+        return publicUrl.startsWith('/')
+            ? publicUrl.replace(/\/+$/, '')
+            : `/${publicUrl.replace(/^\/+|\/+$/g, '')}`;
+    }
+};
+
+const buildAppUrl = (pathname) => {
+    if (typeof window === 'undefined') return pathname;
+
+    const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
+    const basePath = getAppBasePath();
+    return new URL(`${basePath}${normalizedPath}`.replace(/\/{2,}/g, '/'), window.location.origin).toString();
+};
+
+const buildPresentationUrl = (classId, eventId) => buildAppUrl(`/presentation/${encodeURIComponent(classId)}/${encodeURIComponent(eventId)}`);
+
+const EVENT_TYPES_WITH_TIMER = ['question', 'poll'];
+
+const formatTimerClock = (milliseconds = 0) => {
+    const safeMs = Math.max(0, milliseconds);
+    const totalSeconds = Math.ceil(safeMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
+const getEventTimerMeta = (event, now = Date.now()) => {
+    const timer = event?.config?.timer;
+    if (!EVENT_TYPES_WITH_TIMER.includes(event?.type) || !timer?.enabled) return null;
+
+    const durationSeconds = Math.max(0, Number(timer.durationSeconds) || 0);
+    if (!durationSeconds) return null;
+
+    const totalMs = durationSeconds * 1000;
+    const startedAt = Number(timer.startedAt) || null;
+    const endsAt = Number(timer.endsAt) || null;
+    const remainingMs = endsAt ? Math.max(0, endsAt - now) : totalMs;
+    const isExpired = Boolean(endsAt && remainingMs <= 0);
+    const hasStarted = Boolean(startedAt && endsAt);
+    const progress = totalMs > 0 ? Math.max(0, Math.min(100, (remainingMs / totalMs) * 100)) : 0;
+
+    return {
+        durationSeconds,
+        totalMs,
+        startedAt,
+        endsAt,
+        remainingMs,
+        isExpired,
+        hasStarted,
+        progress
+    };
+};
+
+const EventTimerBanner = ({ timerMeta, isCreator, eventStatus, labels }) => {
+    if (!timerMeta) return null;
+
+    const isDraftPending = !timerMeta.hasStarted && eventStatus === 'draft';
+    const isClosed = eventStatus === 'ended';
+    const statusText = isClosed
+        ? labels.closed
+        : isDraftPending
+            ? labels.startsWhenPosted
+            : timerMeta.isExpired
+                ? labels.expired
+                : labels.remaining;
+    const helperText = isClosed
+        ? labels.closedHelp
+        : isDraftPending
+            ? labels.draftHelp
+            : timerMeta.isExpired
+                ? (isCreator ? labels.expiredTeacherHelp : labels.expiredStudentHelp)
+                : (isCreator ? labels.liveTeacherHelp : labels.liveStudentHelp);
+    const clockText = isClosed
+        ? labels.closed
+        : isDraftPending
+            ? formatTimerClock(timerMeta.totalMs)
+            : formatTimerClock(timerMeta.remainingMs);
+    const progressWidth = isClosed ? 0 : (timerMeta.isExpired ? 0 : timerMeta.progress);
+
+    return (
+        <div className={`ev-timer-banner ${timerMeta.isExpired ? 'expired' : ''} ${isDraftPending ? 'pending' : ''} ${isClosed ? 'closed' : ''}`}>
+            <div className="ev-timer-top">
+                <div className="ev-timer-copy">
+                    <span className="ev-timer-pill">
+                        <FaClock />
+                        {statusText}
+                    </span>
+                    <span className="ev-timer-helper">{helperText}</span>
+                </div>
+                <div className="ev-timer-clock">{clockText}</div>
+            </div>
+            <div className="ev-timer-track">
+                <div className="ev-timer-fill" style={{ width: `${progressWidth}%` }} />
+            </div>
+        </div>
+    );
+};
 
 const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, onDeleteEvent, onSubmitAnswer, onEndEvent, onPublishDraftEvent, candidates = [], currentUser, zoomScale = 1 }) => {
     const { t } = useTranslation();
+    const tr = (key, defaultValue, options = {}) => t(key, { defaultValue, ...options });
+    const themedClassroomEventEmptyAnimation = useMemo(
+        () => createThemedClassroomEventAnimation(classroomEventEmptyAnimation),
+        []
+    );
     const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
     const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [selectedConfigType, setSelectedConfigType] = useState(null);
@@ -27,6 +220,9 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
     // ✨ Image Upload State
     const [selectedImage, setSelectedImage] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [timerEnabled, setTimerEnabled] = useState(false);
+    const [timerMinutes, setTimerMinutes] = useState(1);
+    const [timerSeconds, setTimerSeconds] = useState(0);
 
     // ✨ Word Cloud Config
     const [cloudTopic, setCloudTopic] = useState('');
@@ -56,6 +252,130 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
         }
     };
 
+    const getPreviewImageSrc = () => {
+        if (!selectedImage) return null;
+        if (/^https?:\/\//i.test(selectedImage)) return selectedImage;
+        if (selectedImage.startsWith('/')) return `${API_BASE_URL}${selectedImage}`;
+        return `${API_BASE_URL}/${selectedImage.replace(/^\/+/, '')}`;
+    };
+
+    const handleTimerToggle = (enabled) => {
+        setTimerEnabled(enabled);
+        if (enabled && timerMinutes === 0 && timerSeconds === 0) {
+            setTimerMinutes(1);
+            setTimerSeconds(0);
+        }
+    };
+
+    const updateTimerMinutes = (value) => {
+        const nextValue = Math.max(0, parseInt(value, 10) || 0);
+        setTimerMinutes(nextValue);
+    };
+
+    const updateTimerSeconds = (value) => {
+        const nextValue = Math.min(59, Math.max(0, parseInt(value, 10) || 0));
+        setTimerSeconds(nextValue);
+    };
+
+    const buildTimerConfig = (startImmediately = false) => {
+        if (!EVENT_TYPES_WITH_TIMER.includes(selectedConfigType)) {
+            return null;
+        }
+
+        if (!timerEnabled) {
+            return {
+                enabled: false,
+                durationSeconds: 0,
+                startedAt: null,
+                endsAt: null
+            };
+        }
+
+        const durationSeconds = (timerMinutes * 60) + timerSeconds;
+        if (durationSeconds <= 0) {
+            return null;
+        }
+
+        const startedAt = startImmediately ? Date.now() : null;
+        return {
+            enabled: true,
+            durationSeconds,
+            startedAt,
+            endsAt: startedAt ? startedAt + (durationSeconds * 1000) : null
+        };
+    };
+
+    const renderTimerConfigurator = () => {
+        if (!EVENT_TYPES_WITH_TIMER.includes(selectedConfigType)) return null;
+
+        const durationPreviewSeconds = (timerMinutes * 60) + timerSeconds;
+
+        return (
+            <div className="cfg-group cfg-timer-section">
+                <div className="cfg-timer-header">
+                    <div className="cfg-timer-copy">
+                        <div className="cfg-timer-title-row">
+                            <label className="cfg-label cfg-timer-heading">
+                                <FaClock />
+                                <span>{tr('classroomEvent.configAnswerTimer', 'Answer Timer')}</span>
+                            </label>
+                            <span className={`cfg-timer-status ${timerEnabled ? 'enabled' : 'disabled'}`}>
+                                {timerEnabled ? tr('classroomEvent.timerEnabled', 'Enabled') : tr('classroomEvent.timerOff', 'Off')}
+                            </span>
+                        </div>
+                        <p className="cfg-helper cfg-timer-help">
+                            {tr('classroomEvent.configAnswerTimerHelp', 'Countdown starts immediately when the event is created or when a draft is posted.')}
+                        </p>
+                    </div>
+                    <label className="cfg-toggle cfg-timer-toggle">
+                        <input type="checkbox" checked={timerEnabled} onChange={(e) => handleTimerToggle(e.target.checked)} />
+                        <span>{tr('classroomEvent.timerToggleLabel', 'Use timer')}</span>
+                    </label>
+                </div>
+
+                {timerEnabled && (
+                    <div className="cfg-timer-card">
+                        <div className="cfg-timer-grid">
+                            <div className="cfg-timer-box">
+                                <span className="cfg-timer-label">{tr('classroomEvent.timerMinutes', 'Minutes')}</span>
+                                <div className="cfg-timer-controls">
+                                    <button type="button" className="cfg-num-btn" onClick={() => updateTimerMinutes(timerMinutes - 1)}>-</button>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="cfg-timer-input"
+                                        value={timerMinutes}
+                                        onChange={(e) => updateTimerMinutes(e.target.value)}
+                                    />
+                                    <button type="button" className="cfg-num-btn" onClick={() => updateTimerMinutes(timerMinutes + 1)}>+</button>
+                                </div>
+                            </div>
+                            <div className="cfg-timer-box">
+                                <span className="cfg-timer-label">{tr('classroomEvent.timerSeconds', 'Seconds')}</span>
+                                <div className="cfg-timer-controls">
+                                    <button type="button" className="cfg-num-btn" onClick={() => updateTimerSeconds(timerSeconds - 5)}>-</button>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="59"
+                                        className="cfg-timer-input"
+                                        value={timerSeconds}
+                                        onChange={(e) => updateTimerSeconds(e.target.value)}
+                                    />
+                                    <button type="button" className="cfg-num-btn" onClick={() => updateTimerSeconds(timerSeconds + 5)}>+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="cfg-timer-preview">
+                            <span>{tr('classroomEvent.timerPreview', 'Countdown preview')}</span>
+                            <strong>{formatTimerClock(durationPreviewSeconds * 1000)}</strong>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     // ✨ Column count (screen-based only — zoom wrapper handles visual scaling)
     const [numCols, setNumCols] = useState(3);
     useEffect(() => {
@@ -70,12 +390,55 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const getEventSortTimestamp = (event) => {
+        const createdAt = Number(event?.createdAt);
+        if (Number.isFinite(createdAt) && createdAt > 0) {
+            return createdAt;
+        }
+
+        const updatedAt = Number(event?.updatedAt);
+        if (Number.isFinite(updatedAt) && updatedAt > 0) {
+            return updatedAt;
+        }
+
+        const eventId = String(event?.id || '');
+        const timestampMatch = eventId.match(/(\d{10,})$/);
+        if (timestampMatch) {
+            return Number(timestampMatch[1]);
+        }
+
+        return 0;
+    };
+
+    const getEventStatusPriority = (event) => {
+        switch (event?.status) {
+            case 'draft':
+                return 0;
+            case 'active':
+                return 1;
+            case 'ended':
+                return 3;
+            case 'idle':
+            default:
+                return 2;
+        }
+    };
+
+    const orderedEvents = [...events].sort((a, b) => {
+        const priorityDiff = getEventStatusPriority(a) - getEventStatusPriority(b);
+        if (priorityDiff !== 0) {
+            return priorityDiff;
+        }
+
+        return getEventSortTimestamp(b) - getEventSortTimestamp(a);
+    });
+
     // ✨ Prepare data for grid
     const allItems = [];
     if (isCreator) {
         allItems.push({ type: 'add-card', id: 'add-event-btn' });
     }
-    events.forEach(e => allItems.push({ type: 'event', ...e }));
+    orderedEvents.forEach(e => allItems.push({ type: 'event', ...e }));
 
     const distributedColumns = Array.from({ length: numCols }, () => []);
     allItems.forEach((item, index) => {
@@ -104,11 +467,23 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
         setCloudTopic(''); // ✨ Reset Word Cloud Topic
         setEventScoreEnabled(false); // ✨ Reset Event Scoring
         setEventScorePoints(5);
+        setTimerEnabled(false);
+        setTimerMinutes(1);
+        setTimerSeconds(0);
         setIsConfigModalOpen(true);
         setIsAddEventModalOpen(false);
     };
 
     const handleConfigSubmit = (isDraft = false) => {
+        const timerConfig = EVENT_TYPES_WITH_TIMER.includes(selectedConfigType)
+            ? buildTimerConfig(!isDraft)
+            : null;
+
+        if (EVENT_TYPES_WITH_TIMER.includes(selectedConfigType) && timerEnabled && !timerConfig) {
+            setConfigError(tr('classroomEvent.errorInvalidTimer', 'Please set a timer greater than 0 seconds.'));
+            return;
+        }
+
         if (selectedConfigType === 'random') {
             const count = parseInt(studentCountInput);
             const max = candidates.length > 0 ? candidates.length : 1;
@@ -130,7 +505,14 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                 return;
             }
 
-            handleSelectEvent({ type: 'question', questionText: questionTextInput, imageUrl: selectedImage, status: isDraft ? 'draft' : 'idle', scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined });
+            handleSelectEvent({
+                type: 'question',
+                questionText: questionTextInput,
+                imageUrl: selectedImage,
+                timer: timerConfig,
+                status: isDraft ? 'draft' : 'idle',
+                scoring: eventScoreEnabled ? { enabled: true, points: eventScorePoints } : undefined
+            });
             setIsConfigModalOpen(false);
         } else if (selectedConfigType === 'poll') {
             const validOptions = pollOptions.filter(opt => opt.trim() !== '');
@@ -173,6 +555,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                 questionText: questionTextInput,
                 status: isDraft ? 'draft' : 'idle',
                 imageUrl: selectedImage,
+                timer: timerConfig,
                 // For polls, scoring is driven by per-option scores only
                 scoring: isScored ? { enabled: true, points: 0 } : undefined,
                 options: validOptionsWithScores.map(o => o.text),
@@ -247,25 +630,69 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
         }
     };
 
+    const isEmptyState = events.length === 0;
+    const emptyStateDescription = isCreator
+        ? tr(
+            'classroomEvent.noEventsTeacherDesc',
+            'Start the room with a quick poll, question, or random picker to make this space feel active right away.'
+        )
+        : tr(
+            'classroomEvent.noEventsStudentDesc',
+            'Your teacher has not launched a classroom activity yet. Polls, questions, and live interactions will appear here when they begin.'
+        );
+    const emptyStateHint = isCreator
+        ? tr(
+            'classroomEvent.noEventsTeacherHint',
+            'A short icebreaker is often enough to get the class moving.'
+        )
+        : tr(
+            'classroomEvent.noEventsStudentHint',
+            'Stay tuned. This panel updates automatically when a new activity starts.'
+        );
+
     return (
-        <div className="classroom-event-container">
-            {events.length === 0 ? (
+        <div className={`classroom-event-container ${isEmptyState ? 'classroom-event-container--empty' : ''}`}>
+            {isEmptyState ? (
                 <div className="empty-event-state">
-                    <div className="event-placeholder">
-                        <h3>{t('classroomEvent.noEventsTitle') || 'No events yet'}</h3>
-                        <p>{t('classroomEvent.noEventsDesc') || 'Create an event to engage with your students!'}</p>
-                        <div className="event-illustration">
-                             <FaClipboardList style={{ fontSize: '4rem', color: '#cbd5e1' }} />
+                    <div className="empty-event-shell">
+                        <div className="empty-event-copy">
+                            <h3 className="empty-event-title">
+                                <span className="empty-event-title-full">
+                                    {t('classroomEvent.noEventsTitle') || 'No events yet'}
+                                </span>
+                                <span className="empty-event-title-short">
+                                    {tr('classroomEvent.noEventsTitleCompact', 'No events')}
+                                </span>
+                            </h3>
+                            <p className="empty-event-lead">{emptyStateDescription}</p>
+                            <p className="empty-event-note">{emptyStateHint}</p>
+                            <div className="empty-event-actions">
+                                {isCreator ? (
+                                    <button type="button" className="empty-event-primary" onClick={handleAddEventClick}>
+                                        <FaPlus />
+                                        <span>{t('classroomEvent.addEvent') || 'Add Event'}</span>
+                                    </button>
+                                ) : (
+                                    <div className="empty-event-status">
+                                        <FaStar />
+                                        <span>{tr('classroomEvent.noEventsStudentStatus', 'Waiting for the next classroom activity')}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="empty-event-visual" aria-hidden="true">
+                            <span className="empty-event-glow empty-event-glow--one" />
+                            <span className="empty-event-glow empty-event-glow--two" />
+                            <div className="empty-event-visual-frame">
+                                <Lottie
+                                    animationData={themedClassroomEventEmptyAnimation}
+                                    loop={true}
+                                    autoplay={true}
+                                    className="empty-event-lottie"
+                                />
+                            </div>
                         </div>
                     </div>
-                    {isCreator && (
-                        <div className="add-event-card" onClick={handleAddEventClick} style={{ marginTop: '20px', width: '200px', height: 'auto', minHeight: '150px' }}>
-                            <div className="add-event-card-icon">
-                                <FaPlus />
-                            </div>
-                            <span>{t('classroomEvent.addEvent') || 'Add Event'}</span>
-                        </div>
-                    )}
                 </div>
             ) : (
                 <div className="event-masonry-grid" style={{ 
@@ -487,12 +914,13 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                             </label>
                                             {selectedImage && (
                                                 <div className="cfg-image-preview">
-                                                    <img referrerPolicy="no-referrer" src={`${API_BASE_URL}${selectedImage}`} alt="Preview" />
+                                                    <img referrerPolicy="no-referrer" src={getPreviewImageSrc()} alt="Preview" />
                                                     <button className="cfg-remove-img" onClick={() => setSelectedImage(null)}><FaTimes /></button>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
+                                    {renderTimerConfigurator()}
                                 </>
                             )}
 
@@ -530,7 +958,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                             </label>
                                             {selectedImage && (
                                                 <div className="cfg-image-preview">
-                                                    <img referrerPolicy="no-referrer" src={`${API_BASE_URL}${selectedImage}`} alt="Preview" />
+                                                    <img referrerPolicy="no-referrer" src={getPreviewImageSrc()} alt="Preview" />
                                                     <button className="cfg-remove-img" onClick={() => setSelectedImage(null)}><FaTimes /></button>
                                                 </div>
                                             )}
@@ -583,6 +1011,7 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
                                             <span>{t('classroomEvent.enableScoringPerOption') || 'Enable Scoring (Per Option)'}</span>
                                         </label>
                                     </div>
+                                    {renderTimerConfigurator()}
                                 </>
                             )}
 
@@ -641,33 +1070,229 @@ const ClassroomEvent = ({ isCreator, events = [], onAddEvent, onTriggerEvent, on
 /* Helper Component for Event Card Content */
 const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEvent, candidates = [], currentUser, onDeleteEvent }) => {
     const { t } = useTranslation();
+    const { classId: routeClassId } = useParams();
+    const tr = (key, defaultValue, options = {}) => t(key, { defaultValue, ...options });
+    const resolvedClassId = routeClassId || (typeof window !== 'undefined'
+        ? window.location.pathname.match(/\/classroom\/([^/]+)/)?.[1]
+        : '');
     const [displayNames, setDisplayNames] = useState([]);
     const [isAnimating, setIsAnimating] = useState(false);
     const [animationPhase, setAnimationPhase] = useState('idle'); // idle | spinning | slowing | reveal
     const [showResults, setShowResults] = useState(false);
     const [answerInput, setAnswerInput] = useState('');
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedAnswer, setSelectedAnswer] = useState(null);
+    const [selectedEventImage, setSelectedEventImage] = useState(null);
+    const [timerNow, setTimerNow] = useState(Date.now());
+    const timerMeta = getEventTimerMeta(event, timerNow);
+    const isTimerExpired = Boolean(timerMeta?.isExpired);
+    const isEventEnded = event.status === 'ended';
+    const isAnswerLocked = isEventEnded || isTimerExpired;
+    const timerLabels = {
+        remaining: tr('classroomEvent.timerRemaining', 'Time remaining'),
+        startsWhenPosted: tr('classroomEvent.timerStartsWhenPosted', 'Starts when posted'),
+        expired: tr('classroomEvent.timerExpired', "Time's up"),
+        closed: tr('classroomEvent.timerClosed', 'Closed'),
+        liveTeacherHelp: tr('classroomEvent.timerLiveTeacherHelp', 'Students can keep answering until the countdown finishes.'),
+        liveStudentHelp: tr('classroomEvent.timerLiveStudentHelp', 'Submit your answer before the countdown reaches zero.'),
+        expiredTeacherHelp: tr('classroomEvent.timerExpiredTeacherHelp', 'Time is up. Students can no longer answer, but you can still review or end the event.'),
+        expiredStudentHelp: tr('classroomEvent.timerExpiredStudentHelp', 'The answer window has closed for this event.'),
+        closedHelp: tr('classroomEvent.timerClosedHelp', 'This event has already been closed.'),
+        draftHelp: tr('classroomEvent.timerDraftHelp', 'The countdown will begin when this draft is posted.')
+    };
+
+    useEffect(() => {
+        setTimerNow(Date.now());
+
+        const liveTimer = getEventTimerMeta(event, Date.now());
+        if (!liveTimer?.endsAt || liveTimer.isExpired || event.status === 'ended') {
+            return undefined;
+        }
+
+        const interval = setInterval(() => {
+            setTimerNow(Date.now());
+        }, 250);
+
+        return () => clearInterval(interval);
+    }, [event.type, event.status, event.config?.timer?.enabled, event.config?.timer?.endsAt, event.config?.timer?.durationSeconds]);
 
     // Check if user has already answered on mount/update
     useEffect(() => {
         if (currentUser && event.results) {
             const hasAnswered = event.results.some(r => r.userId === currentUser.id);
             setIsSubmitted(hasAnswered);
+            if (hasAnswered) {
+                setIsSubmitting(false);
+            } else if (isAnswerLocked) {
+                setIsSubmitting(false);
+            }
         } else {
             setIsSubmitted(false);
+            if (isAnswerLocked) {
+                setIsSubmitting(false);
+            }
         }
-    }, [currentUser, event.results]);
+    }, [currentUser, event.results, isAnswerLocked]);
+
+    useEffect(() => {
+        if (!selectedEventImage) {
+            return undefined;
+        }
+
+        const handleEscape = (keyboardEvent) => {
+            if (keyboardEvent.key === 'Escape') {
+                setSelectedEventImage(null);
+            }
+        };
+
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [selectedEventImage]);
 
     const handleAnswerSubmit = () => {
         console.log('Answer submit clicked. Input:', answerInput, 'Event:', event);
+        if (isAnswerLocked || isSubmitting) {
+            return;
+        }
+
         if (onSubmitAnswer && answerInput.trim()) {
             console.log('Calling onSubmitAnswer prop...');
-            onSubmitAnswer(event, answerInput);
-            setIsSubmitted(true);
+            onSubmitAnswer(event, answerInput.trim());
+            setIsSubmitting(true);
             setAnswerInput('');
         } else {
             console.warn('onSubmitAnswer not defined or input empty');
         }
+    };
+
+    const renderStudentEndedState = (accent = { bg: '#eff6ff', border: '#bfdbfe', title: '#1d4ed8', desc: '#1e40af' }) => (
+        <div className="ev-submitted-msg ev-timeup-msg" style={{ background: accent.bg, borderColor: accent.border }}>
+            <span style={{ color: accent.title }}>{tr('classroomEvent.eventEnded', 'Event Ended')}</span>
+            <p style={{ color: accent.desc }}>{tr('classroomEvent.studentEventClosedDesc', 'The teacher has ended this activity. You can no longer participate.')}</p>
+        </div>
+    );
+
+    const renderEventImagePreview = (src, altText) => {
+        if (!src) {
+            return null;
+        }
+
+        return (
+            <button
+                type="button"
+                className="ev-image-container ev-image-button"
+                onClick={() => setSelectedEventImage({ src, altText })}
+                title={tr('classroomEvent.openImagePreview', 'Open image preview')}
+            >
+                <img
+                    referrerPolicy="no-referrer"
+                    src={src}
+                    alt={altText}
+                    className="ev-image"
+                />
+                <span className="ev-image-hint">{tr('classroomEvent.tapImageToZoom', 'Click image to enlarge')}</span>
+            </button>
+        );
+    };
+
+    const renderTeacherEventFooter = () => {
+        if (!isCreator || !['poll', 'wordcloud', 'question'].includes(event.type)) {
+            return null;
+        }
+
+        if (event.config?.scoring?.enabled) {
+            if (event.status !== 'ended') {
+                return (
+                    <div className="ev-end-score-footer">
+                        <div className="ev-scoring-info">
+                            <div className="ev-scoring-badge">
+                                <FaStar style={{ color: '#f59e0b', marginRight: '4px' }} />
+                                <span>{t('classroomEvent.scoringEnabled') || 'Scoring Enabled'}</span>
+                            </div>
+                            <span className="ev-scoring-points">
+                                {event.type === 'poll' && event.config?.scoreConfig
+                                    ? (t('classroomEvent.perOptionScoring') || 'Per-option scoring')
+                                    : (t('classroomEvent.ptsPerParticipant', { points: event.config.scoring.points }) || `+${event.config.scoring.points} pts/participant`)}
+                            </span>
+                        </div>
+                        <button
+                            className="ev-end-score-btn"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (onEndEvent) onEndEvent(event);
+                            }}
+                        >
+                            <FaFlagCheckered style={{ marginRight: '6px' }} />
+                            {t('classroomEvent.endAndScore') || 'End & Score'}
+                        </button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="ev-scored-badge">
+                    <FaTrophy style={{ color: '#f59e0b', marginRight: '6px' }} />
+                    {event.type === 'poll' && event.config?.scoreConfig
+                        ? (t('classroomEvent.scoredPerOptionBadge') || 'Scored - Per-option')
+                        : (t('classroomEvent.scoredPtsBadge', { points: event.config.scoring.points }) || `Scored - +${event.config.scoring.points} pts`)}
+                </div>
+            );
+        }
+
+        if (event.status !== 'ended') {
+            return (
+                <div className="ev-end-score-footer ev-end-score-footer-centered">
+                    <button
+                        className="ev-end-score-btn ev-end-score-btn-neutral"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (onEndEvent) {
+                                onEndEvent({ ...event, config: { ...event.config, scoring: { enabled: false } } });
+                            }
+                        }}
+                    >
+                        <FaFlagCheckered style={{ marginRight: '6px' }} />
+                        {t('classroomEvent.endEvent') || 'End Event'}
+                    </button>
+                </div>
+            );
+        }
+
+        return (
+            <div className="ev-scored-badge ev-scored-badge-neutral">
+                <FaFlagCheckered style={{ color: '#6b7280', marginRight: '6px' }} />
+                {t('classroomEvent.eventEnded') || 'Event Ended'}
+            </div>
+        );
+    };
+
+    const renderQuestionAnswerCard = (ans, idx) => {
+        const imgSrc = getProfileImageSrc(ans.photoURL, isGoogleUser(ans));
+        const answerName = ans.userName || t('classroomEvent.anonymous') || 'Anonymous';
+        return (
+            <button
+                type="button"
+                key={ans.userId || idx}
+                className="ev-answer-card ev-answer-card-clickable"
+                onClick={() => setSelectedAnswer(ans)}
+                title={tr('classroomEvent.answerPopupOpen', 'Open this answer in a popup')}
+            >
+                <div className="ev-answer-header">
+                    <img referrerPolicy="no-referrer"
+                        src={imgSrc}
+                        alt={answerName}
+                        className="ev-answer-avatar"
+                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(answerName || 'U') + '&background=random'; }}
+                    />
+                    <div className="ev-answer-user-info">
+                        <span className="ev-answer-username">{answerName}</span>
+                        <span className="ev-answer-time">{t('classroomEvent.justNow') || 'Just now'}</span>
+                    </div>
+                </div>
+                <div className="ev-answer-body ev-answer-body-preview">{ans.text}</div>
+            </button>
+        );
     };
 
     // Effect to handle result arrival and animation
@@ -958,45 +1583,26 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             <span className="ev-fq-icon">Q</span>
                             <p className="ev-fq-text">{event.config?.questionText || t('classroomEvent.openQuestion') || 'Open Question'}</p>
                         </div>
+                        <EventTimerBanner timerMeta={timerMeta} isCreator={isCreator} eventStatus={event.status} labels={timerLabels} />
                         {/* Image if present */}
-                        {event.config?.imageUrl && (
-                            <div className="ev-image-container">
-                                <img referrerPolicy="no-referrer" 
-                                    src={`${API_BASE_URL}${event.config.imageUrl}`} 
-                                    alt="Question" 
-                                    className="ev-image" 
-                                />
-                            </div>
-                        )}
+                        {renderEventImagePreview(getEventImageSrc(event), tr('classroomEvent.questionImageAlt', 'Question attachment'))}
 
                         {/* Creator View: Answers */}
                         {isCreator ? (
                             <div className="ev-answers-section">
                                 <div className="ev-answers-header">
-                                    <span>{t('classroomEvent.answers') || 'Answers'}</span>
-                                    <span className="ev-answers-count">{event.results ? event.results.length : 0}</span>
+                                    <div className="ev-answers-header-main">
+                                        <span>{t('classroomEvent.answers') || 'Answers'}</span>
+                                        <span className="ev-answers-count">{event.results ? event.results.length : 0}</span>
+                                    </div>
                                 </div>
+                                {event.results?.length > 0 && (
+                                    <p className="ev-answers-hint">
+                                        {tr('classroomEvent.answerPopupHint', 'Click a student answer card to open that answer in a popup.')}
+                                    </p>
+                                )}
                                 <div className="ev-answers-list">
-                                    {event.results && event.results.map((ans, idx) => {
-                                        const imgSrc = getProfileImageSrc(ans.photoURL, isGoogleUser(ans));
-                                        return (
-                                            <div key={idx} className="ev-answer-card">
-                                                <div className="ev-answer-header">
-                                                    <img referrerPolicy="no-referrer" 
-                                                        src={imgSrc} 
-                                                        alt={ans.userName} 
-                                                        className="ev-answer-avatar"
-                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(ans.userName || 'U') + '&background=random'; }}
-                                                    />
-                                                    <div className="ev-answer-user-info">
-                                                        <span className="ev-answer-username">{ans.userName || t('classroomEvent.anonymous') || 'Anonymous'}</span>
-                                                        <span className="ev-answer-time">{t('classroomEvent.justNow') || 'Just now'}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="ev-answer-body">{ans.text}</div>
-                                            </div>
-                                        );
-                                    })}
+                                    {event.results && event.results.map((ans, idx) => renderQuestionAnswerCard(ans, idx))}
                                     {(!event.results || event.results.length === 0) && (
                                         <div className="ev-empty-state">
                                             <FaQuestionCircle style={{ fontSize: '2rem', opacity: 0.2, marginBottom: '8px' }} />
@@ -1008,34 +1614,127 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         ) : (
                             /* Student View */
                             <div className="ev-input-section">
-                                {!isSubmitted ? (
+                                {!isSubmitted && !isAnswerLocked ? (
                                     <>
-                                        <textarea
-                                            className="ev-textarea"
-                                            placeholder={t('classroomEvent.typeYourAnswer') || 'Type your answer...'}
-                                            value={answerInput}
-                                            onChange={(e) => setAnswerInput(e.target.value)}
-                                            rows="3"
-                                        />
-                                        <button
-                                            className="ev-submit-btn"
-                                            style={{ background: 'linear-gradient(to right, #3b82f6, #2563eb)' }}
-                                            onClick={handleAnswerSubmit}
-                                            disabled={!answerInput.trim()}
-                                        >
-                                            {t('classroomEvent.submitAnswer') || 'Submit Answer'}
-                                        </button>
+                                        {isSubmitting ? (
+                                            <div className="ev-submitted-msg" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
+                                                <span style={{ color: '#1d4ed8' }}>{tr('classroomEvent.submittingAnswer', 'Submitting your answer...')}</span>
+                                                <p style={{ color: '#1e40af' }}>{tr('classroomEvent.waitingServerConfirm', 'Waiting for live confirmation from the classroom.')}</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <textarea
+                                                    className="ev-textarea"
+                                                    placeholder={t('classroomEvent.typeYourAnswer') || 'Type your answer...'}
+                                                    value={answerInput}
+                                                    onChange={(e) => setAnswerInput(e.target.value)}
+                                                    rows="3"
+                                                />
+                                                <button
+                                                    className="ev-submit-btn"
+                                                    style={{ background: 'linear-gradient(to right, #3b82f6, #2563eb)' }}
+                                                    onClick={handleAnswerSubmit}
+                                                    disabled={!answerInput.trim() || isSubmitting}
+                                                >
+                                                    {t('classroomEvent.submitAnswer') || 'Submit Answer'}
+                                                </button>
+                                            </>
+                                        )}
                                     </>
-                                ) : (
+                                ) : isSubmitted ? (
                                     <div className="ev-submitted-msg" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
                                         <span style={{ color: '#1d4ed8' }}>{t('classroomEvent.answerSubmitted') || 'Answer Submitted! ✅'}</span>
                                         <p style={{ color: '#1e40af' }}>{t('classroomEvent.waitingForOthers') || 'Waiting for other students...'}</p>
                                     </div>
+                                ) : isEventEnded ? (
+                                    renderStudentEndedState()
+                                ) : (
+                                    <div className="ev-submitted-msg ev-timeup-msg" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
+                                        <span style={{ color: '#1d4ed8' }}>{tr('classroomEvent.answerTimeUp', 'Answer time is over.')}</span>
+                                        <p style={{ color: '#1e40af' }}>{tr('classroomEvent.answerTimeUpDesc', 'You can still read the activity, but new answers are closed.')}</p>
+                                    </div>
                                 )}
                             </div>
                         )}
+                        {renderTeacherEventFooter()}
                     </div>
                 </div>
+            )}
+
+            {event.type === 'question' && isCreator && selectedAnswer && ReactDOM.createPortal(
+                <div className="modal-overlay-new" onClick={() => setSelectedAnswer(null)}>
+                    <div className="modal-card-new answer-modal-new" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header-new answer-modal-header" style={{ background: 'linear-gradient(to right, #3b82f6, #2563eb)' }}>
+                            <h3>
+                                <FaClipboardList style={{ marginRight: '8px' }} />
+                                {tr('classroomEvent.answerPopupTitle', 'Student Answer')}
+                            </h3>
+                            <p>{tr('classroomEvent.answerPopupSubtitle', 'Answer from {{name}}', { name: selectedAnswer.userName || tr('classroomEvent.anonymous', 'Anonymous') })}</p>
+                            <button className="modal-close-x" onClick={() => setSelectedAnswer(null)}><FaTimes /></button>
+                        </div>
+
+                        <div className="modal-body-new answer-modal-body">
+                            <div className="answer-modal-question">
+                                <span className="answer-modal-question-label">{tr('classroomEvent.openQuestion', 'Open Question')}</span>
+                                <p>{event.config?.questionText || tr('classroomEvent.openQuestion', 'Open Question')}</p>
+                            </div>
+
+                            <div className="answer-modal-student">
+                                <span className="answer-modal-student-label">{tr('classroomEvent.answerPopupStudentLabel', 'Student')}</span>
+                                <div className="answer-modal-student-card">
+                                    <img
+                                        referrerPolicy="no-referrer"
+                                        src={getProfileImageSrc(selectedAnswer.photoURL, isGoogleUser(selectedAnswer))}
+                                        alt={selectedAnswer.userName || tr('classroomEvent.anonymous', 'Anonymous')}
+                                        className="ev-answer-avatar answer-modal-avatar"
+                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedAnswer.userName || 'U') + '&background=random'; }}
+                                    />
+                                    <div className="answer-modal-student-copy">
+                                        <strong className="answer-modal-student-name">{selectedAnswer.userName || tr('classroomEvent.anonymous', 'Anonymous')}</strong>
+                                        <span className="answer-modal-student-meta">{t('classroomEvent.justNow') || 'Just now'}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="answer-modal-answer">
+                                <span className="answer-modal-answer-label">{tr('classroomEvent.answerPopupAnswerLabel', 'Answer')}</span>
+                                <p>{selectedAnswer.text}</p>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer-new">
+                            <button className="cfg-cancel-btn" onClick={() => setSelectedAnswer(null)}>
+                                {tr('classroomEvent.answersPopupClose', 'Close')}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {selectedEventImage && ReactDOM.createPortal(
+                <div className="modal-overlay-new" onClick={() => setSelectedEventImage(null)}>
+                    <div className="modal-card-new event-image-modal-new" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header-new event-image-modal-header" style={{ background: 'linear-gradient(to right, #f8fbff, #eef6ff)' }}>
+                            <h3>
+                                <FaImage style={{ marginRight: '8px' }} />
+                                {tr('classroomEvent.imagePreviewTitle', 'Image Preview')}
+                            </h3>
+                            <p>{tr('classroomEvent.imagePreviewSubtitle', 'View the attached image in full size.')}</p>
+                            <button className="modal-close-x" onClick={() => setSelectedEventImage(null)}><FaTimes /></button>
+                        </div>
+
+                        <div className="event-image-modal-body">
+                            <img
+                                referrerPolicy="no-referrer"
+                                src={selectedEventImage.src}
+                                alt={selectedEventImage.altText || tr('classroomEvent.imagePreviewTitle', 'Image Preview')}
+                                className="event-image-modal-preview"
+                            />
+                        </div>
+                    </div>
+                </div>,
+                document.body
             )}
 
             {/* ✨ Poll Event Content */}
@@ -1068,16 +1767,9 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             <span className="ev-fq-icon" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>Q</span>
                             <p className="ev-fq-text">{event.config?.questionText || t('classroomEvent.voteNow') || 'Vote now!'}</p>
                         </div>
+                        <EventTimerBanner timerMeta={timerMeta} isCreator={isCreator} eventStatus={event.status} labels={timerLabels} />
                         {/* Image if present */}
-                        {event.config?.imageUrl && (
-                            <div className="ev-image-container">
-                                <img referrerPolicy="no-referrer" 
-                                    src={`${API_BASE_URL}${event.config.imageUrl}`} 
-                                    alt="Poll" 
-                                    className="ev-image" 
-                                />
-                            </div>
-                        )}
+                        {renderEventImagePreview(getEventImageSrc(event), tr('classroomEvent.pollImageAlt', 'Poll attachment'))}
 
                         {isCreator ? (
                             /* Creator View: Results */
@@ -1109,31 +1801,47 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         ) : (
                             /* Student View: Voting */
                             <div className="ev-poll-voting">
-                                {!isSubmitted ? (
-                                    <div className="ev-poll-options">
-                                        {event.config?.options?.map((opt, idx) => (
-                                            <button
-                                                key={idx}
-                                                className="ev-poll-vote-btn"
-                                                onClick={() => {
-                                                    if (onSubmitAnswer) {
-                                                        onSubmitAnswer(event, opt);
-                                                        setIsSubmitted(true);
-                                                    }
-                                                }}
-                                            >
-                                                {opt}
-                                            </button>
-                                        ))}
-                                    </div>
-                                ) : (
+                                {!isSubmitted && !isAnswerLocked ? (
+                                    isSubmitting ? (
+                                        <div className="ev-submitted-msg" style={{ background: '#fffbeb', borderColor: '#fde68a' }}>
+                                            <span style={{ color: '#b45309' }}>{tr('classroomEvent.submittingVote', 'Submitting your vote...')}</span>
+                                            <p style={{ color: '#92400e' }}>{tr('classroomEvent.waitingServerConfirm', 'Waiting for live confirmation from the classroom.')}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="ev-poll-options">
+                                            {event.config?.options?.map((opt, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    className="ev-poll-vote-btn"
+                                                    disabled={isSubmitting}
+                                                    onClick={() => {
+                                                        if (onSubmitAnswer && !isSubmitting && !isAnswerLocked) {
+                                                            onSubmitAnswer(event, opt);
+                                                            setIsSubmitting(true);
+                                                        }
+                                                    }}
+                                                >
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )
+                                ) : isSubmitted ? (
                                     <div className="ev-submitted-msg" style={{ background: '#fffbeb', borderColor: '#fde68a' }}>
                                         <span style={{ color: '#b45309' }}>{t('classroomEvent.voteSubmitted') || 'Vote Submitted! 📊'}</span>
                                         <p style={{ color: '#92400e' }}>{t('classroomEvent.waitingForResults') || 'Waiting for results...'}</p>
                                     </div>
+                                ) : isEventEnded ? (
+                                    renderStudentEndedState({ bg: '#fffbeb', border: '#fde68a', title: '#b45309', desc: '#92400e' })
+                                ) : (
+                                    <div className="ev-submitted-msg ev-timeup-msg" style={{ background: '#fffbeb', borderColor: '#fde68a' }}>
+                                        <span style={{ color: '#b45309' }}>{tr('classroomEvent.voteTimeUp', 'Voting time is over.')}</span>
+                                        <p style={{ color: '#92400e' }}>{tr('classroomEvent.voteTimeUpDesc', 'You can now wait for the teacher to review the results.')}</p>
+                                    </div>
                                 )}
                             </div>
                         )}
+                        {renderTeacherEventFooter()}
                     </div>
                 </div>
             )}
@@ -1219,7 +1927,7 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                         ) : (
                             /* Student View: Join Group with avatars + progress */
                             <div className="grouping-voting">
-                                {!isSubmitted ? (
+                                {!isSubmitted && !isAnswerLocked ? (
                                     <div className="grouping-options">
                                         {event.config?.groups?.map((group, idx) => {
                                             const members = event.results?.filter(r => r.text === (group.id || group.name)) || [];
@@ -1234,9 +1942,9 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                                         borderLeft: `4px solid ${group.color}`,
                                                         '--group-color': group.color,
                                                     }}
-                                                    disabled={isFull}
+                                                    disabled={isFull || isAnswerLocked}
                                                     onClick={() => {
-                                                        if (onSubmitAnswer && !isFull) {
+                                                        if (onSubmitAnswer && !isFull && !isAnswerLocked) {
                                                             onSubmitAnswer(event, group.id || group.name);
                                                             setIsSubmitted(true);
                                                         }
@@ -1277,11 +1985,13 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                             );
                                         })}
                                     </div>
-                                ) : (
+                                ) : isSubmitted ? (
                                     <div className="ev-submitted-msg" style={{ background: '#ecfdf5', borderColor: '#a7f3d0' }}>
                                         <span style={{ color: '#065f46' }}>{t('classroomEvent.groupJoined') || 'Group Joined! ✅'}</span>
                                         <p style={{ color: '#047857' }}>{t('classroomEvent.waitingForTeacher') || "You're in the group. Wait for the teacher to proceed."}</p>
                                     </div>
+                                ) : (
+                                    renderStudentEndedState({ bg: '#ecfdf5', border: '#a7f3d0', title: '#065f46', desc: '#047857' })
                                 )}
                             </div>
                         )}
@@ -1316,9 +2026,11 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                     <div className="ev-body-new">
                         {/* Status */}
                         <div className={`ev-buzz-status ${event.status === 'active' && countdown === 0 ? 'go' : ''} ${event.status === 'active' && countdown > 0 ? 'ready' : ''}`}>
-                            {event.status === 'active' 
-                                ? (countdown > 0 ? (t('classroomEvent.readyCount', { count: countdown }) || `Ready... ${countdown}`) : (t('classroomEvent.goBuzz') || '🖐️ GO!')) 
-                                : (t('classroomEvent.waitingBuzz') || '🔴 Waiting...')}
+                            {isEventEnded
+                                ? (t('classroomEvent.eventEnded') || 'Event Ended')
+                                : event.status === 'active'
+                                    ? (countdown > 0 ? (t('classroomEvent.readyCount', { count: countdown }) || `Ready... ${countdown}`) : (t('classroomEvent.goBuzz') || '🖐️ GO!'))
+                                    : (t('classroomEvent.waitingBuzz') || '🔴 Waiting...')}
                         </div>
 
                         {isCreator ? (
@@ -1394,23 +2106,29 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             </div>
                         ) : (
                             <div className="ev-buzz-student">
-                                <button
-                                    className={`ev-buzz-hand-btn ${event.status === 'active' && countdown === 0 && !isSubmitted ? 'active' : ''}`}
-                                    onClick={() => {
-                                        if (event.status === 'active' && countdown === 0 && !isSubmitted) {
-                                            onSubmitAnswer(event, 'BUZZ!');
-                                            setIsSubmitted(true);
-                                        }
-                                    }}
-                                    disabled={event.status !== 'active' || countdown > 0 || isSubmitted}
-                                >
-                                    <FaHandPaper size={48} />
-                                </button>
-                                {isSubmitted && (
-                                    <div className="ev-submitted-msg" style={{ background: '#fef2f2', borderColor: '#fecaca', marginTop: '16px' }}>
-                                        <span style={{ color: '#dc2626' }}>Buzz Sent! 🚀</span>
-                                        <p style={{ color: '#991b1b' }}>Waiting for results...</p>
-                                    </div>
+                                {isEventEnded ? (
+                                    renderStudentEndedState({ bg: '#fef2f2', border: '#fecaca', title: '#dc2626', desc: '#991b1b' })
+                                ) : (
+                                    <>
+                                        <button
+                                            className={`ev-buzz-hand-btn ${event.status === 'active' && countdown === 0 && !isSubmitted ? 'active' : ''}`}
+                                            onClick={() => {
+                                                if (event.status === 'active' && countdown === 0 && !isSubmitted) {
+                                                    onSubmitAnswer(event, 'BUZZ!');
+                                                    setIsSubmitted(true);
+                                                }
+                                            }}
+                                            disabled={event.status !== 'active' || countdown > 0 || isSubmitted}
+                                        >
+                                            <FaHandPaper size={48} />
+                                        </button>
+                                        {isSubmitted && (
+                                            <div className="ev-submitted-msg" style={{ background: '#fef2f2', borderColor: '#fecaca', marginTop: '16px' }}>
+                                                <span style={{ color: '#dc2626' }}>Buzz Sent! 🚀</span>
+                                                <p style={{ color: '#991b1b' }}>Waiting for results...</p>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         )}
@@ -1446,7 +2164,10 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             <button
                                 className="wc-present-btn"
                                 title={t('classroomEvent.openPresentation') || 'Open Presentation Mode'}
-                                onClick={() => window.open(`/presentation/${window.location.pathname.split('/')[2]}/${event.id}`, '_blank')}
+                                onClick={() => {
+                                    const presentationUrl = buildPresentationUrl(resolvedClassId, event.id);
+                                    window.open(presentationUrl, '_blank', 'noopener,noreferrer');
+                                }}
                             >
                                 <FaExternalLinkAlt style={{ marginRight: '6px' }} /> {t('classroomEvent.present') || 'Present'}
                             </button>
@@ -1462,14 +2183,14 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                     <p>{t('classroomEvent.noWordsYet') || 'No words yet. Start typing!'}</p>
                                 </div>
                             ) : (
-                                <WordCloudViz results={event.results || []} config={event.config} />
+                                <WordCloudViz results={event.results || []} variant="card" />
                             )}
                         </div>
 
                         {/* Input Area (students only, or creator can also submit) */}
                         {!isCreator && (
                             <div className="wc-input-section">
-                                {!isSubmitted ? (
+                                {!isSubmitted && !isAnswerLocked ? (
                                     <div className="wc-input-row">
                                         <input
                                             type="text"
@@ -1483,16 +2204,18 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                                         <button
                                             className="wc-send-btn"
                                             onClick={handleAnswerSubmit}
-                                            disabled={!answerInput.trim()}
+                                            disabled={!answerInput.trim() || isSubmitting}
                                         >
                                             {t('classroomEvent.send') || 'Send'}
                                         </button>
                                     </div>
-                                ) : (
+                                ) : isSubmitted ? (
                                     <div className="wc-submitted-msg">
                                         <span>{t('classroomEvent.sentCloud') || 'Sent! ☁️'}</span>
                                         <p>{t('classroomEvent.lookAtBoard') || 'Look at the board!'}</p>
                                     </div>
+                                ) : (
+                                    renderStudentEndedState({ bg: '#ecfdf5', border: '#a7f3d0', title: '#047857', desc: '#065f46' })
                                 )}
                                 <div className="wc-char-count">
                                     {t('classroomEvent.charCountLimit', { count: answerInput.length }) || `${answerInput.length}/25 characters`}
@@ -1508,76 +2231,13 @@ const EventCardContent = ({ event, isCreator, onTrigger, onSubmitAnswer, onEndEv
                             </div>
                             <span className="rpc-right">{t('classroomEvent.submittedCount', { count: event.results?.length || 0 }) || `${event.results?.length || 0} submitted`}</span>
                         </div>
+                        {renderTeacherEventFooter()}
                     </div>
                 </div>
             )}
 
             {/* Fallback for basic events */}
             {event.type === 'default' && <p>{event.description}</p>}
-
-            {/* ✨ Student Ended Banner — compact inline bar */}
-            {!isCreator && event.status === 'ended' && (
-                <div className="ev-ended-banner">
-                    <FaFlagCheckered /> <span>{t('classroomEvent.eventEnded') || 'Event Ended'}</span>
-                    {event.config?.scoring?.enabled && <span className="ev-ended-pts"><FaStar /> {t('classroomEvent.scored') || 'Scored'}</span>}
-                </div>
-            )}
-
-            {/* ✨ End & Score Footer — Creator view */}
-            {isCreator && event.config?.scoring?.enabled && event.status !== 'ended' && (
-                <div className="ev-end-score-footer">
-                    <div className="ev-scoring-info">
-                        <div className="ev-scoring-badge">
-                            <FaStar style={{ color: '#f59e0b', marginRight: '4px' }} />
-                            <span>{t('classroomEvent.scoringEnabled') || 'Scoring Enabled'}</span>
-                        </div>
-                        <span className="ev-scoring-points">
-                            {event.type === 'poll' && event.config?.scoreConfig ? (t('classroomEvent.perOptionScoring') || 'Per-option scoring') : (t('classroomEvent.ptsPerParticipant', { points: event.config.scoring.points }) || `+${event.config.scoring.points} pts/participant`)}
-                        </span>
-                    </div>
-                    <button
-                        className="ev-end-score-btn"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (onEndEvent) onEndEvent(event);
-                        }}
-                    >
-                        <FaFlagCheckered style={{ marginRight: '6px' }} />
-                        {t('classroomEvent.endAndScore') || 'End & Score'}
-                    </button>
-                </div>
-            )}
-            {/* Creator Scored Badge */}
-            {isCreator && event.status === 'ended' && event.config?.scoring?.enabled && (
-                <div className="ev-scored-badge">
-                    <FaTrophy style={{ color: '#f59e0b', marginRight: '6px' }} /> 
-                    {event.type === 'poll' && event.config?.scoreConfig ? (t('classroomEvent.scoredPerOptionBadge') || 'Scored — Per-option') : (t('classroomEvent.scoredPtsBadge', { points: event.config.scoring.points }) || `Scored — +${event.config.scoring.points} pts`)}
-                </div>
-            )}
-            {/* Creator End button for non-scoring events */}
-            {isCreator && event.status !== 'ended' && !event.config?.scoring?.enabled && ['poll', 'wordcloud', 'question'].includes(event.type) && (
-                <div className="ev-end-score-footer" style={{ justifyContent: 'center' }}>
-                    <button
-                        className="ev-end-score-btn" style={{ background: 'linear-gradient(135deg, #6b7280, #4b5563)' }}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (onEndEvent) {
-                                // For non-scoring events, just end them
-                                onEndEvent({ ...event, config: { ...event.config, scoring: { enabled: false } } });
-                            }
-                        }}
-                    >
-                        <FaFlagCheckered style={{ marginRight: '6px' }} />
-                        {t('classroomEvent.endEvent') || 'End Event'}
-                    </button>
-                </div>
-            )}
-            {/* Non-scoring ended badge */}
-            {event.status === 'ended' && !event.config?.scoring?.enabled && (
-                <div className="ev-scored-badge" style={{ background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)', color: '#475569', borderColor: '#cbd5e1' }}>
-                    <FaFlagCheckered style={{ color: '#6b7280', marginRight: '6px' }} /> {t('classroomEvent.eventEnded') || 'Event Ended'}
-                </div>
-            )}
         </div>
     );
 };
